@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Grid from '@mui/material/Grid/index.js';
 import Container from '@mui/material/Container/index.js';
-import Notes from '../Notes/notes.js';
+import Notes from '../Notes/notes';
 import './entireNoteHistory.css';
 
 const NoteHistory = () => {
-  const [noNotes, setnoNotes] = useState();
-
   const onStarValueChange = (e, note) => {
     const updatedNote = JSON.parse(sessionStorage.getItem(note._id));
     let newNote;
@@ -30,10 +28,6 @@ const NoteHistory = () => {
     sessionStorage.setItem(note._id, JSON.stringify(newNote));
   };
 
-  const setNoNotes = (text) => {
-    setnoNotes(text);
-  };
-
   return (
     <div>
       <Container
@@ -41,11 +35,7 @@ const NoteHistory = () => {
         style={{ marginTop: "4rem"}}
       >
         <Grid className="grid" container justifyContent="center">
-          {/* <span id="noNotes" style={{ marginTop: "7rem"}}>
-            {noNotes}
-          </span> */}
           <Notes
-            // setNoNotes={setNoNotes}
             onStarValueChange={onStarValueChange}
           ></Notes>
         </Grid>

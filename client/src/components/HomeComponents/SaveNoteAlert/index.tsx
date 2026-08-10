@@ -1,7 +1,14 @@
 import React from 'react';
 import Alert from '@mui/material/Alert/index.js';
 
-export const AlertMessage = (props) => {
+interface AlertMessageProps {
+  successFlag: 'visible' | 'hidden';
+  errorFlag: 'visible' | 'hidden';
+  successMessage: string;
+  errorMessage: string;
+}
+
+export const AlertMessage = (props: AlertMessageProps) => {
   return (
     <>
       <Alert

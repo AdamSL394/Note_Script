@@ -1,47 +1,107 @@
-*{
-    font-family: sans-serif
-}
-#container{
-    margin-top: 5rem;
-    text-align: center;
-    padding-bottom: 3%;
-    justify-content:space-between
-}
-.formButtons{
-    display: flex;
-    justify-content: space-evenly;
-    margin-top: 1rem;
-}
-#date{
-    position: relative;
-    border-radius: 30px;
-    border: 1px solid #cbcbcb;
-    padding: 0.5rem;
-    margin-top: 0.5rem;
-}
-#pastNoteHeader{
-    margin-bottom: 3%;
-    font-family:Times, Times New Roman, serif;
-    color: #626161ae;
-    font-style: normal;
-}
-#pastNoteError{
-    margin-bottom: 3%;
-    font-family:Times, Times New Roman, serif;
-    color: #626161ae;
-    font-style: normal
-}
-#fullWidth{
-    width:19rem;
-    height:15rem;
-    float: left;
-}
-#id{
-    float: right !important;
-}
-@media screen and (max-width: 550px) {
-    .word {
-      font-size: 4rem;
-    }
+* {
+  font-family: sans-serif;
 }
 
+#container {
+  margin-top: 5rem;
+  text-align: center;
+  padding-bottom: 3%;
+  justify-content: space-between;
+}
+
+.formButtons {
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 1rem;
+}
+
+#date {
+  position: relative;
+  border-radius: 30px;
+  border: 1px solid #cbcbcb;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+#pastNoteHeader {
+  margin-bottom: 3%;
+  font-family: Times, Times New Roman, serif;
+  color: #626161ae;
+  font-style: normal;
+}
+
+#pastNoteError {
+  margin-bottom: 3%;
+  font-family: Times, Times New Roman, serif;
+  color: #626161ae;
+  font-style: normal;
+}
+
+#fullWidth {
+  width: 19rem;
+  height: 15rem;
+  float: left;
+}
+
+#id {
+  float: right !important;
+}
+
+#count {
+  position: absolute;
+  left: 5%;
+  width: 200px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: inset 5px 5px 10px 1px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/*
+ * IMPORTANT:
+ * Don't use top: 29%.
+ * That is what causes the count items
+ * to move down and overlap other content.
+ */
+#items {
+  position: static;
+  margin: 0.5rem 0;
+}
+
+.css-julti5-MuiSwitch-root {
+  vertical-align: unset !important;
+}
+
+@media screen and (max-width: 550px) {
+  .word {
+    font-size: 4rem;
+  }
+}
+
+@media screen and (max-width: 1726px) {
+  #count {
+    position: static;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: inset 5px 5px 10px 1px rgba(0, 0, 0, 0.3);
+    margin: auto;
+    width: fit-content;
+    display: block;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    padding-left: 17px;
+  }
+
+  /*
+   * Remove the 29% vertical offset.
+   */
+  #items {
+    position: static;
+    margin: 0.5rem;
+  }
+}

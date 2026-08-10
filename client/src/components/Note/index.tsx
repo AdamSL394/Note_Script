@@ -1,30 +1,35 @@
-/* eslint-disable react/prop-types */
 import React from 'react';
 import Grid from '@mui/material/Grid/index.js';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
-import NoteText from '../NoteText/noteText.js';
-import PropTypes from 'prop-types';
+import NoteText from '../NoteText/noteText';
+import type { Note as NoteType } from '../../types';
 
-function Note(props) {
-    const editNote = (note) => {
-        note.textLength = 200 - note.text.length;
-        note.edit = true;
-        sessionStorage.setItem(note._id, JSON.stringify(note));
-        props.updateNote(note);
+interface NoteProps {
+  note: NoteType;
+  openModal: (note: NoteType) => void;
+  updateNote: (note: NoteType) => void;
+}
+
+function Note(props: NoteProps) {
+    const editNote = (note: NoteType) => {
+        const noteToEdit: NoteType = {
+            ...note,
+            textLength: 200 - note.text.length,
+            edit: true,
+        };
+        sessionStorage.setItem(noteToEdit._id, JSON.stringify(noteToEdit));
+        props.updateNote(noteToEdit);
     };
     return (
         <Grid xs={8} sm={5} md={5} lg={2} style={{ margin: '.5%' }} item={true}>
             <Card
-                item={4}
                 style={{ marginBottom: '2%' }}
                 id="Card"
-                value={props.note.id}
                 variant="outlined"
             >
                 <Button
                     id="deleteButton"
-                    value={props.note.id}
                     onClick={() => props.openModal(props.note)}
                 >
                     <strong>X</strong>
@@ -109,8 +114,8 @@ function Note(props) {
                     <span>
                         {props.note.code ? (
                             <span
-                                role="computer guy"
-                                aria-label="arm"
+                                role="img"
+                                aria-label="computer guy"
                                 style={{
                                     backgroundColor: '#ffffff',
                                     marginRight: '.4rem',
@@ -142,7 +147,7 @@ function Note(props) {
                         {props.note.eatOut ? (
                             <span
                                 role="img"
-                                aria-label="pissa"
+                                aria-label="pizza"
                                 style={{
                                     backgroundColor: '#ffffff',
                                     marginRight: '.4rem',
@@ -176,9 +181,3 @@ function Note(props) {
 }
 
 export default Note;
-
-Note.propTypes = {
-    openModal: PropTypes.func,
-    editNote: PropTypes.func,
-    note: PropTypes.object,
-};

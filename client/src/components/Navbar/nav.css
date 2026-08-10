@@ -40,6 +40,7 @@
 }
 #userInfo{
     font-family:Times, Times New Roman, serif !important;
+    border-radius: 10px;
 }
 
 .menuIcon {

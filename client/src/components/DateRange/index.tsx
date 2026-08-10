@@ -1,20 +1,33 @@
-/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import './dateRange.css';
 
-export const DateRange = (props) => {
-    const [startDate, setStartDate] = useState();
-    const [endDate, setEndDate] = useState();
+interface DateRangeProps {
+  runDateSearch: (
+    date1: string | undefined,
+    date2: string | undefined
+  ) => void;
+  // Passed in from SearchNotes but never actually used inside this
+  // component — kept in the type to match reality rather than hiding it.
+  setCurrentDBCall?: (value: string | number) => void;
+}
 
+export const DateRange = (props: DateRangeProps) => {
+    const [startDate, setStartDate] = useState<string | undefined>();
+    const [endDate, setEndDate] = useState<string | undefined>();
 
-    const settingStartDate = (e, endDate) => {
+    const settingStartDate = (
+        e: React.ChangeEvent<HTMLInputElement>,
+        endDate: string | undefined
+    ) => {
         setStartDate(e.target.value);
-        const dateSelectionStartDate =e.target.value;
+        const dateSelectionStartDate = e.target.value;
         props.runDateSearch(dateSelectionStartDate, endDate);
     };
 
-    const settingEndDate = (startDate, e) => {
+    const settingEndDate = (
+        startDate: string | undefined,
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
         setEndDate(e.target.value);
         const dateSelectionEndDate = e.target.value;
         props.runDateSearch(startDate, dateSelectionEndDate);
@@ -24,7 +37,7 @@ export const DateRange = (props) => {
         <span
             id='dateInput'
             style={{
-                alignText: 'center',
+                textAlign: 'center',
                 width: '13rem',
                 height: '1.3rem',
                 float  :'right',
@@ -50,9 +63,4 @@ export const DateRange = (props) => {
             </div>
         </span>
     );
-};
-
-
-DateRange.propTypes = {
-    runDateSearch: PropTypes.func,
 };

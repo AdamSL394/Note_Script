@@ -6,7 +6,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import Grid from '@mui/material/Grid/index.js';
-import NoteRoutes from '../../router/noteRoutes.js';
+import NoteRoutes from '../../router/noteRoutes.ts';
 import './upload.css';
 
 

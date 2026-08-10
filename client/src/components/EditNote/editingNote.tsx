@@ -1,37 +1,31 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
-/* eslint-disable max-len */
 import React from 'react';
-import PropTypes from 'prop-types';
 import Grid from '@mui/material/Grid/index.js';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import FormControl from '@mui/material/FormControl/index.js';
 import InputLabel from '@mui/material/InputLabel/index.js';
-import Select from '@mui/material/Select/index.js';
+import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
-import Textarea from '../TextArea/index.js';
-import { TrackedEmojis } from '../TrackedEmojis/index.js';
-import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index.js';
+import Textarea from '../TextArea/index';
+import { TrackedEmojis } from '../TrackedEmojis/index';
+import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
+import type { Note } from '../../types';
 
-function EditingNote(props) {
+interface EditingNoteProps {
+  note: Note;
+  notes: Note[];
+  setDateNote: (e: React.ChangeEvent<HTMLInputElement>, note: Note) => void;
+  currentPage: number;
+  setNoteValue: (note?: Note) => void;
+  saveNote: (note: Note) => void;
+  openModal: (note: Note) => void;
+  updateNote: (note: Note) => void;
+  // Bound to a MUI <Select>'s onChange, not a plain input — SelectChangeEvent
+  // is the correct type here, not React.ChangeEvent<HTMLInputElement>.
+  onStarValueChange: (e: SelectChangeEvent, note: Note) => void;
+}
 
-  const editNote = (note) => {
-    const updatedNote = JSON.parse(sessionStorage.getItem(note._id));
-    try {
-      if (updatedNote) {
-        updatedNote.edit = false;
-        sessionStorage.setItem(updatedNote._id, JSON.stringify(updatedNote));
-      } else {
-        sessionStorage.setItem(note._id, JSON.stringify(note));
-      }
-    } catch (e) {
-      console.log(e);
-    }
-    note.edit = false;
-    props.updateNote(note);
-  };
-
+function EditingNote(props: EditingNoteProps) {
   return (
     <Grid xs={8} sm={5} md={5} lg={2} style={{ margin: '.5%' }} item>
       <Card variant="outlined" id="Card">
@@ -109,7 +103,7 @@ function EditingNote(props) {
           setNoteValue={props.setNoteValue}
         ></Textarea>
         <div>
-          <Button onClick={() => editNote(props.note)}>
+          <Button onClick={() => props.saveNote(props.note)}>
             <strong>Save Me</strong>
           </Button>
         </div>
@@ -121,19 +115,3 @@ function EditingNote(props) {
 }
 
 export default EditingNote;
-
-EditingNote.propTypes = {
-  setNoteValue: PropTypes.func,
-  closeModal: PropTypes.func,
-  openModal: PropTypes.func,
-  note: PropTypes.object,
-  notes: PropTypes.arrayOf(
-    PropTypes.shape({
-      text: PropTypes.string,
-      user: PropTypes.number,
-    })
-  ),
-  onStarValueChange: PropTypes.func,
-  currentPage: PropTypes.number,
-  saveNote: PropTypes.func,
-};

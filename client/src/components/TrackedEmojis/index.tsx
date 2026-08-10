@@ -1,8 +1,11 @@
-/* eslint-disable max-len */
-/* eslint-disable react/prop-types */
 import React from 'react';
+import type { Note } from '../../types';
 
-export const TrackedEmojis = (props) => {
+interface TrackedEmojisProps {
+  note: Note;
+}
+
+export const TrackedEmojis = (props: TrackedEmojisProps) => {
     return (
         <>
             <div>

@@ -2,7 +2,7 @@ import React from 'react';
 
 
 function Footer() {
-    const mystyle = {
+    const mystyle: React.CSSProperties = {
         bottom: 0,
         width: '100vw',
         borderTop: 'solid 1.5px',
@@ -13,11 +13,7 @@ function Footer() {
         position: 'fixed',
     };
 
-    const outline = {
-        // borderTop: "solid .6rem",
-        // borderColor:"#e9d8c2",
-        // position:"fixed",
-        // width: "100vw",
+    const outline: React.CSSProperties = {
         backgroundColor: '#e9d8c2',
         color: '#f4f4f4',
     };

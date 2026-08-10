@@ -1,11 +1,12 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Login from '../views/Login/login.js';
-import Home from '../views/Home/home.js';
-import { ProtectedRoute } from '../hooks/protectedRoute.js';
-import AllNotes from '../views/AllNotes/allNotes.js';
-import UploadNotes from '../views/Upload/upload.js';
-import UserSettings from '../views/UserSettings/userSettings.js'
+import Login from '../views/Login/login';
+import Home from '../views/Home/home';
+import { ProtectedRoute } from '../hooks/protectedRoute';
+import AllNotes from '../views/AllNotes/allNotes';
+import UserSettings from '../views/UserSettings/userSettings'
+import Upload from '../views/Upload/upload.js'
+
 
 const Router = () => {
     return (
@@ -15,8 +16,8 @@ const Router = () => {
                 <Route path="/" element={<ProtectedRoute />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/all" element={<AllNotes />} />
-                    {/* <Route path="/upload" element={<UploadNotes />} /> */}
                     <Route path="/userSettings" element={<UserSettings />} />
+                    <Route path="/upload" element={<Upload />} />
                 </Route>
             </Routes>
         </>

@@ -4,8 +4,6 @@ import LogOut from '../LogoutButton/logoutButton.js';
 import AppBar from '@mui/material/AppBar/AppBar.js';
 import Toolbar from '@mui/material/Toolbar/Toolbar.js';
 import IconButton from '@mui/material/IconButton/IconButton.js';
-import MenuIcon from '@mui/icons-material/Menu.js';
-import MenuItem from '@mui/material/MenuItem/MenuItem.js';
 import Menu from '@mui/material/Menu/Menu.js';
 import Box from '@mui/material/Box/Box.js';
 import Typography from '@mui/material/Typography/Typography.js';
@@ -16,25 +14,31 @@ import { useAuth0 } from '@auth0/auth0-react';
 function Navbar() {
   const { user } = useAuth0();
   const navigate = useNavigate();
-  const [anchorElNav, setAnchorElNav] = useState(null);
+  const [anchorElNav, setAnchorElNav] = useState<HTMLElement | null>(null);
 
   const pages = ['Home', 'View All Notes', 'User'];
 
-  const handleOpenNavMenu = (event) => {
+  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
   };
 
-  const handleCloseNavMenu = (value) => {
-    if(value.target.innerHTML === 'Home'){
-      navigate('/');
-    }
-    if(value.target.innerHTML === 'View All Notes'){
-      const path = `/all`;
-      navigate(path);
-    }
-    if(value.target.innerHTML === 'User'){
-      const path = `/userSettings`;
-      navigate(path);
+  // Wired to two call sites with genuinely different event shapes: the
+  // mobile menu's <span onClick> passes a real click event, but this is
+  // also passed directly as <Menu onClose>, which MUI calls with `{}`
+  // (no `.target` at all) when the menu is dismissed via backdrop click
+  // or Escape. Reading `.target.innerHTML` unconditionally previously
+  // meant dismissing the menu without clicking a link would throw.
+  const handleCloseNavMenu = (value: React.MouseEvent<HTMLElement> | {}) => {
+    if ('target' in value && value.target instanceof HTMLElement) {
+      if (value.target.innerHTML === 'Home') {
+        navigate('/');
+      }
+      if (value.target.innerHTML === 'View All Notes') {
+        navigate('/all');
+      }
+      if (value.target.innerHTML === 'User') {
+        navigate('/userSettings');
+      }
     }
     setAnchorElNav(null);
   };
@@ -44,10 +48,6 @@ function Navbar() {
   }
   const routeChanges = () => {
     const path = `/all`;
-    navigate(path);
-  };
-  const upload = () => {
-    const path = `/upload`;
     navigate(path);
   };
   const userSettings = () => {
@@ -126,13 +126,13 @@ function Navbar() {
               <span role="img" aria-label="Star">
                 👋🏼 &nbsp;
               </span>{' '}
-              {user.name ? user.name : ''}
+              {user?.name ? user.name : ''}
             </i>{' '}
           </i>
           <img
             id="userInfo"
             style={{ height: '25px', width: '25px' }}
-            src={user.picture}
+            src={user?.picture}
             referrerPolicy="no-referrer"
             alt="User Profile"
           ></img>

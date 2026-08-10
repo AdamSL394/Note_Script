@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import './login.css';
 
 function Login() {
-  const [text, setText] = useState();
+  const [text, setText] = useState<string | undefined>();
 
   useEffect(() => {
     const words = ['Note Script'];
-    let part;
+    let part: string;
     let i = 0;
     let offset = 0;
     const len = words.length;
