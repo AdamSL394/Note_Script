@@ -1,10 +1,25 @@
 /* eslint-disable max-len */
-const ParseNotes = async (userId, listOfNotes) => {
+
+interface UploadPayload {
+    note: string;
+}
+
+interface ParsedNote {
+    date: string;
+    text: string;
+    star: string;
+    userId: string;
+}
+
+const ParseNotes = async (
+    userId: string,
+    listOfNotes: UploadPayload
+): Promise<ParsedNote[]> => {
     const stringOfNotes = listOfNotes.note;
     const notes = stringOfNotes.split('\n');
-    const arrayOfNotes = [];
+    const arrayOfNotes: ParsedNote[] = [];
 
-    let note = {
+    let note: ParsedNote = {
         'date': '',
         'text': '',
         'star': 'None',
@@ -12,12 +27,18 @@ const ParseNotes = async (userId, listOfNotes) => {
     };
 
     for (let i = 0; i <= notes.length + 1;) {
-        // let date;
         let text = '';
 
         const noteDate = new Date(notes[i]);
-        if (noteDate != 'Invalid Date') {
-            // date = noteDate;
+        // Was `noteDate != 'Invalid Date'` — comparing a Date object
+        // directly to a string. This actually worked correctly at
+        // runtime (JS implicitly calls .toString() on the Date for the
+        // comparison, and an invalid date's toString() really is the
+        // literal string "Invalid Date"), but TypeScript flags direct
+        // comparisons between types with no structural overlap. Made
+        // the same coercion explicit — behavior is identical, just
+        // spelled out instead of implicit.
+        if (noteDate.toString() != 'Invalid Date') {
             note['date'] = noteDate.toISOString().split('T')[0];
             i++;
         }
@@ -56,4 +77,4 @@ const ParseNotes = async (userId, listOfNotes) => {
     return (arrayOfNotes);
 };
 
-module.exports = ParseNotes;
+export default ParseNotes;
