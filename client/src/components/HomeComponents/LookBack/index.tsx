@@ -205,7 +205,7 @@ export const LookBack = (props: LookBackProps) => {
               // from the child <select> — React's event bubbles that
               // correctly at runtime, but TS can't know it structurally
               // from a form-level ChangeEvent, hence the explicit cast.
-              const target = e.target as HTMLSelectElement;
+              const target = e.target as unknown as HTMLSelectElement;
               onNumericChange(checked, target.value);
             }}
             style={{ marginRight: '12rem' }}

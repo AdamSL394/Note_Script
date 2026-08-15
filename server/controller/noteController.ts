@@ -90,9 +90,11 @@ const getMostRecentlyUpdatedNotes = async (ids: string): Promise<INote[]> => {
     return updatedNotes;
 };
 
-const deleteNotes = async (id: string): Promise<string> => {
-    await Note.deleteOne({ _id: id });
-    return 'note deleted';
+const deleteNotes = async (id: string, userId: string): Promise<string> => {
+    // Scoped to userId as well as _id — previously any authenticated
+    // request could delete any note purely by knowing its _id.
+    const result = await Note.deleteOne({ _id: id, userId });
+    return result.deletedCount > 0 ? 'note deleted' : 'not found';
 };
 
 // NOTE: 12 positional string/boolean parameters is a real design smell —
@@ -104,6 +106,7 @@ const deleteNotes = async (id: string): Promise<string> => {
 // good candidate for a follow-up refactor to a single options object.
 const updateNote = async (
     id: string,
+    userId: string,
     switchEdit: boolean,
     text: string,
     date: string,
@@ -116,8 +119,12 @@ const updateNote = async (
     eatOut: boolean,
     basketball: boolean,
 ): Promise<INote | null> => {
-    const updated = await Note.findByIdAndUpdate(
-        id,
+    // Switched from findByIdAndUpdate (which only filters by _id) to
+    // findOneAndUpdate with a compound filter — previously any
+    // authenticated request could edit any note purely by knowing its
+    // _id, with no check that it belonged to the requester.
+    const updated = await Note.findOneAndUpdate(
+        { _id: id, userId },
         {
             $set: {
                 edit: switchEdit,
@@ -169,8 +176,11 @@ const searchNotes = async (text: string, userId: string): Promise<INote[]> => {
     return notes;
 };
 
-const getSingleNote = async (id: string): Promise<INote[]> => {
-    const note = await Note.find({ _id: id }).exec();
+const getSingleNote = async (id: string, userId: string): Promise<INote[]> => {
+    // Scoped to userId as well as _id — previously any authenticated
+    // request could fetch any note purely by guessing/observing its
+    // _id, with no check that it actually belonged to the requester.
+    const note = await Note.find({ _id: id, userId }).exec();
     return note;
 };
 

@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import React, {useState} from 'react';
-import LogOut from '../LogoutButton/logoutButton.js';
+import LogOut from '../LogoutButton/logoutButton';
 import AppBar from '@mui/material/AppBar/AppBar.js';
 import Toolbar from '@mui/material/Toolbar/Toolbar.js';
 import IconButton from '@mui/material/IconButton/IconButton.js';

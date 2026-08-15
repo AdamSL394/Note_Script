@@ -1,44 +1,53 @@
 import express, { Request, Response } from 'express';
+import { AuthResult } from 'express-oauth2-jwt-bearer';
 import userController from '../controller/userController';
+import { getVerifiedUserId } from '../middleware/checkJwt';
 
 const router = express.Router();
 
-router.get('/callback', (_req: Request, res: Response) => {
-  return res.sendStatus(200);
+const getUserId = (req: Request): string | undefined =>
+    getVerifiedUserId((req as unknown as { auth?: AuthResult }).auth);
+
+router.get('/callback', async (req: Request, res: Response) => {
+    return res.sendStatus(200);
 });
 
-router.post('/user/:id', async (req: Request, res: Response) => {
-  let id = req.params.id;
+interface UserBody {
+    user: { email: string };
+}
 
-  if (id.length !== 24) {
-    id += '000';
-  }
-
-  const userDetails = req.body.user;
-
-  const user = await userController.getSingleUser(id, userDetails);
-  const searchedUser = user[0];
-
-  return res.status(201).json({ searchedUser });
+router.post('/user/:id', async (req: Request<{ id: string }, unknown, UserBody>, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        res.status(401).send('Unauthorized');
+        return;
+    }
+    // The URL's :id segment is ignored in favor of the verified token
+    // identity — kept in the path only because the client still sends
+    // it there.
+    const userDetails = req.body['user'];
+    const user = await userController.getSingleUser(userId, userDetails);
+    const searchedUser = user[0];
+    res.status(201).json({ 'searchedUser': searchedUser });
+    return;
 });
 
-router.post('/user/trackedstats/:id', async (req: Request, res: Response) => {
-  let id = req.params.id;
+interface TrackedStatsBody {
+    user: { email: string };
+    trackedStats: { icon: string; name: string; visible: 'visible' | 'hidden' };
+}
 
-  if (id.length !== 24) {
-    id += '000';
-  }
-
-  const userDetails = req.body.user;
-  const stats = req.body.trackedStats;
-
-  const user = await userController.updateUserStats(
-    id,
-    userDetails,
-    stats
-  );
-
-  return res.send(user);
+router.post('/user/trackedstats/:id', async (req: Request<{ id: string }, unknown, TrackedStatsBody>, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        res.status(401).send('Unauthorized');
+        return;
+    }
+    const stats = req.body.trackedStats;
+    const userDetails = req.body['user'];
+    const user = await userController.updateUserStats(userId, userDetails, stats);
+    res.send(user);
+    return;
 });
 
 export default router;

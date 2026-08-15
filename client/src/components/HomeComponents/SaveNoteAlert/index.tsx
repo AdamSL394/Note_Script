@@ -15,11 +15,10 @@ export const AlertMessage = (props: AlertMessageProps) => {
         severity="success"
         style={{ visibility: props.successFlag, marginTop: '1%' }}
         id="successFlag"
-        open={false}
       >
         {props.successMessage}
       </Alert>
-      <Alert severity="error" style={{ visibility: props.errorFlag }} open={false}>
+      <Alert severity="error" style={{ visibility: props.errorFlag }}>
         {props.errorMessage}
       </Alert>
     </>

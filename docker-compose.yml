@@ -1,18 +1,16 @@
-services: 
-
-  server: 
-    build: 
-      context: "."
-      dockerfile: ./server/Dockerfile
-    container_name: note_script-app
-
-    environment: 
-      NODE_ENV: production
-    ports: 
-      - "5000:${PORT}"
-    restart: always
-    volumes: 
-      - /Desktop/Users/adam/desktop/Code/Apps/Docker_example
 version: "3.9"
 
-        
+services:
+  server:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+    container_name: note_script-app
+    environment:
+      NODE_ENV: production
+    ports:
+      - "5002:${PORT}"
+    restart: always
+    volumes:
+      - /Desktop/Users/adam/desktop/Code/Apps/Docker_example

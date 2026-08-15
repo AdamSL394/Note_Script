@@ -4,7 +4,7 @@ import React from 'react';
 import './logoutButton.css';
 
 
-const LogOut = () => {
+const LogOut = (): React.ReactElement | null => {
     const { logout, isAuthenticated } = useAuth0();
 
     // Was `logouts = (options) => {...}` — options was never used and
@@ -16,16 +16,17 @@ const LogOut = () => {
         });
     };
 
-    return (
-        isAuthenticated && (
-            <Button
-                onClick={() => logouts()}
-                className='logoutButton'
-            >
-                Sign Out
-            </Button>
-        )
+    if (!isAuthenticated) {
+        return null;
+    }
 
+    return (
+        <Button
+            onClick={() => logouts()}
+            className='logoutButton'
+        >
+            Sign Out
+        </Button>
     );
 };
 

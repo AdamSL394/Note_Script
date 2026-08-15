@@ -7,7 +7,6 @@
     "web": "npm run start --prefix client",
     "server": "cd server && nodemon server.js",
     "dev": "concurrently -n 'server,client' \"npm run server\" \"npm run web\"",
-    "prestart": "npm run build --prefix client",
     "start": "cd server && node server.js",
     "lint": "eslint **/*.js"
   },
@@ -17,7 +16,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/AdamSL394/MERN_Docker/issues"
   },
@@ -32,7 +31,6 @@
     "eslint-plugin-react": "^7.32.2"
   },
   "dependencies": {
-    "-": "^0.0.1",
     "@babel/preset-env": "^7.20.2",
     "@babel/runtime": "^7.15.4",
     "g": "^2.0.1"

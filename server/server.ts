@@ -8,6 +8,7 @@ import userRouter from './routes/userSettings';
 import config from './config/config.json';
 import bodyParser from 'body-parser';
 import connectToDB from './database/db';
+import checkJwt from './middleware/checkJwt';
 
 const app = express();
 
@@ -32,8 +33,13 @@ main();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-app.use('/notes', notesRouter);
-app.use('/api/users', userRouter);
+// checkJwt rejects any request without a valid, verified Auth0 access
+// token before it ever reaches these routers — route handlers can now
+// trust that a request making it this far is genuinely authenticated,
+// and derive the actual user identity from the verified token rather
+// than any client-submitted id.
+app.use('/notes', checkJwt, notesRouter);
+app.use('/api/users', checkJwt, userRouter);
 
 if (
   process.env.NODE_ENV === 'development' ||
@@ -41,8 +47,8 @@ if (
 ) {
   const root = path.join(__dirname, '..', 'client', 'build');
   app.use(express.static(root));
-  app.use('/users', notesRouter);
-  app.use('/api/users', userRouter);
+  app.use('/users', checkJwt, notesRouter);
+  app.use('/api/users', checkJwt, userRouter);
   app.get('*', function (req: Request, res: Response) {
     res.sendFile('index.html', { root });
   });

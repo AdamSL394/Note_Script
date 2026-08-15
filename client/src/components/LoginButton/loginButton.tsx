@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import Button from '@mui/material/Button/index.js';
 import React from 'react';
 
-const LoginButton = () => {
+const LoginButton = (): React.ReactElement | null => {
     const { loginWithRedirect, isAuthenticated } = useAuth0();
 
     const buttonStyle: React.CSSProperties = {
@@ -14,15 +14,16 @@ const LoginButton = () => {
         fontFamily: 'Times, Times New Roman, serif',
       };
 
+    if (isAuthenticated) {
+        return null;
+    }
 
     return (
-        !isAuthenticated && (
-            <Button
-                onClick={() => loginWithRedirect()}
-                style={buttonStyle}>
-                Sign In
-            </Button>
-        )
+        <Button
+            onClick={() => loginWithRedirect()}
+            style={buttonStyle}>
+            Sign In
+        </Button>
     );
 };
 
