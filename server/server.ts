@@ -5,23 +5,30 @@ import cors from 'cors';
 import path from 'path';
 import notesRouter from './routes/notes';
 import userRouter from './routes/userSettings';
-import config from './config/config.json';
 import bodyParser from 'body-parser';
 import connectToDB from './database/db';
 import checkJwt from './middleware/checkJwt';
+import config from './config/config.json';
+
+
 
 const app = express();
 
 // `resolveJsonModule` means TS already knows config.json's exact shape —
 // `keyof typeof config` gives the real union of environment keys
 // automatically, rather than a hand-written interface that could drift.
-const environment = (process.env.NODE_ENV || 'development') as keyof typeof config;
 
-console.log('Host environment', process.env.NODE_ENV);
+
+console.log('CONFIG.TS LOADED');
+
+
+
+const environment = (process.env.NODE_ENV || 'production') as keyof typeof config;
+const environmentCreds = config[environment];
 
 async function main() {
   try {
-    await connectToDB(process.env.MONGODB_URI || config[environment].mongodb);
+    await connectToDB(process.env.MONGODB_URI || environmentCreds.mongodb);
   } catch (err) {
     console.error(err);
     process.exit(1); // don't let the server come up looking healthy with no DB connection
@@ -45,7 +52,7 @@ if (
   process.env.NODE_ENV === 'development' ||
   process.env.NODE_ENV === 'production'
 ) {
-  const root = path.join(__dirname, '..', 'client', 'build');
+  const root = path.join(__dirname, '..', '..', 'client', 'build');
   app.use(express.static(root));
   app.use('/users', checkJwt, notesRouter);
   app.use('/api/users', checkJwt, userRouter);

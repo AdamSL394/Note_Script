@@ -1,29 +1,31 @@
 # PROD CONFIG
-FROM node as prod
+FROM node:18 as prod
 
 WORKDIR /app
 
-COPY ./package*.json ./
+# Install server dependencies first (includes typescript/ts-node as
+# devDependencies — needed here to run the build step below, even
+# though they're not needed once the compiled JS exists).
+COPY ./server/package*.json ./server/
+RUN npm install --prefix server
 
-RUN npm install
+# Install client dependencies, then build. REACT_APP_HOST is a build ARG
+# because Create React App bakes REACT_APP_* vars into the compiled JS
+# at build time, not runtime — so dev and prod need two separately built
+# images, each with the right value baked in, rather than one shared
+# image configured at deploy time.
+ARG REACT_APP_HOST=production
+ENV REACT_APP_HOST=$REACT_APP_HOST
 
-COPY . .
-
+COPY ./client/package*.json ./client/
+RUN npm install --prefix client
+COPY ./client ./client
 RUN npm run build --prefix client
+
+# Copy server source and compile TypeScript -> server/dist/*.js.
+COPY ./server ./server
+RUN npm run build --prefix server
 
 ENV NODE_ENV=production
 
-CMD ["npm","start"]
-
-#DEV CONFIG
-# FROM prod as dev
-
-# EXPOSE 5000 3000
-
-# ENV NODE_ENV=development
-
-# RUN npm install -g nodemon
-
-# RUN npm install --only=dev
-
-# CMD [ "npm", "run", "dev" ]
+CMD ["node", "server/dist/server.js"]
