@@ -12,5 +12,3 @@ services:
     ports:
       - "5002:${PORT}"
     restart: always
-    volumes:
-      - /Desktop/Users/adam/desktop/Code/Apps/Docker_example

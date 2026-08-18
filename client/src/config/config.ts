@@ -6,5 +6,5 @@ import config from './config.json';
 // automatically, rather than needing a hand-written interface that could
 // drift out of sync with the actual file.
 const enviroment = (process.env.REACT_APP_HOST || 'production') as keyof typeof config;
-const enviromentAPI = config[enviroment];
-export default enviromentAPI;
+const enviromentCreds = config[enviroment];
+export default enviromentCreds;

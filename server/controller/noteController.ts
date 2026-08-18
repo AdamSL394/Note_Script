@@ -143,7 +143,6 @@ const updateNote = async (
         },
         { new: true },
     );
-    console.log("updated", updated)
     return updated;
 };
 
