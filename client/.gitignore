@@ -10,7 +10,6 @@
 
 auth_config.json
 config.json
-package-lock.json
 
 # production
 /build

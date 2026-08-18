@@ -26,7 +26,6 @@ yarn-error.log*
 
 .env
 dump.rbd
-package-lock.json
 
 config.json
 /data
