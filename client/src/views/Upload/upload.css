@@ -1,0 +1,19 @@
+#container{
+    margin-top: 5rem;
+    text-align: center;
+    padding-bottom: 3%;
+}
+#csvFileInput{
+
+}
+#upload{
+    border: 1px solid  lightgrey;
+    background-color: #e9d8c2;
+    color:black;
+}
+
+#example{
+    border: 1px solid  lightgrey;
+    background-color: #e9d8c2;
+    color:black;
+}

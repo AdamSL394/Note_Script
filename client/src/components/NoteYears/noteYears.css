@@ -1,0 +1,8 @@
+.noteYears{
+  cursor: pointer !important;
+  position: relative;
+  margin-left: 5%;
+  margin-bottom: 1%;
+  color:blue !important;
+  text-decoration: underline;
+}

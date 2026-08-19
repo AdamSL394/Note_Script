@@ -1,0 +1,108 @@
+#container {
+  margin-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.formButtons {
+  display: block;
+  margin: 0 auto 1.5rem;
+  max-width: 46rem;
+}
+
+#pastNoteHeader,
+#pastNoteError {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+  font-style: normal;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Tracked-property count panel - was an inset-shadow floating box with
+   absolute positioning; now a quiet in-flow card matching the rest of
+   the palette. */
+#count {
+  position: static;
+  max-width: 24rem;
+  margin: 0 auto 1.5rem;
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 12px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
+}
+
+#items {
+  position: static;
+  margin: 0.25rem 0;
+  font-size: 13px;
+  color: var(--ns-graphite);
+}
+
+/* Streak strip - the signature element. A row of dots representing the
+   last 7 days: gray = no entry, blue = logged, amber = a tracked "win"
+   (medal/king) that day. */
+.streakStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 24rem;
+  margin: 0 auto 1.5rem;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+}
+
+.streakStrip .streakLabel {
+  white-space: nowrap;
+}
+
+.streakStrip .streakRule {
+  flex: 1;
+  height: 0.5px;
+  background: var(--ns-rule);
+}
+
+.streakDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ns-rule);
+  flex-shrink: 0;
+}
+
+.streakDot.logged {
+  background: var(--ns-blue);
+}
+
+.streakDot.win {
+  background: var(--ns-amber);
+}
+
+.css-julti5-MuiSwitch-root {
+  vertical-align: unset !important;
+}
+
+.lookBackRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1rem auto;
+}
+
+.lookBackSelect {
+  min-width: 3.5rem;
+}
+
+.lookBackLabel {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+}

@@ -1,0 +1,13 @@
+.logoutButton {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.03em !important;
+  color: var(--ns-blue) !important;
+  border: 1px solid var(--ns-blue) !important;
+  margin-right: 1rem !important;
+  text-transform: none !important;
+}
+
+.logoutButton:hover {
+  background-color: var(--ns-blue-tint) !important;
+}

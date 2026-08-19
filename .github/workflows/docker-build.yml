@@ -1,0 +1,44 @@
+name: Docker Image Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+      - name: Set up test config
+        run: cp config/config.example.json config/config.json
+        working-directory: server
+      - name: Run server test suite
+        run: npm test
+        working-directory: server
+
+  build:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up server config for build
+        # tsc's compile-time import of config.json (via resolveJsonModule)
+        # needs the file to physically exist in the build context - this
+        # job is a separate runner from `test`, so it needs its own copy.
+        # Placeholder values only; production always gets its real config
+        # from wherever the actual Heroku deploy sources it, not this file.
+        run: cp server/config/config.example.json server/config/config.json
+      - name: Build front end Docker Image
+        run: docker compose -f "docker-compose.yml" build
+        env:
+          PORT: 5002

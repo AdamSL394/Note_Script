@@ -1,2 +1,0 @@
-To Start this app in the root directory run 
-    - docker compose -f docker-compose.yml up

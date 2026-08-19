@@ -1,0 +1,31 @@
+
+#noNotes{
+  margin: auto;
+  font-weight: 200;
+  font-size: xx-large;
+  width: 47%;
+}
+@media screen and (max-width: 1000px) {
+  #searchStyle {
+    max-width: 80% !important;
+    text-align: center;
+    /* margin: auto; */
+  }
+  .stack{
+    text-align: center;
+    margin-top: 6% !important;
+
+  }
+}
+  @media screen and (max-width: 758px) {
+    #searchStyle {
+      max-width: 80% !important;
+      text-align: center;
+      margin: auto;
+    }
+    .stack{
+      text-align: center;
+      margin-top: 6% !important;
+  
+    }
+}

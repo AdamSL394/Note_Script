@@ -1,0 +1,38 @@
+{
+  "name": "note-script",
+  "version": "1.0.0",
+  "description": "To Start this app in the root directory run      - docker compose -f docker-compose.yml up",
+  "main": "index.js",
+  "scripts": {
+    "web": "npm run start --prefix client",
+    "server": "cd server && nodemon server.js",
+    "dev": "concurrently -n 'server,client' \"npm run server\" \"npm run web\"",
+    "start": "cd server && node server.js",
+    "lint": "eslint **/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdamSL394/MERN_Docker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AdamSL394/MERN_Docker/issues"
+  },
+  "homepage": ".",
+  "devDependencies": {
+    "@babel/core": "^7.21.0",
+    "@babel/eslint-parser": "^7.19.1",
+    "@babel/preset-react": "^7.18.6",
+    "babel-preset-react-app": "*",
+    "eslint": "^8.35.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-react": "^7.32.2"
+  },
+  "dependencies": {
+    "@babel/preset-env": "^7.20.2",
+    "@babel/runtime": "^7.15.4",
+    "g": "^2.0.1"
+  }
+}

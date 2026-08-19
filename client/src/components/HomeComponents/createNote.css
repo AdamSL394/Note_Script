@@ -1,0 +1,81 @@
+.createNoteCard {
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.createNoteMain {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.createNoteControls {
+  flex: 0 0 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.noteDateLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+  margin-bottom: 0.75rem;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 1rem;
+}
+
+.tagChip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.6;
+}
+
+.tagChip.active {
+  border-color: var(--ns-blue);
+  background: var(--ns-blue-tint);
+  color: var(--ns-ink);
+}
+
+.tagChip.active.win {
+  border-color: var(--ns-amber);
+  background: var(--ns-amber-tint);
+  color: var(--ns-amber-dark);
+}
+
+.saveEntryButton {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+@media screen and (max-width: 700px) {
+  .createNoteCard {
+    flex-direction: column;
+  }
+  .createNoteControls {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
