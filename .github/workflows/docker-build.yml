@@ -32,4 +32,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build front end Docker Image
-        run: docker compose -f "docker-compose.yml" up -d --build
+        run: docker compose -f "docker-compose.yml" build
