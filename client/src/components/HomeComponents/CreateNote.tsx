@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Grid from '@mui/material/Grid/index.js';
 import TextField from '@mui/material/TextField/index.js';
 import FormControl from '@mui/material/FormControl/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
@@ -33,6 +32,15 @@ const EMOJI_LIST: TrackedStat[] = [
   { icon: '👫', name: 'date/smoosh', visible: 'hidden' },
   { icon: '🌟', name: 'star', visible: 'hidden' },
 ];
+
+// Tags that render with the amber "win" accent when active, matching
+// the streak strip's amber = win-day convention in homeView. Deliberately
+// excludes 'star' - that name collides with the Note schema's existing
+// String star-rating field (see noteController/models/notes.ts), so
+// toggling this tracked stat likely already clobbers that field. Not
+// fixed here since it's a backend/schema concern, not styling - flagging
+// so it doesn't get lost.
+const WIN_TAGS = new Set(['medal', 'king']);
 
 export const CreateNote = (props: CreateNoteProps) => {
   const [date, setDate] = useState<string | undefined>();
@@ -85,165 +93,94 @@ export const CreateNote = (props: CreateNoteProps) => {
     return;
   };
 
-  // Emoji dropdown — identical for mobile and desktop, only its
-  // positioning wrapper differs, so it's a small shared piece too.
-  const renderEmojiPicker = (formControlStyle: React.CSSProperties) => (
-    <FormControl id="emoji" sx={{ m: 1 }} style={formControlStyle}>
-      <InputLabel id="demo-simple-select-label">Icons</InputLabel>
-      <Select
-        labelId="demo-simple-select-label"
-        id="demo-simple-select"
-        value={''}
-        onChange={(e: SelectChangeEvent) => {
-          addToEmojiList(e.target.value, EMOJI_LIST, props.user);
-        }}
-      >
-        {EMOJI_LIST.map((i, key) => (
-          <MenuItem key={key + 100} value={i.icon}>
-            <span key={key}>{i.icon}</span>
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-
   return (
-    <>
-      {/* Note text + tracked-stats icon row — identical at every
-          breakpoint, so it renders once regardless of viewport rather
-          than being duplicated inside the mobile/desktop toggle below. */}
-      <Grid item xs={12} sm={12} md={6} lg={6} style={{ margin: '0' }}>
+    <div className="createNoteCard">
+      <div className="createNoteMain">
         <TextField
           autoFocus={true}
           multiline
           rows={7}
+          fullWidth
           label="Note"
-          id="fullWidth"
-          color="primary"
           placeholder="Note"
           value={props.text}
           onChange={(e) => props.setText(e.target.value)}
-          style={{ overflowY: 'auto', overflow: 'visible' }}
-        ></TextField>
-        <div style={{ width: '20rem', marginLeft: '12px' }}>
-          {props.trackedStats?.map((i, key) => {
-            return i ? (
-              <span key={key + 300}>
-                <span
-                  key={key}
-                  onClick={() => {
-                    setCodeIcon(i);
-                  }}
-                >
-                  {i.icon}
-                </span>
-                <span
-                  key={key + 200}
-                  role="img"
-                  aria-label="checkmark"
-                  style={{
-                    visibility: i.visible ? i.visible : 'hidden',
-                    marginRight: '.5rem',
-                  }}
-                >
-                  ✔️
-                </span>
-              </span>
-            ) : (
-              <></>
+          InputProps={{ style: { fontFamily: 'var(--font-serif)', fontSize: '15px' } }}
+        />
+        <div className="tagRow">
+          {props.trackedStats?.map((stat, key) => {
+            if (!stat) return null;
+            const active = stat.visible === 'visible';
+            const isWin = WIN_TAGS.has(stat.name);
+            const className = [
+              'tagChip',
+              active ? 'active' : '',
+              active && isWin ? 'win' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
+            return (
+              <button
+                key={key}
+                type="button"
+                className={className}
+                onClick={() => setCodeIcon(stat)}
+              >
+                <span aria-hidden="true">{stat.icon}</span>
+                <span>{stat.name}</span>
+              </button>
             );
           })}
         </div>
-      </Grid>
+      </div>
 
-      {/* Date input / emoji picker / save button — layout genuinely
-          differs between mobile and desktop (see createNote.css), so
-          these stay as two variants for now. */}
-      <div id="mobileCreateNote">
-        <Grid item xs={6} sm={6} md={6} lg={6} style={{ marginTop: '0' }}>
-          <span
-            style={{
-              display: 'flex',
-              alignContent: 'space-around',
-              flexWrap: 'wrap',
-              flexDirection: 'column',
+      <div className="createNoteControls">
+        <TextField
+          type="date"
+          label="Date"
+          size="small"
+          fullWidth
+          value={date ?? ''}
+          onChange={(e) => setDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
+
+        <FormControl size="small" fullWidth>
+          <InputLabel id="demo-simple-select-label">Icons</InputLabel>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            label="Icons"
+            value={''}
+            onChange={(e: SelectChangeEvent) => {
+              addToEmojiList(e.target.value, EMOJI_LIST, props.user);
             }}
           >
-            <input
-              id="date"
-              type="date"
-              placeholder="Date"
-              defaultValue={date}
-              onChange={(e) => setDate(e.target.value)}
-              style={{
-                alignSelf: 'center',
-                position: 'absolute',
-                marginTop: '2.5rem',
-              }}
-            ></input>
+            {EMOJI_LIST.map((i, key) => (
+              <MenuItem key={key + 100} value={i.icon}>
+                <span key={key}>
+                  {i.icon} {i.name}
+                </span>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-            {renderEmojiPicker({
-              position: 'absolute',
-              marginTop: '13%',
-              width: '7rem',
-            })}
-
-            <Button
-              id="saveMe"
-              disabled={props.disabled}
-              style={{
-                alignSelf: 'center',
-                position: 'absolute',
-                marginTop: '13%',
-              }}
-              variant="contained"
-              value="save"
-              color="primary"
-              onClick={() => props.storeNewNote(props.trackedStats, date)}
-            >
-              Save Note
-            </Button>
-          </span>
-        </Grid>
+        <Button
+          className="saveEntryButton"
+          disabled={props.disabled}
+          fullWidth
+          variant="contained"
+          value="save"
+          onClick={() => props.storeNewNote(props.trackedStats, date)}
+          sx={{
+            backgroundColor: 'var(--ns-blue)',
+            '&:hover': { backgroundColor: 'var(--ns-blue)', opacity: 0.9 },
+          }}
+        >
+          save entry
+        </Button>
       </div>
-      <span id="desktopCreateNote">
-        <Grid item xs={6} sm={6} md={6} lg={6} style={{ marginTop: '0' }}>
-          <span>
-            <input
-              id="date"
-              type="date"
-              placeholder="Date"
-              defaultValue={date}
-              onChange={(e) => setDate(e.target.value)}
-              style={{ alignSelf: 'center', position: 'absolute' }}
-            ></input>
-
-            <Button
-              disabled={props.disabled}
-              style={{
-                alignSelf: 'center',
-                position: 'absolute',
-                marginTop: '140px',
-                marginLeft: '7px',
-              }}
-              variant="contained"
-              value="save"
-              color="primary"
-              onClick={() => {
-                props.storeNewNote(props.trackedStats, date);
-              }}
-            >
-              Save Note
-            </Button>
-
-            {renderEmojiPicker({
-              position: 'absolute',
-              marginTop: '59px',
-              width: '7rem',
-            })}
-          </span>
-        </Grid>
-      </span>
-    </>
+    </div>
   );
 };

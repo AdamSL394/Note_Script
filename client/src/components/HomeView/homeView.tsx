@@ -42,6 +42,17 @@ const EMPTY_COUNTS: PropertyCounts = {
   date_smoosh: 0,
 };
 
+// Tags that count as a "win" day for the streak strip's amber dot.
+// Kept in sync by convention with CreateNote's WIN_TAGS - both mark the
+// same two tracked stats (medal, king) as the app's "win" category.
+const WIN_TAGS = ['medal', 'king'];
+
+interface StreakDay {
+  date: string;
+  hasNote: boolean;
+  isWin: boolean;
+}
+
 const HomeView = () => {
   const { user } = useAuth0();
   const [noNotes, setnoNotes] = useState<string | undefined>();
@@ -245,12 +256,34 @@ const HomeView = () => {
   const renderPropertyCount = (property: string, count: number) => {
     if (count > 0) {
       return (
-        <span id="items" style={{ marginTop: '1rem', marginBottom: '0.3rem',  }}>
+        <span id="items">
           {property}: {count}
         </span>
       );
     }
     return null;
+  };
+
+  // Builds the last 7 days for the streak strip from notes already
+  // in state (the default fetch on mount already scopes to the last
+  // week, so this needs no extra request). A day is a "win" if any
+  // note logged that day has one of the WIN_TAGS set.
+  const getStreakDays = (): StreakDay[] => {
+    const days: StreakDay[] = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split('T')[0];
+      const dayNotes = notes.filter((note) => note.date === iso);
+      const hasNote = dayNotes.length > 0;
+      const isWin = dayNotes.some((note) => {
+        const record = note as unknown as Record<string, unknown>;
+        return WIN_TAGS.some((tag) => Boolean(record[tag]));
+      });
+      days.push({ date: iso, hasNote, isWin });
+    }
+    return days;
   };
 
   return (
@@ -272,6 +305,21 @@ const HomeView = () => {
         successMessage={successMessage}
         errorMessage={errorMessage}
       ></AlertMessage>
+
+      <div className="streakStrip">
+        <span className="streakLabel">past 7 days</span>
+        <span className="streakRule"></span>
+        {getStreakDays().map((day) => (
+          <span
+            key={day.date}
+            className={
+              'streakDot' +
+              (day.isWin ? ' win' : day.hasNote ? ' logged' : '')
+            }
+            title={day.date}
+          ></span>
+        ))}
+      </div>
 
       <LookBack
         timePeriod={timePeriod}
