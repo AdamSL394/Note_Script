@@ -1,0 +1,42 @@
+{
+    "local":{
+        "origin":"http://localhost:3000",
+        "api_url":"http://localhost:5001",
+        "logoutURL":"http://localhost:3000",
+        "auth0":{
+            "domain": "dev-07j15n0p.us.auth0.com",
+            "clientId": "p9eT1rMY70S9ALx8jTH4s9WDi4QBHaRy",
+            "audience": "https://note-script-api"
+        }
+    },
+    "staging":{
+        "origin":"http://localhost:5000",
+        "api_url":"http://localhost:5000",
+        "logoutURL":"http://localhost:5000",
+        "auth0":{
+            "domain": "dev-07j15n0p.us.auth0.com",
+            "clientId": "p9eT1rMY70S9ALx8jTH4s9WDi4QBHaRy",
+            "audience": "https://note-script-api"
+        }
+    },
+    "development":{
+        "origin":"https://note-script-dev.herokuapp.com/",
+        "api_url":"https://note-script-dev.herokuapp.com",
+        "logoutURL":"https://note-script-dev.herokuapp.com/",
+        "auth0":{
+            "domain": "dev-07j15n0p.us.auth0.com",
+            "clientId": "p9eT1rMY70S9ALx8jTH4s9WDi4QBHaRy",
+            "audience": "https://note-script-api"
+        }
+    },
+    "production":{
+        "origin":"https://note-script-d5b3cb5bed9f.herokuapp.com/",
+        "api_url":"https://note-script-d5b3cb5bed9f.herokuapp.com",
+        "logoutURL":"https://note-script-d5b3cb5bed9f.herokuapp.com/",
+        "auth0":{
+            "domain": "notescriptprod.us.auth0.com",
+            "clientId": "wOrmI7KNpzpYCeSdJtc9hxAiSsgZVzfS",
+            "audience": "https://note-script-api"
+        }
+    }
+}
