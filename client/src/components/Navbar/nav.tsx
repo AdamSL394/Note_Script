@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import LogOut from '../LogoutButton/logoutButton';
 import AppBar from '@mui/material/AppBar/AppBar.js';
 import Toolbar from '@mui/material/Toolbar/Toolbar.js';
@@ -72,7 +72,7 @@ function Navbar() {
               <div className="menuIcon"></div>
             </div>
           </IconButton>
-          <Menu          
+          <Menu
             id="menu-appbar"
             anchorEl={anchorElNav}
             anchorOrigin={{
@@ -96,46 +96,41 @@ function Navbar() {
                 onClick={(e) => handleCloseNavMenu(e)}
                 style={{ width: '100% !important' }}
               >
-                <Typography textAlign="center" style={{ cursor: 'pointer',padding:'10%' }}>
+                <Typography
+                  textAlign="center"
+                  style={{
+                    cursor: 'pointer',
+                    padding: '10%',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
                   {page}
                 </Typography>
               </span>
             ))}
           </Menu>
         </Box>
-        <span id="navItems" >
+        <span id="navItems">
           <span className="tabs" id="home" onClick={handleClick}>
-            {' '}
-            Home \
+            Home
           </span>
           <span className="tabs" id="all" onClick={routeChanges}>
-            {' '}
-            View All Notes \
+            View All Notes
           </span>
-          {/* <span className="tabs" id="all" onClick={upload} > Upload Notes \</span> */}
           <i className="tabs" id="userName" onClick={userSettings}>
-            {' '}
-            <i
-              className="userInfo"
-              style={{
-                fontFamily:
-                  'font-family:Times, Times New Roman, serif !important',
-              }}
-            >
-              Hi{' '}
-              <span role="img" aria-label="Star">
-                👋🏼 &nbsp;
-              </span>{' '}
-              {user?.name ? user.name : ''}
-            </i>{' '}
+            Hi{' '}
+            <span role="img" aria-label="Star">
+              👋🏼
+            </span>{' '}
+            {user?.name ? user.name : ''}
+            <img
+              id="userAvatar"
+              style={{ height: '25px', width: '25px' }}
+              src={user?.picture}
+              referrerPolicy="no-referrer"
+              alt="User Profile"
+            ></img>
           </i>
-          <img
-            id="userInfo"
-            style={{ height: '25px', width: '25px' }}
-            src={user?.picture}
-            referrerPolicy="no-referrer"
-            alt="User Profile"
-          ></img>
         </span>
         <LogOut></LogOut>
       </Toolbar>

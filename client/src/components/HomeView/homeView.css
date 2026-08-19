@@ -1,34 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400&display=swap');
-
-/*
- * Field-notebook design tokens. Defined once here since homeView.css is
- * loaded by the top-level page component - createNote.css and any other
- * stylesheet can reference these vars without redefining them.
- */
-:root {
-  --ns-fog: #f1f2f4;
-  --ns-paper: #fbfbfa;
-  --ns-ink: #23262b;
-  --ns-graphite: #5b6069;
-  --ns-blue: #3d5a80;
-  --ns-blue-tint: #eaf0f6;
-  --ns-amber: #e8a33d;
-  --ns-amber-tint: #fbf1de;
-  --ns-amber-dark: #8a5a0f;
-  --ns-rule: #d8dbe0;
-  --font-mono: 'IBM Plex Mono', monospace;
-  --font-serif: 'Source Serif 4', Georgia, serif;
-}
-
-* {
-  font-family: var(--font-mono);
-}
-
-body {
-  background: var(--ns-fog);
-  color: var(--ns-ink);
-}
-
 #container {
   margin-top: 3rem;
   padding-bottom: 3rem;
@@ -119,8 +88,21 @@ body {
   vertical-align: unset !important;
 }
 
-@media screen and (max-width: 550px) {
-  .word {
-    font-size: 4rem;
-  }
+.lookBackRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1rem auto;
+}
+
+.lookBackSelect {
+  min-width: 3.5rem;
+}
+
+.lookBackLabel {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
 }

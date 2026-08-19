@@ -2,6 +2,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import React, { useState } from 'react';
 import NoteRoutes from '../../../router/noteRoutes';
 import Switch from '@mui/material/Switch/index.js';
+import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
+import MenuItem from '@mui/material/MenuItem/index.js';
 import type { Note } from '../../../types';
 
 interface LookBackProps {
@@ -77,10 +79,9 @@ export const LookBack = (props: LookBackProps) => {
         props.setNotes(res);
       }
     } catch (error) {
-        props.setNoteError('Error Getting Notes');
+      props.setNoteError('Error Getting Notes');
     }
   };
-
 
   const onNumericChange = async (checked: boolean, value: string) => {
     props.setTimePeriod(value);
@@ -193,46 +194,28 @@ export const LookBack = (props: LookBackProps) => {
   };
 
   return (
-    <>
-      
+    <div className="lookBackRow">
+      <Select
+        size="small"
+        value={props.timePeriod}
+        onChange={(e: SelectChangeEvent) => {
+          onNumericChange(checked, e.target.value);
+        }}
+        className="lookBackSelect"
+      >
+        <MenuItem value="1">1</MenuItem>
+        <MenuItem value="2">2</MenuItem>
+        <MenuItem value="3">3</MenuItem>
+      </Select>
 
-      <h2 id="pastNoteHeader" style={{display:"inline-block"}}>
-        <span>
-          <form
-            action="#"
-            onChange={(e: React.ChangeEvent<HTMLFormElement>) => {
-              // The handler is on the form, but the actual change comes
-              // from the child <select> — React's event bubbles that
-              // correctly at runtime, but TS can't know it structurally
-              // from a form-level ChangeEvent, hence the explicit cast.
-              const target = e.target as unknown as HTMLSelectElement;
-              onNumericChange(checked, target.value);
-            }}
-            style={{ marginRight: '12rem' }}
-          >
-            <select
-              name="languages"
-              id="lang"
-              style={{ position: 'absolute', marginTop: '.4rem' }}
-            >
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
-          </form>
-        </span>
-        <span>{props.noteview} ago</span>
-      </h2>
+      <span className="lookBackLabel">{props.noteview} ago</span>
 
-      <span style={{marginBottom: '1rem', right: '2%', position: 'relative'}}>
-        <Switch
-          style={{verticalAlign: 'unset !important'}}
-          checked={checked}
-          onChange={handleChange}
-          inputProps={{ 'aria-label': 'controlled' }}
-          id="switch"
-        />
-      </span>
-    </>
+      <Switch
+        checked={checked}
+        onChange={handleChange}
+        inputProps={{ 'aria-label': 'controlled' }}
+        id="switch"
+      />
+    </div>
   );
 };

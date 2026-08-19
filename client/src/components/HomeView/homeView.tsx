@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import { CreateNote } from '../HomeComponents/CreateNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
-import { HomeNotes } from '../HomeComponents/NotesHomeView.js';
+import { HomeNotes } from '../HomeComponents/NotesHomeView';
 import { AlertMessage } from '../HomeComponents/SaveNoteAlert/index';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
 import './homeView.css';

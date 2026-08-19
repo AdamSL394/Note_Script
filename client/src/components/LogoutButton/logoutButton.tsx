@@ -25,7 +25,7 @@ const LogOut = (): React.ReactElement | null => {
             onClick={() => logouts()}
             className='logoutButton'
         >
-            Sign Out
+            sign out
         </Button>
     );
 };

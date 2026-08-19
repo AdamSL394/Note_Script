@@ -5,15 +5,6 @@ import React from 'react';
 const LoginButton = (): React.ReactElement | null => {
     const { loginWithRedirect, isAuthenticated } = useAuth0();
 
-    const buttonStyle: React.CSSProperties = {
-        color: '#000000',
-        float: 'right',
-        background: '#e9d8c2',
-        margin: '.5%',
-        font: '300 normal 1.5em \'tahoma\'',
-        fontFamily: 'Times, Times New Roman, serif',
-      };
-
     if (isAuthenticated) {
         return null;
     }
@@ -21,8 +12,20 @@ const LoginButton = (): React.ReactElement | null => {
     return (
         <Button
             onClick={() => loginWithRedirect()}
-            style={buttonStyle}>
-            Sign In
+            variant="outlined"
+            sx={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '13px',
+                letterSpacing: '0.03em',
+                color: 'var(--ns-blue)',
+                borderColor: 'var(--ns-blue)',
+                '&:hover': {
+                    borderColor: 'var(--ns-blue)',
+                    backgroundColor: 'var(--ns-blue-tint)',
+                },
+            }}
+        >
+            sign in
         </Button>
     );
 };

@@ -1,3 +1,4 @@
+import './tokens.css';
 import './App.css';
 import React from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/index.js';
@@ -6,13 +7,17 @@ import { BrowserRouter } from 'react-router-dom';
 import Router from './router/index';
 import { useAuthTokenSync } from './hooks/useAuthTokenSync';
 
+// Matches the field-notebook palette (see tokens.css) rather than the
+// original tan/pink pair - anything using MUI's default theme colors
+// (rather than an explicit override) now lands in the right family
+// instead of clashing with the rest of the app.
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#e9d8c2',
+            main: '#3d5a80',
         },
         secondary: {
-            main: '#f8d6c5',
+            main: '#e8a33d',
         },
     },
 });
@@ -22,12 +27,14 @@ function App() {
     useAuthTokenSync();
 
     if (isLoading) {
+        // Was an external Giphy GIF, centered via position:absolute + a
+        // fixed negative margin - same layout hack removed everywhere
+        // else in this pass, plus a network dependency and a visual
+        // style with nothing to do with the rest of the app.
         return (
-            <img
-                id="loading"
-                src="https://media2.giphy.com/media/3oEjI6SIIHBdRxXI40/200w.gif?cid=82a1493bihnamtzyz8vki1lhaho1d71gyhbf1cg4ay7wurdj&rid=200w.gif&ct=g"
-                alt="Loading Gif"
-            />
+            <div className="loadingScreen">
+                <span className="loadingLabel">loading…</span>
+            </div>
         );
     }
 

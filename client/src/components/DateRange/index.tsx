@@ -34,22 +34,8 @@ export const DateRange = (props: DateRangeProps) => {
     };
 
     return (
-        <span
-            id='dateInput'
-            style={{
-                textAlign: 'center',
-                width: '13rem',
-                height: '1.3rem',
-                float  :'right',
-                
-            }}
-        >
-            <div style={{
-                display: 'inline-flex',
-            }}
-            id='dateRange'
-            >
-               
+        <span id="dateInput">
+            <div id="dateRange">
                 <input
                     type="date"
                     onChange={(e) => settingStartDate(e, endDate)}

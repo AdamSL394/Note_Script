@@ -11,16 +11,33 @@ interface AlertMessageProps {
 export const AlertMessage = (props: AlertMessageProps) => {
   return (
     <>
-      <Alert
-        severity="success"
-        style={{ visibility: props.successFlag, marginTop: '1%' }}
-        id="successFlag"
-      >
-        {props.successMessage}
-      </Alert>
-      <Alert severity="error" style={{ visibility: props.errorFlag }}>
-        {props.errorMessage}
-      </Alert>
+      {props.successFlag === 'visible' && (
+        <Alert
+          severity="success"
+          style={{
+            marginTop: '1rem',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '13px',
+            borderRadius: '8px',
+          }}
+          id="successFlag"
+        >
+          {props.successMessage}
+        </Alert>
+      )}
+      {props.errorFlag === 'visible' && (
+        <Alert
+          severity="error"
+          style={{
+            marginTop: '1rem',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '13px',
+            borderRadius: '8px',
+          }}
+        >
+          {props.errorMessage}
+        </Alert>
+      )}
     </>
   );
 };

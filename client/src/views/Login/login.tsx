@@ -63,13 +63,13 @@ function Login() {
   };
 
   return (
-    <div>
-      <Footer></Footer>
-      <LoginButton></LoginButton>
+    <div className="loginPage">
       <button className="appBubble" onClick={home}>
         <span className="icon">NS</span>
       </button>
-      <div className="word container">{text}</div>
+      <div className="word">{text}</div>
+      <LoginButton></LoginButton>
+      <Footer></Footer>
     </div>
   );
 }

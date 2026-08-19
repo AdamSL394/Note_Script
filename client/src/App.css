@@ -1,25 +1,18 @@
-html, body, #app, #app>div {
-    height: 100%;
-    font-family: Times, Times New Roman, serif !important;
-  }
-.appBubble{
-  top:"-10px";
-  text-align: center;
-  float: left;
-  width:5rem;
-  margin:.5%;
-  background-color:#e9d8c2;
-  border-radius: 10px 10px 10px 10px;
+.App {
+  height: 100%;
 }
-.icon{
-  color:white;
-  font: 500 normal 2.5em 'tahoma';
-  font-family: URW Chancery L, cursive;
-    margin-right: 10px;
+
+.loadingScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ns-fog);
 }
-#loading{
-  position: absolute; 
-  top: 50%;
-  left: 54%;
-  margin: -100px 0 0 -150px;
+
+.loadingLabel {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--ns-graphite);
 }

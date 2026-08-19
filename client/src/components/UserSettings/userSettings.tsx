@@ -6,6 +6,13 @@ import Grid from '@mui/material/Grid/index.js';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
 import './userSettings.css';
 
+// Same "win" convention as CreateNote's tag chips, NotesHomeView's card
+// accent, and homeView's streak strip - a third hand-copied list of the
+// same two tags. Worth pulling all of these (and the tag icon/label
+// tables) into one shared file the next time this page gets touched,
+// rather than keeping four sources of truth in sync by hand.
+const WIN_TAGS = new Set(['medal', 'king']);
+
 const UserSetting = () => {
     const [currentUser, setCurrentUser] = useState<UserRecord | undefined>();
     const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
@@ -64,89 +71,74 @@ const UserSetting = () => {
     }
 
     return (
-        <>
-            <Container id="container" className="userInformation">
-                <Grid
-                    item
-                    xs={6}
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    style={{
-                        margin: '0',
-                        textAlign: 'left',
-                    }}
-                >
-                    <span style={{ float: 'right' }}>
-                        <h4>Profile Picture</h4>
-                        <img
-                            id="userInfo"
-                            style=
-                                {{ height: '125px',
-                                    width: '125px',
-                                    float: 'right',
-                                }}
-                            src={user.picture}
-                            referrerPolicy="no-referrer"
-                            alt="User Profile"
-                        ></img>
-                    </span>
-                    <h4 className="Form" onClick={() => changeName()}>
-            Name:
-                        <span style={{ marginLeft: '13px' }}>
-                            {user.name ? user.name : ''}
-                        </span>
+        <Container id="container" className="userInformation">
+            <Grid item xs={12} sm={10} md={8} lg={8} style={{ margin: '0 auto', textAlign: 'left' }}>
+                <div className="settingsHeader">
+                    <img
+                        id="userInfo"
+                        className="settingsAvatar"
+                        style={{ height: '80px', width: '80px' }}
+                        src={user.picture}
+                        referrerPolicy="no-referrer"
+                        alt="User Profile"
+                    ></img>
+                    <h2 className="settingsName" onClick={() => changeName()}>
+                        {user.name ? user.name : ''}
+                    </h2>
+                </div>
+
+                <div className="Form">
+                    <h4 className="settingsLabel">Email</h4>
+                    <div className="settingsValue">
+                        {currentUser ? currentUser.email : user.email}
+                    </div>
+                </div>
+
+                <div className="Form">
+                    <h4 className="settingsLabel">Tracked Stats</h4>
+                    <div className="statChipRow">
+                        {withoutDups.map((icon, i) => {
+                            const active = icon.visible === 'visible';
+                            const isWin = WIN_TAGS.has(icon.name);
+                            const className = [
+                                'tagChip',
+                                active ? 'active' : '',
+                                active && isWin ? 'win' : '',
+                            ]
+                                .filter(Boolean)
+                                .join(' ');
+                            return (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    className={className}
+                                    title="Double-click to stop tracking this stat"
+                                    onDoubleClick={() => {
+                                        deleteStat(user as AuthUser, icon);
+                                    }}
+                                >
+                                    <span aria-hidden="true">{icon.icon}</span>
+                                    <span>{icon.name}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="Form">
+                    <h4 className="settingsLabel">
+                        Total Notes
+                        <span className="comingSoon">coming soon</span>
                     </h4>
-
-                    <div className="Form">
-                        <h4>
-              Email:
-                            <span style={{ marginLeft: '13px' }}>
-                                {currentUser ? currentUser.email : user.email}
-                            </span>
-                        </h4>
-                    </div>
-
-                    <div className="Form">
-                        <h4>
-                            {' '}
-              Tracked Stats:
-                            <span style={{ marginLeft: '13px' }}>
-                                {' '}
-                                {withoutDups.map((icon, i) => {
-                                    return (
-                                        <span key={i + 300}>
-                                            <span
-                                                key={i + 100}
-                                                style={{ cursor: 'pointer' }}
-                                                onDoubleClick={() => {
-                                                    deleteStat(user as AuthUser, icon);
-                                                }}
-                                            >
-                                                {icon.icon}
-                                            </span>
-                                            <span
-                                                key={i + 200}
-                                                role="img"
-                                                aria-label="checkmark"
-                                                style={{
-                                                    visibility: icon.visible,
-                                                    marginRight: '.5rem',
-                                                }}
-                                            >
-                        ✔️
-                                            </span>
-                                        </span>
-                                    );
-                                })}
-                            </span>{' '}
-                        </h4>
-                    </div>
-                    <h4 className="Form">Total Notes</h4>
-                    <h4 className="Form">Dark Mode</h4>
-                </Grid>
-            </Container>
-        </>
+                </div>
+                <div className="Form">
+                    <h4 className="settingsLabel">
+                        Dark Mode
+                        <span className="comingSoon">coming soon</span>
+                    </h4>
+                </div>
+            </Grid>
+        </Container>
     );
 };
 

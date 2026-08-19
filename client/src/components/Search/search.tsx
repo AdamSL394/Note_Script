@@ -52,14 +52,19 @@ function Search(props: SearchProps) {
   return (
     <>
       <input
-      id='smallScreen'
+        id="smallScreen"
         autoComplete="new-password"
         style={{
-          borderRadius: '25px',
-          height: '30%',
+          borderRadius: '20px',
+          height: '2.1rem',
           textAlign: 'center',
           width: '13rem',
           marginLeft: '5%',
+          border: '0.5px solid var(--ns-rule)',
+          background: 'var(--ns-paper)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '13px',
+          color: 'var(--ns-ink)',
         }}
         type="text"
         placeholder="Search…"
