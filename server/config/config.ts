@@ -8,5 +8,5 @@ import config from './config.json';
 
 
 const enviroment = (process.env.NODE_ENV || 'production') as keyof typeof config;
-const enviromentCreds = config[enviroment];
+const enviromentCreds = config[enviroment] ;
 export default enviromentCreds;
