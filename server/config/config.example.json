@@ -1,0 +1,10 @@
+{
+ "test": {
+        "mongodb": "mongodb://localhost:27017/note-script-test",
+        "auth0": {
+            "domain": "test-tenant.us.auth0.com",
+            "audience": "https://test-api.note-script.local"
+        }
+    }
+
+}

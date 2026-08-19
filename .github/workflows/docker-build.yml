@@ -18,6 +18,9 @@ jobs:
       - name: Install server dependencies
         run: npm ci
         working-directory: server
+      - name: Set up test config
+        run: cp config/config.example.json config/config.json
+        working-directory: server
       - name: Run server test suite
         run: npm test
         working-directory: server

@@ -6,7 +6,7 @@ const environment = (process.env.NODE_ENV || 'development') as keyof typeof conf
 
 if (!config[environment]["auth0"]) {
     throw new Error(
-        `Missing "auth0" config block for environment "${environment}" in config.json`
+        `Missing "auth0" config block for environment "${String(environment)}" in config.json`
     );
 }
 
