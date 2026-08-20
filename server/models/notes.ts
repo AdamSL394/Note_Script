@@ -40,13 +40,6 @@ const NoteSchema = new Schema<INote>({
     'king': {type: Boolean, default: false},
     'date/smoosh': {type: Boolean, default: false},
     'basketball': {type: Boolean, default: false},
-    // Was `default: Date.now()` — calling the function immediately
-    // evaluates it ONCE at schema-definition time (server startup), so
-    // every note ever created got the exact same frozen timestamp
-    // (whenever the server last restarted), not its actual creation
-    // time. `default: Date.now` (no parens) passes the function itself,
-    // so Mongoose calls it fresh for each new document — the standard,
-    // well-known fix for this exact Mongoose gotcha.
     'updatedAt': {type: Date, default: Date.now},
 
 });
