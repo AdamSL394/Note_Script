@@ -13,6 +13,33 @@
   --ns-rule: #d8dbe0;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-serif: 'Source Serif 4', Georgia, serif;
+  /* Tells the browser which palette to use for chrome it renders
+     itself — native <input type="date"> pickers, default scrollbars —
+     so those stay legible instead of defaulting to light-mode chrome
+     (white picker, black text) that a dark page can't restyle with
+     ordinary CSS. */
+  color-scheme: light;
+}
+
+/* Same "field notebook" palette, tuned for a dark room rather than
+   inverted mechanically — paper goes to a dark slate rather than
+   near-black so the ledger cards still read as paper, not void. Toggled
+   via a `data-theme="dark"` attribute on <html> (see ThemeToggle). Any
+   component styled entirely from --ns-* tokens picks this up for free;
+   components with literal hardcoded colors don't, which is the same
+   reason those are being migrated to tokens elsewhere in this pass. */
+[data-theme='dark'] {
+  --ns-fog: #1b1d21;
+  --ns-paper: #24272c;
+  --ns-ink: #eceef0;
+  --ns-graphite: #9aa0aa;
+  --ns-blue: #7ea3d1;
+  --ns-blue-tint: #2a3542;
+  --ns-amber: #eab767;
+  --ns-amber-tint: #3a2f1d;
+  --ns-amber-dark: #f0c988;
+  --ns-rule: #383c42;
+  color-scheme: dark;
 }
 
 * {
@@ -25,4 +52,5 @@ body {
   color: var(--ns-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }

@@ -51,15 +51,45 @@ const computeYearAgoRange = (yearsAgo: number): YearAgoRange => {
   return { today, weekAhead };
 };
 
+// A day-offset window: `startOffset` days ago through `endOffset` days
+// ago, e.g. {startOffset: 0, endOffset: 7} = "today through a week ago".
+// Value 3's window is 8 days wide (14→22) rather than 7, matching the
+// original behavior exactly - preserved here rather than "corrected"
+// as part of this cleanup.
+interface WeekRangeConfig {
+  noteView: string;
+  startOffset: number;
+  endOffset: number;
+}
+
+// Keyed by the Select's value ('1' | '2' | '3'), same convention as
+// TAG_CONFIG elsewhere in the app: one small table instead of one
+// hand-written conditional block per value.
+const WEEK_RANGES: Record<string, WeekRangeConfig> = {
+  '1': { noteView: 'week', startOffset: 0, endOffset: 7 },
+  '2': { noteView: 'weeks', startOffset: 7, endOffset: 14 },
+  '3': { noteView: 'weeks', startOffset: 14, endOffset: 22 },
+};
+
+// Year lookback is just "N years ago", so the value doubles directly as
+// yearsAgo - no table needed, just Number(value).
+const daysAgoIso = (days: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().split('T')[0];
+};
+
 export const LookBack = (props: LookBackProps) => {
   const [checked, setChecked] = useState(true);
   const { user } = useAuth0();
 
-  const getNoteRangeYear = async () => {
+  // Fetches and applies the "N years ago" note range, shared by all
+  // three yearly Select values (previously duplicated three times).
+  const fetchYearRange = async (yearsAgo: number) => {
     const userid = user?.sub?.split('|')[1];
     if (!userid) return;
     const { today: todayLastYear, weekAhead: weekAheadLastYear } =
-      computeYearAgoRange(1);
+      computeYearAgoRange(yearsAgo);
 
     try {
       const res = await NoteRoutes.getNoteRangeYear(
@@ -67,17 +97,15 @@ export const LookBack = (props: LookBackProps) => {
         weekAheadLastYear,
         todayLastYear
       );
-
-      if (res) {
-        if (res.length < 1) {
-          props.setNotes(res);
-          props.setnoNotes('No Notes for last year.');
-          return;
-        }
-        props.setNoteError('');
-        props.setnoNotes('');
+      if (!res) return;
+      if (res.length < 1) {
         props.setNotes(res);
+        props.setnoNotes('No Notes for last year.');
+        return;
       }
+      props.setNoteError('');
+      props.setnoNotes('');
+      props.setNotes(res);
     } catch (error) {
       props.setNoteError('Error Getting Notes');
     }
@@ -86,89 +114,22 @@ export const LookBack = (props: LookBackProps) => {
   const onNumericChange = async (checked: boolean, value: string) => {
     props.setTimePeriod(value);
     const userid = user?.sub?.split('|')[1];
+
     if (checked) {
-      if (!userid) return;
-      if (value === '1') {
-        props.setNoteView('week');
-        const todaysDate = new Date().toISOString().split('T')[0];
-        const myCurrentDate = new Date();
-        const myPastDate = new Date(myCurrentDate);
-        myPastDate.setDate(myPastDate.getDate() - 7);
-        const lastWeeksDate = myPastDate.toISOString().split('T')[0];
-        props.getNoteRanges(userid, todaysDate, lastWeeksDate);
-      }
-      if (value === '2') {
-        props.setNoteView('weeks');
-        const myCurrentDate = new Date();
-        const myPastDate = new Date(myCurrentDate);
-        myPastDate.setDate(myPastDate.getDate() - 7);
-        const eightDaysago = myPastDate.toISOString().split('T')[0];
-        const pastDate = new Date(myCurrentDate);
-        pastDate.setDate(pastDate.getDate() - 14);
-        const fourteenDaysAgo = pastDate.toISOString().split('T')[0];
-        props.getNoteRanges(userid, eightDaysago, fourteenDaysAgo);
-      }
-      if (value === '3') {
-        props.setNoteView('weeks');
-        const myCurrentDate = new Date();
-        const myPastDate = new Date(myCurrentDate);
-        myPastDate.setDate(myPastDate.getDate() - 14);
-        const eightDaysago = myPastDate.toISOString().split('T')[0];
-        const pastDate = new Date(myCurrentDate);
-        pastDate.setDate(pastDate.getDate() - 22);
-        const fourteenDaysAgo = pastDate.toISOString().split('T')[0];
-        props.getNoteRanges(userid, eightDaysago, fourteenDaysAgo);
-      }
+      const range = WEEK_RANGES[value];
+      if (!userid || !range) return;
+      props.setNoteView(range.noteView);
+      props.getNoteRanges(
+        userid,
+        daysAgoIso(range.startOffset),
+        daysAgoIso(range.endOffset)
+      );
+      return;
     }
+
     // year
-    if (!checked) {
-      if (value === '1') {
-        props.setNoteView('year');
-        getNoteRangeYear();
-      }
-      if (value === '2') {
-        if (!userid) return;
-        props.setNoteView('years');
-        const { today: todayLastYear, weekAhead: weekAheadLastYear } =
-          computeYearAgoRange(2);
-        const res = await NoteRoutes.getNoteRangeYear(
-          userid,
-          weekAheadLastYear,
-          todayLastYear
-        );
-        if (res) {
-          if (res.length < 1) {
-            props.setNotes(res);
-            props.setnoNotes('No Notes for last year.');
-            return;
-          }
-          props.setNoteError('');
-          props.setnoNotes('');
-          props.setNotes(res);
-        }
-      }
-      if (value === '3') {
-        if (!userid) return;
-        props.setNoteView('years');
-        const { today: todayLastYear, weekAhead: weekAheadLastYear } =
-          computeYearAgoRange(3);
-        const res = await NoteRoutes.getNoteRangeYear(
-          userid,
-          weekAheadLastYear,
-          todayLastYear
-        );
-        if (res) {
-          if (res.length < 1) {
-            props.setNotes(res);
-            props.setnoNotes('No Notes for last year.');
-            return;
-          }
-          props.setNoteError('');
-          props.setnoNotes('');
-          props.setNotes(res);
-        }
-      }
-    }
+    props.setNoteView(value === '1' ? 'year' : 'years');
+    await fetchYearRange(Number(value));
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

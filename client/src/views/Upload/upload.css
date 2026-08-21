@@ -7,13 +7,13 @@
 
 }
 #upload{
-    border: 1px solid  lightgrey;
-    background-color: #e9d8c2;
-    color:black;
+    border: 1px solid var(--ns-rule);
+    background-color: var(--ns-amber-tint);
+    color: var(--ns-ink);
 }
 
 #example{
-    border: 1px solid  lightgrey;
-    background-color: #e9d8c2;
-    color:black;
+    border: 1px solid var(--ns-rule);
+    background-color: var(--ns-amber-tint);
+    color: var(--ns-ink);
 }

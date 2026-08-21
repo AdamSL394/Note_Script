@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import EditingNote from '../EditNote/editingNote';
 import ModalPop from '../Modal/index';
-import Note from '../Note/index';
+import { NoteCard } from '../NoteCard/index';
 import { SearchNotes } from '../SearchNotes/searchNotes';
 import type { Note as NoteType } from '../../types';
 import type { SelectChangeEvent } from '@mui/material/Select/index.js';
@@ -71,6 +71,21 @@ function Notes(props: NotesProps) {
     const indexOfLastPost = page * postPerPage;
     const indexOfFirstPost = indexOfLastPost - postPerPage;
     return getNotes.slice(indexOfFirstPost, indexOfLastPost);
+  };
+
+  // Stages a note for editing: computes the remaining-character budget,
+  // marks it editable, and persists the draft so EditingNote/Textarea
+  // can pick it back up. Moved here from the old Note component so all
+  // note-mutation logic (save, edit, update, delete) lives in one place
+  // instead of being split across the card renderer and its parent.
+  const editNote = (note: NoteType) => {
+    const noteToEdit: NoteType = {
+      ...note,
+      textLength: 200 - note.text.length,
+      edit: true,
+    };
+    sessionStorage.setItem(noteToEdit._id, JSON.stringify(noteToEdit));
+    updateNote(noteToEdit);
   };
 
   // Saves whatever draft exists in sessionStorage for this note (or the
@@ -192,25 +207,22 @@ function Notes(props: NotesProps) {
     setNotes(currentPosts);
   };
 
+  // Previously reached into the DOM directly (document.getElementById)
+  // to toggle the "no notes" banner's display style, fighting React's
+  // own state-driven rendering of the same element. Now `noNotes` alone
+  // is the source of truth: the JSX below renders the banner only when
+  // it's non-empty, so setting state is the only thing this needs to do.
   const checkNoteApiResponse = (
     notesResponse: NoteType[] | null | undefined
   ): boolean => {
-    const noNotesElement = document.getElementById('noNotes');
     if (!notesResponse || notesResponse.length < 1) {
-      if (noNotesElement) {
-        noNotesElement.style.display = 'grid';
-      }
       setNoNotes('Get started... Upload or make your first Note!');
       setIsLoading(false);
       setNotes([]);
       return false;
-    } else {
-      if (noNotesElement) {
-        noNotesElement.style.display = 'none';
-      }
-      setNoNotes('');
-      return true;
     }
+    setNoNotes('');
+    return true;
   };
 
   const determineApiCall = async (
@@ -338,23 +350,25 @@ function Notes(props: NotesProps) {
           ></Pagination>
         </Stack>
       </Container>
-      <Box id="noNotes">{noNotes}</Box>
+      {noNotes && <Box id="noNotes">{noNotes}</Box>}
       {isloading ? (
-        <img
-          src="https://media4.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif?cid=ecf05e47d78qz3v8umwss2cvzhgxw5siyk2sxf88n7leuzne&rid=giphy.gif&ct=g"
-          alt="Loading Gif"
-        />
+        // Same "loading…" text treatment App.tsx uses for the auth
+        // gate, instead of an external Giphy GIF - no third-party
+        // network dependency, and one consistent loading style app-wide.
+        <div className="loadingScreen">
+          <span className="loadingLabel">loading…</span>
+        </div>
       ) : (
         <>
-          {notes.map((note, i) => {
+          {notes.map((note) => {
             if (!note.edit) {
               return (
-                <Note
-                  key={i}
+                <NoteCard
+                  key={note._id}
                   note={note}
-                  openModal={openModal}
-                  updateNote={updateNote}
-                ></Note>
+                  onEdit={editNote}
+                  onDelete={openModal}
+                />
               );
             }
             if (note.edit) {
@@ -367,7 +381,7 @@ function Notes(props: NotesProps) {
                   : 200 - note.text.length;
               return (
                 <EditingNote
-                  key={i * 102}
+                  key={note._id}
                   notes={notes}
                   note={{ ...note, textLength }}
                   setDateNote={setDateNote}

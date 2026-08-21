@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from '@mui/material/Link/index.js';
-import Grid from '@mui/material/Grid/index.js';
 
 // The minimal shape notesYears() actually needs — not the full
 // NoteYearsProps shape. Callers (like SearchNotes) pass their own props
@@ -21,20 +20,18 @@ interface NoteYearsProps {
 
 function NoteYears(props: NoteYearsProps) {
   return (
-    <Grid container style={gridStyles}>
+    <div style={gridStyles}>
       {props.noteYears.map((year, key) => (
-        <Grid item xs={0.5} key={key + 11} style={itemStyles}>
-          <Link
-            key={key + 1}
-            onClick={() => handleYearClick(year, props)}
-            className="noteYears"
-            style={getLinkStyles(year, props)}
-          >
-            {year}
-          </Link>
-        </Grid>
+        <Link
+          key={key}
+          onClick={() => handleYearClick(year, props)}
+          className="noteYears"
+          style={getLinkStyles(year, props)}
+        >
+          {year}
+        </Link>
       ))}
-    </Grid>
+    </div>
   );
 }
 
@@ -48,31 +45,42 @@ function getLinkStyles(
   year: string | number,
   props: NoteYearsProps
 ): React.CSSProperties {
+  const base: React.CSSProperties = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '13px',
+    padding: '2px 10px',
+    borderRadius: '20px',
+    border: '0.5px solid var(--ns-rule)',
+    background: 'var(--ns-fog)',
+  };
   if (year === props.currentDbCall) {
     return {
+      ...base,
       cursor: 'default',
-      color: 'grey',
+      color: 'var(--ns-graphite)',
       textDecoration: 'none',
     };
   } else {
     return {
+      ...base,
       cursor: 'pointer',
-      color: 'blue',
+      color: 'var(--ns-blue)',
     };
   }
 }
 
-const itemStyles: React.CSSProperties = {
-    marginBottom: '1.5rem',
-  };
-
+// Previously `position: absolute; left: 2%`, floating this year list
+// on top of the note-card grid below it instead of taking its own
+// space in the page flow — the two visually overlapped as soon as
+// there were enough cards to reach that height. A plain wrapping flex
+// row keeps it in normal document flow, so it always renders above
+// the cards it belongs with rather than over them.
 const gridStyles: React.CSSProperties = {
-  left: '2%',
-  position: 'absolute',
   display: 'flex',
-  flexDirection: 'column-reverse',
-  marginTop: '.5%',
-  width: '5%',
+  flexWrap: 'wrap',
+  gap: '6px',
+  marginTop: '0.75rem',
+  marginBottom: '0.75rem',
 };
 
 export default NoteYears;

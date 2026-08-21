@@ -15,9 +15,9 @@ export const TrackedEmojis = (props: TrackedEmojisProps) => {
                             role="img"
                             aria-label="eyes"
                             style={{
-                                backgroundColor: 'lightgrey',
+                                backgroundColor: 'var(--ns-fog)',
                                 marginRight: '.4rem',
-                                border: '2px lightgrey',
+                                border: '1px solid var(--ns-rule)',
                                 borderRadius: '10px 10px 10px 10px',
                                 paddingLeft: '4px',
                             }}

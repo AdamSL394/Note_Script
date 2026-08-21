@@ -3,9 +3,9 @@
     position: relative;
     width: 59%;
     height: 3.5rem;
-    background: rgb(252, 251, 251);
+    background: var(--ns-paper);
     margin: 0 auto;
-    border-color: #dadada;
+    border: 1px solid var(--ns-rule);
     margin-top: 3px;
 }
 
@@ -46,6 +46,6 @@
     width:30%;
     text-align:center;
     margin-top:3%;
-    color:#005fcc;
+    color:var(--ns-blue);
     display:none;
 }

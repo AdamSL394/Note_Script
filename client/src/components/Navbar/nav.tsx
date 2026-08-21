@@ -10,11 +10,13 @@ import Typography from '@mui/material/Typography/Typography.js';
 import './nav.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useThemeMode } from '../../hooks/useThemeMode';
 
 function Navbar() {
   const { user } = useAuth0();
   const navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = useState<HTMLElement | null>(null);
+  const { mode, toggleTheme } = useThemeMode();
 
   const pages = ['Home', 'View All Notes', 'User'];
 
@@ -131,6 +133,22 @@ function Navbar() {
               alt="User Profile"
             ></img>
           </i>
+        </span>
+        <span
+          role="button"
+          aria-label={
+            mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+          }
+          onClick={toggleTheme}
+          style={{
+            cursor: 'pointer',
+            fontSize: '18px',
+            padding: '0 12px',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          {mode === 'dark' ? '☀️' : '🌙'}
         </span>
         <LogOut></LogOut>
       </Toolbar>

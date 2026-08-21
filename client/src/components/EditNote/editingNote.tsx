@@ -52,7 +52,7 @@ function EditingNote(props: EditingNoteProps) {
             style={{
               marginTop: '4%',
               borderRadius: '5px 5px 5px 5px',
-              border: '1px solid #cbcbcb',
+              border: '1px solid var(--ns-rule)',
             }}
           ></input>
 

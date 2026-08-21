@@ -34,12 +34,51 @@
   vertical-align: middle;
 }
 
+.hamburger {
+  width: 22px;
+  height: 16px;
+  position: relative;
+}
+
 .menuIcon {
-  width: 28px;
+  width: 22px;
   height: 2px;
   background-color: var(--ns-graphite);
-  margin: 6px 0;
   border-radius: 4px;
+  position: absolute;
+  left: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease, top 0.2s ease,
+    background-color 0.15s ease;
+}
+
+.menuIcon:nth-child(1) {
+  top: 0;
+}
+
+.menuIcon:nth-child(2) {
+  top: 7px;
+}
+
+.menuIcon:nth-child(3) {
+  top: 14px;
+}
+
+.hamburger.open .menuIcon {
+  background-color: var(--ns-blue);
+}
+
+.hamburger.open .menuIcon:nth-child(1) {
+  top: 7px;
+  transform: rotate(45deg);
+}
+
+.hamburger.open .menuIcon:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.open .menuIcon:nth-child(3) {
+  top: 7px;
+  transform: rotate(-45deg);
 }
 
 #navItems {

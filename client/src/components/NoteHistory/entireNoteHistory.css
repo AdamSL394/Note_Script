@@ -15,8 +15,9 @@
         transform: translate(-50%, -50%);
         width: 400px;
         height: 100px;
-        background-color: white !important;
-        border: 2px solid #000;
+        background-color: var(--ns-paper) !important;
+        border: 1px solid var(--ns-rule);
+        border-radius: 8px;
         box-shadow: 24;
         font: 4;
         text-align: center;

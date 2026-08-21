@@ -8,9 +8,7 @@ interface NoteYearAggregateResult {
 // The route handler passes req.body here directly (see routes/notes.ts)
 // — this is the raw client-submitted note payload, not an Express
 // Request object, despite the original parameter being named `req`.
-const postNotes = async (
-    noteData: Partial<INote> & { userId: string }
-): Promise<string> => {
+const postNotes = async (noteData: Partial<INote> & { userId: string }): Promise<string> => {
     if (noteData.userId.length != 24) {
         noteData.userId = noteData.userId + '000';
     }
