@@ -5,6 +5,61 @@
   font-size: xx-large;
   width: 47%;
 }
+
+/* Two-column page layout: the years sidebar runs down the left, the
+   search row/pagination/note grid form the main column to its right.
+   The sidebar is sticky so it stays in view while the note grid below
+   it scrolls - useful once there are enough notes to make "View All
+   Notes" a genuinely long page. */
+.notesPageLayout {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  padding: 0 1.5rem;
+}
+
+.yearsSidebarCol {
+  flex: 0 0 130px;
+  position: sticky;
+  top: 5rem;
+}
+
+/* Below this width the sidebar collapses into the same wrapping
+   horizontal row NoteYears itself falls back to (see noteYears.css) -
+   a fixed-width column stops making sense once there's not much width
+   to spare in the first place. */
+@media screen and (max-width: 900px) {
+  .notesPageLayout {
+    flex-direction: column;
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+  .yearsSidebarCol {
+    flex: none;
+    position: static;
+    width: 100%;
+  }
+}
+
+/* EditableNoteGrid renders bare card components with no container of
+   its own (it's shared with HomeView, which needs its own different
+   padding/margins around the grid) - this supplies the grid layout.
+   Was flex-wrap relying on MUI's <Grid item> for uniform card widths,
+   but that sizing turned out to depend on spacing context normally
+   supplied by an actual MUI <Grid container> ancestor - without one,
+   cards fell back to hugging their own content width instead of a
+   uniform column width (visible as wildly inconsistent card sizes,
+   with narrow ones squeezing their header text into their icons).
+   CSS Grid's auto-fill/minmax has no such dependency: every column is
+   guaranteed to be the same width, with a hard floor so a card never
+   gets narrow enough to crowd its own header. */
+.noteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 @media screen and (max-width: 1000px) {
   #searchStyle {
     max-width: 80% !important;

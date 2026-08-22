@@ -1,7 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import React, { useState } from 'react';
 import NoteRoutes from '../../../router/noteRoutes';
-import Switch from '@mui/material/Switch/index.js';
 import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import type { Note } from '../../../types';
@@ -132,30 +131,44 @@ export const LookBack = (props: LookBackProps) => {
     await fetchYearRange(Number(value));
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const numericValue = event.target.checked;
-    setChecked(event.target.checked);
-
-    if (!numericValue) {
-      onNumericChange(numericValue, props.timePeriod);
-      if (Number(props.timePeriod) > 1) {
-        props.setNoteView('years');
-        return;
-      }
-      props.setNoteView('year');
-    }
-    if (numericValue) {
-      onNumericChange(numericValue, props.timePeriod);
-      if (Number(props.timePeriod) > 1) {
-        props.setNoteView('weeks');
-        return;
-      }
-      props.setNoteView('week');
+  // Switches between "weeks ago" and "years ago" mode. Was previously
+  // wired to a MUI <Switch>'s onChange event, which meant reading the
+  // new value off `event.target.checked` — now called directly from
+  // the segmented toggle buttons below with the target unit, so it's a
+  // plain function instead of an event handler shape it never needed.
+  const setUnit = (isWeeks: boolean) => {
+    setChecked(isWeeks);
+    onNumericChange(isWeeks, props.timePeriod);
+    if (isWeeks) {
+      props.setNoteView(Number(props.timePeriod) > 1 ? 'weeks' : 'week');
+    } else {
+      props.setNoteView(Number(props.timePeriod) > 1 ? 'years' : 'year');
     }
   };
 
   return (
     <div className="lookBackRow">
+      <div className="lookBackToggle" role="group" aria-label="Look back unit">
+        <button
+          type="button"
+          className={
+            'lookBackToggleBtn' + (checked ? ' active' : '')
+          }
+          onClick={() => setUnit(true)}
+        >
+          Weeks
+        </button>
+        <button
+          type="button"
+          className={
+            'lookBackToggleBtn' + (!checked ? ' active' : '')
+          }
+          onClick={() => setUnit(false)}
+        >
+          Years
+        </button>
+      </div>
+
       <Select
         size="small"
         value={props.timePeriod}
@@ -170,13 +183,6 @@ export const LookBack = (props: LookBackProps) => {
       </Select>
 
       <span className="lookBackLabel">{props.noteview} ago</span>
-
-      <Switch
-        checked={checked}
-        onChange={handleChange}
-        inputProps={{ 'aria-label': 'controlled' }}
-        id="switch"
-      />
     </div>
   );
 };

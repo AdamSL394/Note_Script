@@ -1,51 +1,29 @@
 /* eslint-disable max-len */
 import { useAuth0 } from '@auth0/auth0-react';
 import Container from '@mui/material/Container/index.js';
-import Grid from '@mui/material/Grid/index.js';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import { CreateNote } from '../HomeComponents/CreateNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
-import { HomeNotes } from '../HomeComponents/NotesHomeView';
+import { EditableNoteGrid } from '../EditableNoteGrid/index';
 import { AlertMessage } from '../HomeComponents/SaveNoteAlert/index';
+import { useEditableNotes } from '../../hooks/useEditableNotes';
+import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
 import './homeView.css';
 
-// Known fields plus an index signature — this object is genuinely
-// accessed with dynamic string keys (`counts[property]++`) below, so a
-// strict named-fields-only interface would fight the actual usage
-// rather than describe it honestly.
-interface PropertyCounts {
-  gym: number;
-  study: number;
-  weed: number;
-  code: number;
-  read: number;
-  eatOut: number;
-  basketball: number;
-  king: number;
-  medal: number;
-  date_smoosh: number;
-  [key: string]: number;
-}
+// Built directly from NOTE_TAG_FIELDS — the same list NoteCard renders
+// tag chips from — instead of a separately hand-typed, differently
+// cased field list. That mismatch (a 'Study' field that doesn't exist
+// on Note, 'EatOut' lowercased to 'eatout' when the real field is
+// 'eatOut', and 'look' missing from the list entirely) was why most
+// tags never showed a count above the note grid: this panel's keys
+// silently didn't match the Note object's actual field names.
+type PropertyCounts = Record<string, number>;
 
-const EMPTY_COUNTS: PropertyCounts = {
-  gym: 0,
-  study: 0,
-  weed: 0,
-  code: 0,
-  read: 0,
-  eatOut: 0,
-  basketball: 0,
-  king: 0,
-  medal: 0,
-  date_smoosh: 0,
-};
-
-// Tags that count as a "win" day for the streak strip's amber dot.
-// Kept in sync by convention with CreateNote's WIN_TAGS - both mark the
-// same two tracked stats (medal, king) as the app's "win" category.
-const WIN_TAGS = ['medal', 'king'];
+const EMPTY_COUNTS: PropertyCounts = Object.fromEntries(
+  NOTE_TAG_FIELDS.map(({ field }) => [field, 0])
+);
 
 interface StreakDay {
   date: string;
@@ -88,6 +66,28 @@ const HomeView = () => {
   // through this instead of asserting non-null and hoping.
   const getUserId = (): string | undefined => user?.sub?.split('|')[1];
 
+  // Gives the weekly digest the same edit/save/delete behavior as the
+  // "All Notes" page, instead of read-only cards. Unlike notes.tsx
+  // (which repaginates "All Notes" after a delete), HomeView isn't
+  // paginated — the currently loaded range is everything there is to
+  // show, so a delete just needs to drop that one note locally.
+  const {
+    open,
+    modelNoteId,
+    editNote,
+    saveNote,
+    updateNote,
+    setNoteValue,
+    setDateNote,
+    onStarValueChange,
+    openModal,
+    closeModal,
+  } = useEditableNotes(setNotes, (deletedNoteId) => {
+    setNotes((prevNotes) =>
+      prevNotes.filter((note) => note._id !== deletedNoteId)
+    );
+  });
+
   useEffect(() => {
     const userid = getUserId();
     if (!userid || !user) {
@@ -117,11 +117,11 @@ const HomeView = () => {
     // type for everyone.
     notes.forEach((note) => {
       const noteRecord = note as unknown as Record<string, unknown>;
-      for (const property in noteRecord) {
-        if (property in counts && noteRecord[property]) {
-          counts[property]++;
+      NOTE_TAG_FIELDS.forEach(({ field }) => {
+        if (noteRecord[field]) {
+          counts[field]++;
         }
-      }
+      });
     });
 
     setPropertyCounts(counts);
@@ -253,26 +253,48 @@ const HomeView = () => {
     }
   };
 
-  const renderPropertyCount = (property: string, count: number) => {
+  const renderPropertyCount = (label: string, count: number) => {
     if (count > 0) {
       return (
-        <span id="items">
-          {property}: {count}
+        <span id="items" key={label}>
+          {label}: {count}
         </span>
       );
     }
     return null;
   };
 
-  // Builds the last 7 days for the streak strip from notes already
-  // in state (the default fetch on mount already scopes to the last
-  // week, so this needs no extra request). A day is a "win" if any
-  // note logged that day has one of the WIN_TAGS set.
-  const getStreakDays = (): StreakDay[] => {
+  // Anchors the streak strip to the last day actually present in the
+  // currently loaded `notes` — not to real "today" — so switching
+  // LookBack's range (a week ago, a year ago, etc.) visibly moves the
+  // strip instead of it always showing the same real-world last-7-days
+  // window regardless of what's selected below it. Falls back to today
+  // only when nothing is loaded (nothing to anchor to).
+  const streakAnchorDate = useMemo(() => {
+    if (notes.length === 0) {
+      return new Date();
+    }
+    const maxDateStr = notes.reduce(
+      (latest, note) => (note.date > latest ? note.date : latest),
+      notes[0].date
+    );
+    return new Date(`${maxDateStr}T00:00:00`);
+  }, [notes]);
+
+  const formatShortDate = (iso: string): string =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+
+  // Builds the 7 days ending at streakAnchorDate from notes already in
+  // state — no extra request needed, since LookBack already fetched
+  // whatever range is currently loaded. A day is a "win" if any note
+  // logged that day has one of the WIN_TAGS set.
+  const streakDays = useMemo((): StreakDay[] => {
     const days: StreakDay[] = [];
-    const today = new Date();
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
+      const d = new Date(streakAnchorDate);
       d.setDate(d.getDate() - i);
       const iso = d.toISOString().split('T')[0];
       const dayNotes = notes.filter((note) => note.date === iso);
@@ -284,7 +306,7 @@ const HomeView = () => {
       days.push({ date: iso, hasNote, isWin });
     }
     return days;
-  };
+  }, [notes, streakAnchorDate]);
 
   return (
     <Container id="container">
@@ -307,9 +329,12 @@ const HomeView = () => {
       ></AlertMessage>
 
       <div className="streakStrip">
-        <span className="streakLabel">past 7 days</span>
+        <span className="streakLabel">
+          {formatShortDate(streakDays[0].date)} –{' '}
+          {formatShortDate(streakDays[6].date)}
+        </span>
         <span className="streakRule"></span>
-        {getStreakDays().map((day) => (
+        {streakDays.map((day) => (
           <span
             key={day.date}
             className={
@@ -336,22 +361,26 @@ const HomeView = () => {
       <h3 id="pastNoteError">{noteError}</h3>
       <div>
         <div id="count">
-          {propertyNames.map((property) =>
-            renderPropertyCount(
-              property,
-              propertyCounts[property.toLowerCase()]
-            )
+          {NOTE_TAG_FIELDS.map(({ field, label }) =>
+            renderPropertyCount(label, propertyCounts[field])
           )}
         </div>
-        <Grid
-          container
-          spacing={2}
-          direction="row"
-          justifyContent="center"
-          alignItems="flex-start"
-        >
-          <HomeNotes notes={notes}></HomeNotes>
-        </Grid>
+        <div className="homeNoteGrid">
+          <EditableNoteGrid
+            notes={notes}
+            currentPage={1}
+            open={open}
+            modelNoteId={modelNoteId}
+            editNote={editNote}
+            saveNote={saveNote}
+            updateNote={updateNote}
+            setNoteValue={setNoteValue}
+            setDateNote={setDateNote}
+            onStarValueChange={onStarValueChange}
+            openModal={openModal}
+            closeModal={closeModal}
+          />
+        </div>
       </div>
     </Container>
   );

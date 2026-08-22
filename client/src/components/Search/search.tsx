@@ -59,7 +59,6 @@ function Search(props: SearchProps) {
           height: '2.1rem',
           textAlign: 'center',
           width: '13rem',
-          marginLeft: '5%',
           border: '0.5px solid var(--ns-rule)',
           background: 'var(--ns-paper)',
           fontFamily: 'var(--font-mono)',

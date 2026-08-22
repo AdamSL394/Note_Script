@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from '@mui/material/Link/index.js';
 
 // The minimal shape notesYears() actually needs — not the full
@@ -18,20 +18,87 @@ interface NoteYearsProps {
   setNotesBasedOnYear: (page: unknown, year: string | number) => void;
 }
 
+// How many of the most recent years show before truncating to "…".
+// Matches the note-list pagination's own boundary/sibling counts in
+// spirit (a handful near the front, a clear jump to the far end)
+// rather than introducing a different truncation convention.
+const VISIBLE_YEAR_COUNT = 6;
+
+const SPECIAL_ENTRIES = new Set(['Recently Changed', 'All']);
+
 function NoteYears(props: NoteYearsProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  // getNoteYears() builds this list oldest-first with the two special
+  // entries appended at the end — a sidebar reads more naturally with
+  // the most recent year on top and the specials pinned above the
+  // chronological list, so both get reordered for display here rather
+  // than changing what's actually stored/fetched.
+  const specials = props.noteYears.filter((year) => SPECIAL_ENTRIES.has(String(year)));
+  const years = props.noteYears
+    .filter((year) => !SPECIAL_ENTRIES.has(String(year)))
+    .slice()
+    .reverse();
+
+  const needsTruncation = !expanded && years.length > VISIBLE_YEAR_COUNT + 1;
+  const visibleYears = needsTruncation
+    ? years.slice(0, VISIBLE_YEAR_COUNT)
+    : years;
+  const oldestYear = years[years.length - 1];
+
   return (
-    <div style={gridStyles}>
-      {props.noteYears.map((year, key) => (
-        <Link
-          key={key}
-          onClick={() => handleYearClick(year, props)}
-          className="noteYears"
-          style={getLinkStyles(year, props)}
-        >
-          {year}
-        </Link>
-      ))}
-    </div>
+    <nav className="noteYearsSidebar" aria-label="Filter notes by year">
+      {specials.length > 0 && (
+        <div className="noteYearsGroup">
+          {specials.map((year) => (
+            <Link
+              key={year}
+              onClick={() => handleYearClick(year, props)}
+              className="noteYears"
+              style={getLinkStyles(year, props)}
+            >
+              {year}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {years.length > 0 && (
+        <div className="noteYearsGroup noteYearsDivider">
+          {visibleYears.map((year) => (
+            <Link
+              key={year}
+              onClick={() => handleYearClick(year, props)}
+              className="noteYears"
+              style={getLinkStyles(year, props)}
+            >
+              {year}
+            </Link>
+          ))}
+
+          {needsTruncation && (
+            <>
+              <Link
+                component="button"
+                onClick={() => setExpanded(true)}
+                className="noteYears noteYearsEllipsis"
+                aria-label="Show all years"
+              >
+                …
+              </Link>
+              <Link
+                key={oldestYear}
+                onClick={() => handleYearClick(oldestYear, props)}
+                className="noteYears"
+                style={getLinkStyles(oldestYear, props)}
+              >
+                {oldestYear}
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+    </nav>
   );
 }
 
@@ -48,10 +115,11 @@ function getLinkStyles(
   const base: React.CSSProperties = {
     fontFamily: 'var(--font-mono)',
     fontSize: '13px',
-    padding: '2px 10px',
+    padding: '3px 10px',
     borderRadius: '20px',
     border: '0.5px solid var(--ns-rule)',
     background: 'var(--ns-fog)',
+    textAlign: 'center',
   };
   if (year === props.currentDbCall) {
     return {
@@ -59,6 +127,8 @@ function getLinkStyles(
       cursor: 'default',
       color: 'var(--ns-graphite)',
       textDecoration: 'none',
+      background: 'var(--ns-blue-tint)',
+      borderColor: 'var(--ns-blue)',
     };
   } else {
     return {
@@ -68,19 +138,5 @@ function getLinkStyles(
     };
   }
 }
-
-// Previously `position: absolute; left: 2%`, floating this year list
-// on top of the note-card grid below it instead of taking its own
-// space in the page flow — the two visually overlapped as soon as
-// there were enough cards to reach that height. A plain wrapping flex
-// row keeps it in normal document flow, so it always renders above
-// the cards it belongs with rather than over them.
-const gridStyles: React.CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '6px',
-  marginTop: '0.75rem',
-  marginBottom: '0.75rem',
-};
 
 export default NoteYears;

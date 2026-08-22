@@ -7,21 +7,15 @@ import Stack from '@mui/material/Stack/index.js';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
-import EditingNote from '../EditNote/editingNote';
-import ModalPop from '../Modal/index';
-import { NoteCard } from '../NoteCard/index';
+import { EditableNoteGrid } from '../EditableNoteGrid/index';
 import { SearchNotes } from '../SearchNotes/searchNotes';
+import NoteYears from '../NoteYears/noteYears';
+import { useEditableNotes } from '../../hooks/useEditableNotes';
+import { useNoteYears } from '../../hooks/useNoteYears';
 import type { Note as NoteType } from '../../types';
-import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import './notes.css';
 
-interface NotesProps {
-  // Bound to a MUI <Select>'s onChange (see editingNote.tsx), not a
-  // plain input — SelectChangeEvent is the correct type here.
-  onStarValueChange: (e: SelectChangeEvent, note: NoteType) => void;
-}
-
-function Notes(props: NotesProps) {
+function Notes() {
   const postPerPage = 30;
   const [currentPage, setCurrentPage] = useState(1);
   const [notes, setNotes] = useState<NoteType[]>([]);
@@ -33,8 +27,6 @@ function Notes(props: NotesProps) {
   // doesn't actually honor yet.
   const [currentCall, setCurrentCall] = useState<string | number>('All');
   const [numberOfPages, setNumberOfPages] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [modelNoteId, setModelNoteId] = useState<string | undefined>();
   const [isloading, setIsLoading] = useState(false);
   const [searchedNotesResults, setSearchNoteResults] = useState<NoteType[]>(
     []
@@ -50,6 +42,24 @@ function Notes(props: NotesProps) {
   // `user!.sub` and hoping — if it's ever actually missing, callers get
   // undefined back and can bail out explicitly rather than throwing.
   const getUserId = (): string | undefined => user?.sub?.split('|')[1];
+
+  const {
+    open,
+    modelNoteId,
+    editNote,
+    saveNote,
+    updateNote,
+    setNoteValue,
+    setDateNote,
+    onStarValueChange,
+    openModal,
+    closeModal,
+  } = useEditableNotes(setNotes, () => allNotes(currentPage));
+
+  const { noteYears, currentDbCall, setCurrentDBCall, notesYears } =
+    useNoteYears(currentPage, (unused, year) =>
+      setNotesBasedOnYear(unused, year)
+    );
 
   useEffect(() => {
     // Without this guard, allNotes() can run before `user` exists and
@@ -71,33 +81,6 @@ function Notes(props: NotesProps) {
     const indexOfLastPost = page * postPerPage;
     const indexOfFirstPost = indexOfLastPost - postPerPage;
     return getNotes.slice(indexOfFirstPost, indexOfLastPost);
-  };
-
-  // Stages a note for editing: computes the remaining-character budget,
-  // marks it editable, and persists the draft so EditingNote/Textarea
-  // can pick it back up. Moved here from the old Note component so all
-  // note-mutation logic (save, edit, update, delete) lives in one place
-  // instead of being split across the card renderer and its parent.
-  const editNote = (note: NoteType) => {
-    const noteToEdit: NoteType = {
-      ...note,
-      textLength: 200 - note.text.length,
-      edit: true,
-    };
-    sessionStorage.setItem(noteToEdit._id, JSON.stringify(noteToEdit));
-    updateNote(noteToEdit);
-  };
-
-  // Saves whatever draft exists in sessionStorage for this note (or the
-  // note itself if no draft was staged), without mutating either.
-  const saveNote = (note: NoteType) => {
-    const rawDraft = sessionStorage.getItem(note._id);
-    const draftNote: NoteType | null = rawDraft ? JSON.parse(rawDraft) : null;
-    const noteToSave: NoteType = draftNote
-      ? { ...draftNote, edit: false }
-      : { ...note, edit: false };
-    sessionStorage.setItem(noteToSave._id, JSON.stringify(noteToSave));
-    updateNote(noteToSave);
   };
 
   const getNoteYears = async (year: string | number, value: number) => {
@@ -152,42 +135,6 @@ function Notes(props: NotesProps) {
     value: number
   ) => {
     await determineApiCall(currentCall, value);
-  };
-
-  const openModal = (note: NoteType) => {
-    setModelNoteId(note._id);
-    setOpen(true);
-  };
-
-  const closeModal = async (note: string | 'Cancel') => {
-    if (note !== 'Cancel') {
-      setOpen(false);
-      await NoteRoutes.deleteNote(note);
-      allNotes(currentPage);
-    }
-    if (note === 'Cancel') {
-      setOpen(false);
-    }
-  };
-
-  // Applies the server's response (the source of truth after an update)
-  // to the matching note in state, instead of discarding it.
-  const updateNote = async (note: NoteType) => {
-    const updatedNoteFromServer = await NoteRoutes.updateNote(note);
-    if (!updatedNoteFromServer || !updatedNoteFromServer._id) {
-      return;
-    }
-    // Trust whatever `edit` value the server echoes back — don't force
-    // it to false here. updateNote is called both to *save* a note
-    // (saveNote sends edit: false) and to *open* one for editing
-    // (Note/index.js's editNote sends edit: true). Hardcoding false here
-    // would silently kick a note back out of edit mode the instant you
-    // opened it.
-    setNotes((prevNotes) =>
-      prevNotes.map((n) =>
-        n._id === updatedNoteFromServer._id ? updatedNoteFromServer : n
-      )
-    );
   };
 
   const getNoteRange = async (userId: string, start: string, end: string) => {
@@ -282,50 +229,21 @@ function Notes(props: NotesProps) {
     }
   };
 
-  // Accepts an optional updated note for a proper immutable replace.
-  // Falls back to the old "just re-render" behavior when called with no
-  // argument, since Textarea.js still relies on mutating props.note
-  // directly and just needs a nudge to re-render — that's a separate,
-  // larger fix left for its own session (see notes on Textarea.js).
-  const setNoteValue = (updatedNote?: NoteType) => {
-    if (updatedNote && updatedNote._id) {
-      setNotes((prevNotes) =>
-        prevNotes.map((n) => (n._id === updatedNote._id ? updatedNote : n))
-      );
-      return;
-    }
-    setNotes((prevNotes) => [...prevNotes]);
-  };
-
   const setSearchedNote = (searchedNotes: NoteType[]) => {
     setNotes(searchedNotes);
   };
 
-  // Merges in any staged draft, then updates the date without mutating
-  // the note object or relying on shared-reference mutation to sync UI.
-  const setDateNote = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    note: NoteType
-  ) => {
-    const rawStored = sessionStorage.getItem(note._id);
-    const storedNote: NoteType | null = rawStored ? JSON.parse(rawStored) : null;
-    const updatedNote: NoteType = storedNote
-      ? { ...storedNote, date: e.target.value }
-      : { ...note, date: e.target.value };
-    sessionStorage.setItem(updatedNote._id, JSON.stringify(updatedNote));
-    setNotes((prevNotes) =>
-      prevNotes.map((n) => (n._id === note._id ? updatedNote : n))
-    );
-  };
-
   return (
-    <>
-      <ModalPop
-        note={notes}
-        open={open}
-        modelNoteId={modelNoteId}
-        closeModal={closeModal}
-      ></ModalPop>
+    <div className="notesPageLayout">
+      <aside className="yearsSidebarCol">
+        <NoteYears
+          noteYears={noteYears}
+          currentDbCall={currentDbCall}
+          notesYears={notesYears}
+          currentPage={currentPage}
+          setNotesBasedOnYear={setNotesBasedOnYear}
+        ></NoteYears>
+      </aside>
       <Container style={{ maxWidth: '100%', marginBottom: '1rem' }}>
         <Box id='searchStyle' style={{ maxWidth: '90%'}}>
           <SearchNotes
@@ -336,8 +254,8 @@ function Notes(props: NotesProps) {
             setSearchNoteResults={setSearchNoteResults}
             setNumberOfPages={setNumberOfPages}
             setSearchedNote={setSearchedNote}
-            currentPage={currentPage}
             setNotesBasedOnYear={setNotesBasedOnYear}
+            setCurrentDBCall={setCurrentDBCall}
           ></SearchNotes>
         </Box>
         <Stack className="stack">
@@ -349,56 +267,34 @@ function Notes(props: NotesProps) {
             color="primary"
           ></Pagination>
         </Stack>
+        {noNotes && <Box id="noNotes">{noNotes}</Box>}
+        {isloading ? (
+          // Same "loading…" text treatment App.tsx uses for the auth
+          // gate, instead of an external Giphy GIF - no third-party
+          // network dependency, and one consistent loading style app-wide.
+          <div className="loadingScreen">
+            <span className="loadingLabel">loading…</span>
+          </div>
+        ) : (
+          <div className="noteGrid">
+            <EditableNoteGrid
+              notes={notes}
+              currentPage={currentPage}
+              open={open}
+              modelNoteId={modelNoteId}
+              editNote={editNote}
+              saveNote={saveNote}
+              updateNote={updateNote}
+              setNoteValue={setNoteValue}
+              setDateNote={setDateNote}
+              onStarValueChange={onStarValueChange}
+              openModal={openModal}
+              closeModal={closeModal}
+            />
+          </div>
+        )}
       </Container>
-      {noNotes && <Box id="noNotes">{noNotes}</Box>}
-      {isloading ? (
-        // Same "loading…" text treatment App.tsx uses for the auth
-        // gate, instead of an external Giphy GIF - no third-party
-        // network dependency, and one consistent loading style app-wide.
-        <div className="loadingScreen">
-          <span className="loadingLabel">loading…</span>
-        </div>
-      ) : (
-        <>
-          {notes.map((note) => {
-            if (!note.edit) {
-              return (
-                <NoteCard
-                  key={note._id}
-                  note={note}
-                  onEdit={editNote}
-                  onDelete={openModal}
-                />
-              );
-            }
-            if (note.edit) {
-              // Compute textLength without mutating the state object
-              // during render — pass it through as part of a new object
-              // instead.
-              const textLength =
-                note.textLength !== undefined
-                  ? note.textLength
-                  : 200 - note.text.length;
-              return (
-                <EditingNote
-                  key={note._id}
-                  notes={notes}
-                  note={{ ...note, textLength }}
-                  setDateNote={setDateNote}
-                  currentPage={currentPage}
-                  setNoteValue={setNoteValue}
-                  saveNote={saveNote}
-                  openModal={openModal}
-                  updateNote={updateNote}
-                  onStarValueChange={props.onStarValueChange}
-                ></EditingNote>
-              );
-            }
-            return null;
-          })}
-        </>
-      )}
-    </>
+    </div>
   );
 }
 

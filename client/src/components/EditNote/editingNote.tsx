@@ -1,5 +1,4 @@
 import React from 'react';
-import Grid from '@mui/material/Grid/index.js';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import FormControl from '@mui/material/FormControl/index.js';
@@ -27,7 +26,7 @@ interface EditingNoteProps {
 
 function EditingNote(props: EditingNoteProps) {
   return (
-    <Grid xs={8} sm={5} md={5} lg={2} style={{ margin: '.5%' }} item>
+    <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
       <Card variant="outlined" id="Card">
         <Button
           onClick={() => props.openModal(props.note)}
@@ -110,7 +109,7 @@ function EditingNote(props: EditingNoteProps) {
         <>{props.note.textLength}</>
         <TrackedEmojis note={props.note}></TrackedEmojis>
       </Card>
-    </Grid>
+    </div>
   );
 }
 

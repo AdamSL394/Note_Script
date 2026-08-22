@@ -1,4 +1,59 @@
+.noteYearsSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.noteYearsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.noteYearsDivider {
+  padding-top: 10px;
+  border-top: 0.5px solid var(--ns-rule);
+}
+
 .noteYears {
   cursor: pointer;
   text-decoration: none;
+  display: block;
+}
+
+/* The "…" expand control - deliberately unstyled as a pill (no border/
+   background) so it reads as a subtle "show more" affordance rather
+   than another clickable year, matching how the numeric note
+   pagination's own "…" is just plain text, not a button-styled chip. */
+.noteYearsEllipsis {
+  color: var(--ns-graphite) !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 3px 10px !important;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+
+/* Below this width, a persistent vertical sidebar eats too much of the
+   page for what it offers - falls back to the same wrapping horizontal
+   row the rest of the filter controls use on mobile. */
+@media screen and (max-width: 900px) {
+  .noteYearsSidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .noteYearsGroup {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .noteYearsDivider {
+    border-top: none;
+    padding-top: 0;
+    border-left: 0.5px solid var(--ns-rule);
+    padding-left: 10px;
+  }
 }

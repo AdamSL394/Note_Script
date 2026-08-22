@@ -6,6 +6,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import InputLabel from '@mui/material/InputLabel/index.js';
 import Button from '@mui/material/Button/index.js';
 import NoteRoutes from '../../router/noteRoutes';
+import { WIN_TAGS } from '../../constants/noteFields';
 import type { TrackedStat, AuthUser } from '../../types';
 import './createNote.css';
 
@@ -33,14 +34,11 @@ const EMOJI_LIST: TrackedStat[] = [
   { icon: '🌟', name: 'star', visible: 'hidden' },
 ];
 
-// Tags that render with the amber "win" accent when active, matching
-// the streak strip's amber = win-day convention in homeView. Deliberately
-// excludes 'star' - that name collides with the Note schema's existing
-// String star-rating field (see noteController/models/notes.ts), so
-// toggling this tracked stat likely already clobbers that field. Not
-// fixed here since it's a backend/schema concern, not styling - flagging
-// so it doesn't get lost.
-const WIN_TAGS = new Set(['medal', 'king']);
+// 'star' is deliberately not in the shared WIN_TAGS list - it collides
+// with the Note schema's existing String star-rating field (see
+// noteController/models/notes.ts), so toggling this tracked stat likely
+// already clobbers that field. Not fixed here since it's a
+// backend/schema concern, not styling - flagging so it doesn't get lost.
 
 export const CreateNote = (props: CreateNoteProps) => {
   const [date, setDate] = useState<string | undefined>();
@@ -111,7 +109,7 @@ export const CreateNote = (props: CreateNoteProps) => {
           {props.trackedStats?.map((stat, key) => {
             if (!stat) return null;
             const active = stat.visible === 'visible';
-            const isWin = WIN_TAGS.has(stat.name);
+            const isWin = WIN_TAGS.includes(stat.name);
             const className = [
               'tagChip',
               active ? 'active' : '',

@@ -1,6 +1,6 @@
 import React from 'react';
 import Card from '@mui/material/Card/index.js';
-import Grid from '@mui/material/Grid/index.js';
+import { NOTE_TAG_FIELDS, WIN_TAGS as WIN_TAG_LIST } from '../../constants/noteFields';
 import type { Note } from '../../types';
 
 export interface NoteCardProps {
@@ -13,35 +13,6 @@ export interface NoteCardProps {
   onEdit?: (note: Note) => void;
   onDelete?: (note: Note) => void;
 }
-
-interface TagConfigEntry {
-  field: string;
-  icon: string;
-  label: string;
-}
-
-// Maps every Note field that can be tagged to its emoji + accessible
-// label. One small table + one map instead of one hand-written
-// conditional block per field, repeated per renderer - this is the
-// single source of truth both HomeView's digest and AllNotes' list
-// render from, so a field added here shows up in both places.
-const TAG_CONFIG: TagConfigEntry[] = [
-  { field: 'look', icon: '👀', label: 'Eyes' },
-  { field: 'gym', icon: '💪🏼', label: 'Arm' },
-  { field: 'weed', icon: '🍁', label: 'Leaf' },
-  { field: 'code', icon: '👨🏻\u200d💻', label: 'Computer guy' },
-  { field: 'read', icon: '📚', label: 'Books' },
-  { field: 'eatOut', icon: '🍕', label: 'Pizza' },
-  { field: 'basketball', icon: '⛹🏻\u200d♂️', label: 'Basketball' },
-  { field: 'king', icon: '🤴🏻', label: 'King' },
-  { field: 'medal', icon: '🥇', label: 'Medal' },
-  { field: 'date/smoosh', icon: '👫', label: 'Date' },
-];
-
-// Same "win" convention as the streak strip and CreateNote's tag chips -
-// a card with one of these tags gets the amber accent, so the same
-// color means the same thing everywhere in the app.
-const WIN_TAGS = new Set(['medal', 'king']);
 
 // Renders a note's star rating ('1'/'2'/'3'/'None', per the schema) as
 // filled stars instead of the raw string.
@@ -59,15 +30,14 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
   // strict, fully-named type everywhere else, so this stays a local
   // cast rather than loosening the shared type for one odd field.
   const record = note as unknown as Record<string, unknown>;
-  const isWinDay = Array.from(WIN_TAGS).some((tag) => Boolean(record[tag]));
+  const isWinDay = WIN_TAG_LIST.some((tag) => Boolean(record[tag]));
   const stars = renderStars(note.star);
 
   return (
-    <Grid alignItems="flex-start" item xs={12} sm={6} md={4} lg={3}>
+    <div style={{ minWidth: 0 }}>
       <Card
         variant="outlined"
         style={{
-          marginBottom: '1rem',
           border: '0.5px solid var(--ns-rule)',
           borderLeft: isWinDay
             ? '3px solid var(--ns-amber)'
@@ -76,6 +46,7 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
           background: 'var(--ns-paper)',
           boxShadow: '0 1px 3px rgba(35, 38, 43, 0.04)',
           padding: '1.1rem 1.25rem',
+          height: '100%',
         }}
       >
         <div
@@ -159,7 +130,7 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
             gap: '4px',
           }}
         >
-          {TAG_CONFIG.map(({ field, icon, label }) =>
+          {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
             record[field] ? (
               <span
                 key={field}
@@ -180,6 +151,6 @@ export const NoteCard = ({ note, onEdit, onDelete }: NoteCardProps) => {
           )}
         </div>
       </Card>
-    </Grid>
+    </div>
   );
 };

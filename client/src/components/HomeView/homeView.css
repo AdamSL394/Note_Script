@@ -100,9 +100,48 @@
   min-width: 3.5rem;
 }
 
+/* Segmented Weeks/Years toggle, replacing a plain MUI <Switch> whose
+   on/off state didn't visually communicate what it was switching
+   between - a sliding blue circle on a gray track reads as "on/off",
+   not "weeks/years." Two labeled buttons say directly what each state
+   means. */
+.lookBackToggle {
+  display: flex;
+  border: 1px solid var(--ns-rule);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.lookBackToggleBtn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  padding: 5px 14px;
+  border: none;
+  background: var(--ns-paper);
+  color: var(--ns-graphite);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lookBackToggleBtn:first-child {
+  border-right: 1px solid var(--ns-rule);
+}
+
+.lookBackToggleBtn.active {
+  background: var(--ns-blue);
+  color: var(--ns-paper);
+}
+
 .lookBackLabel {
   font-family: var(--font-mono);
   font-size: 13px;
   letter-spacing: 0.03em;
   color: var(--ns-graphite);
+}
+
+.homeNoteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
