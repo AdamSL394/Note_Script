@@ -1,6 +1,7 @@
 import { auth, AuthResult } from 'express-oauth2-jwt-bearer';
 import { Request, Response, NextFunction } from 'express';
 import config from './../config/config.json'
+import { normalizeUserId } from '../utils/userId';
 
 const environment = (process.env.NODE_ENV || 'development') as keyof typeof config;
 
@@ -26,7 +27,7 @@ export const getVerifiedUserId = (auth: AuthResult | undefined): string | undefi
     const sub = auth?.payload?.sub;
     if (!sub) return undefined;
     const rawId = sub.split('|')[1] ?? sub;
-    return rawId.length !== 24 ? rawId + '000' : rawId;
+    return normalizeUserId(rawId);
 };
 
 export default checkJwt;

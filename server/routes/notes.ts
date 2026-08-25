@@ -143,13 +143,23 @@ router.post('/upload', async (req: Request<{}, unknown, UploadBody>, res: Respon
     const arrayOfNotes = await parseNotes(userId, { note: req.body.note });
     const data: string[] = [];
 
-    arrayOfNotes.forEach(async (i) => {
-        await noteController.uploadNotes(i).then((resp) => {
-            data.push(resp);
-            return resp;
+    const results: string[] = [];
+    for (const note of arrayOfNotes) {
+        const result = await noteController.uploadNotes(note);
+        results.push(result);
+    }
+
+    const successCount = results.filter((r) => r === 'correct').length;
+    const failureCount = results.length - successCount;
+    if (failureCount > 0) {
+        res.status(207).json({
+            message: `${successCount} of ${results.length} notes uploaded successfully`,
+            successCount,
+            failureCount,
         });
-    });
-    res.send('Sucess');
+        return;
+    }
+    res.json({ message: `${successCount} notes uploaded successfully`, successCount, failureCount: 0 });
 });
 
 router.get('/lastyear/:userid/:tdYearAgo/:lwYearAgo', async (req: Request<{ userid: string; tdYearAgo: string; lwYearAgo: string }>, res: Response) => {

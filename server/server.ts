@@ -42,8 +42,6 @@ if (
 ) {
   const root = path.join(__dirname, '..', '..', 'client', 'build');
   app.use(express.static(root));
-  app.use('/users', checkJwt, notesRouter);
-  app.use('/api/users', checkJwt, userRouter);
   app.get('*', function (req: Request, res: Response) {
     res.sendFile('index.html', { root });
   });
