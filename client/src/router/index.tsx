@@ -5,7 +5,7 @@ import Home from '../views/Home/home';
 import { ProtectedRoute } from '../hooks/protectedRoute';
 import AllNotes from '../views/AllNotes/allNotes';
 import UserSettings from '../views/UserSettings/userSettings'
-import Upload from '../views/Upload/upload.js'
+import Upload from '../views/Upload/upload'
 
 
 const Router = () => {

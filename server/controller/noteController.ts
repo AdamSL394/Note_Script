@@ -1,5 +1,6 @@
 import Note, { INote } from '../models/notes';
 import mongoose from 'mongoose';
+import { normalizeUserId } from '../utils/userId';
 
 interface NoteYearAggregateResult {
     _id: string;
@@ -11,9 +12,7 @@ interface NoteYearAggregateResult {
 const postNotes = async (
     noteData: Partial<INote> & { userId: string }
 ): Promise<string> => {
-    if (noteData.userId.length != 24) {
-        noteData.userId = noteData.userId + '000';
-    }
+    noteData.userId = normalizeUserId(noteData.userId);
     const newNote = new Note(noteData);
     // Previously called newNote.save() with a callback but never awaited
     // it, so this function returned 'Success' before the callback had

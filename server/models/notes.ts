@@ -23,12 +23,17 @@ const NoteSchema = new Schema<INote>({
     'userId': {type: String, required: true},
     'text': {type: String, required: true},
     'date': {type: String, required: true},
-    // `default: false` on a String-typed field is an odd mismatch — a
-    // boolean default value for a field that's supposed to hold string
-    // star-ratings ('1'/'2'/'3'/'None' per the client's usage). Left
-    // exactly as-is since I don't know if existing documents rely on
-    // this, but worth a look.
-    'star': {type: String, default: false},
+    // Was `default: false` — a boolean default on a String-typed field
+    // that's supposed to hold '1'/'2'/'3'/'None' (see the client's
+    // renderStars/star-select usage). Mongoose cast that default to the
+    // string "false" on save, which the client's `=== 'None'` check
+    // never matches — so a note saved without a star silently didn't
+    // render as "no rating" the way the rest of the app expects.
+    // Existing documents already saved with "false" are unaffected by
+    // this change (it only affects the default going forward); a
+    // one-time migration to normalize old "false" values to 'None' is
+    // a separate, optional cleanup.
+    'star': {type: String, default: 'None'},
     'edit': {type: Boolean, default: false},
     'look': {type: Boolean, default: false},
     'gym': {type: Boolean, default: false},
@@ -40,22 +45,30 @@ const NoteSchema = new Schema<INote>({
     'king': {type: Boolean, default: false},
     'date/smoosh': {type: Boolean, default: false},
     'basketball': {type: Boolean, default: false},
-    // Was `default: Date.now()` — calling the function immediately
-    // evaluates it ONCE at schema-definition time (server startup), so
-    // every note ever created got the exact same frozen timestamp
-    // (whenever the server last restarted), not its actual creation
-    // time. `default: Date.now` (no parens) passes the function itself,
-    // so Mongoose calls it fresh for each new document — the standard,
-    // well-known fix for this exact Mongoose gotcha.
     'updatedAt': {type: Date, default: Date.now},
 
 });
 
-// This includes `name: 'text'`, but there's no `name` field anywhere on
-// this schema — looks like a leftover/mistake. Left exactly as-is since
-// touching a live text index without knowing the current index state on
-// your actual database is genuinely risky; flagging rather than fixing.
-NoteSchema.index({name:'text', 'text': 'text'})
+// Was `{ name: 'text', text: 'text' }` — 'name' isn't a field on this
+// schema at all, so that half of the index definition was pointing at
+// nothing. The real intent (per searchNotes' $search stage in
+// noteController.ts) is a text index on the `text` field alone.
+//
+// NOTE ON DEPLOYING THIS: Mongoose doesn't auto-drop/rename an existing
+// index just because the schema definition changed. If the old
+// `{name:'text', text:'text'}` index already exists on your live
+// database, this new definition won't replace it automatically — either
+// drop the old index manually (`db.notes.dropIndex(...)`) or call
+// `Note.syncIndexes()` once during a deploy/migration step.
+NoteSchema.index({ text: 'text' });
+
+// Every note query (getAllNotes, getRangeNotes, deleteNotes, updateNote,
+// getSingleNote, getMostRecentlyUpdatedNotes) filters by userId, and
+// several also sort by date — there was no index supporting either,
+// meaning every one of those queries did a full collection scan. This
+// compound index covers the userId-filter + date-sort pattern used
+// throughout noteController.ts.
+NoteSchema.index({ userId: 1, date: -1 });
 
 const Note: Model<INote> = mongoose.model<INote>('Note', NoteSchema);
 
