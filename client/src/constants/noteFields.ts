@@ -24,7 +24,7 @@ export const NOTE_TAG_FIELDS: NoteFieldConfig[] = [
   { field: 'basketball', icon: '⛹🏻\u200d♂️', label: 'Basketball' },
   { field: 'king', icon: '🤴🏻', label: 'King' },
   { field: 'medal', icon: '🥇', label: 'Medal' },
-  { field: 'date/smoosh', icon: '👫', label: 'Date' },
+  { field: 'ice', icon: '👫', label: 'Date' },
 ];
 
 // Tags that count as a "win" — gets the amber accent wherever notes are
