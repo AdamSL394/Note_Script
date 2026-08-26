@@ -7,6 +7,7 @@ import InputLabel from '@mui/material/InputLabel/index.js';
 import Button from '@mui/material/Button/index.js';
 import NoteRoutes from '../../router/noteRoutes';
 import type { TrackedStat, AuthUser } from '../../types';
+import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
 import './createNote.css';
 
 interface CreateNoteProps {
@@ -19,28 +20,26 @@ interface CreateNoteProps {
   storeNewNote: (stats: TrackedStat[], date: string | undefined) => void;
 }
 
+// Built from the shared tag list instead of a separately hand-typed
+// copy — previously this list and NotesHomeView's tag table had drifted
+// out of order/sync with each other. 'star' is appended on top since
+// it's specific to this picker (a trackable "did I do something
+// 5-star-worthy" stat) rather than a Note tag field.
+//
+// Deliberately kept excluded from WIN_TAGS: 'star' collides with the
+// Note schema's existing String star-rating field (see
+// noteController/models/notes.ts), so toggling this tracked stat likely
+// already clobbers that field. Not fixed here since it's a
+// backend/schema concern, not a styling one — flagging so it doesn't
+// get lost.
 const EMOJI_LIST: TrackedStat[] = [
-  { icon: '🥇', name: 'medal', visible: 'hidden' },
-  { icon: '👀', name: 'look', visible: 'hidden' },
-  { icon: '💪🏼', name: 'gym', visible: 'hidden' },
-  { icon: '🍁', name: 'weed', visible: 'hidden' },
-  { icon: '👨🏻‍💻', name: 'code', visible: 'hidden' },
-  { icon: '⛹🏻‍♂️', name: 'basketball', visible: 'hidden' },
-  { icon: '📚', name: 'read', visible: 'hidden' },
-  { icon: '🍕', name: 'eatOut', visible: 'hidden' },
-  { icon: '🤴🏻', name: 'king', visible: 'hidden' },
-  { icon: '👫', name: 'date/smoosh', visible: 'hidden' },
+  ...NOTE_TAG_FIELDS.map(({ field, icon }) => ({
+    icon,
+    name: field,
+    visible: 'hidden' as const,
+  })),
   { icon: '🌟', name: 'star', visible: 'hidden' },
 ];
-
-// Tags that render with the amber "win" accent when active, matching
-// the streak strip's amber = win-day convention in homeView. Deliberately
-// excludes 'star' - that name collides with the Note schema's existing
-// String star-rating field (see noteController/models/notes.ts), so
-// toggling this tracked stat likely already clobbers that field. Not
-// fixed here since it's a backend/schema concern, not styling - flagging
-// so it doesn't get lost.
-const WIN_TAGS = new Set(['medal', 'king']);
 
 export const CreateNote = (props: CreateNoteProps) => {
   const [date, setDate] = useState<string | undefined>();
@@ -111,7 +110,7 @@ export const CreateNote = (props: CreateNoteProps) => {
           {props.trackedStats?.map((stat, key) => {
             if (!stat) return null;
             const active = stat.visible === 'visible';
-            const isWin = WIN_TAGS.has(stat.name);
+            const isWin = WIN_TAGS.includes(stat.name);
             const className = [
               'tagChip',
               active ? 'active' : '',

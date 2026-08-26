@@ -53,13 +53,7 @@ const Textarea = (props: TextareaProps) => {
   return (
     <>
       <textarea
-        style={{
-          width: '94%',
-          fontSize: 'medium',
-          borderRadius: '5px 5px 5px 5px',
-          height: '13rem',
-        }}
-        id="editCard"
+        className="editingTextarea"
         value={postContent}
         onChange={(e) => {
           const clampedText = onChangeTextArea(e, props.note);

@@ -1,8 +1,61 @@
-.noteYears{
+.noteYearsSidebar {
+  position: sticky;
+  top: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 4.5rem;
+  flex-shrink: 0;
+  align-self: flex-start;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+}
+
+.noteYearsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.noteYearsDivider {
+  padding-top: 0.5rem;
+  border-top: 0.5px solid var(--ns-rule);
+}
+
+.noteYears {
   cursor: pointer !important;
-  position: relative;
-  margin-left: 5%;
-  margin-bottom: 1%;
-  color:blue !important;
-  text-decoration: underline;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+}
+
+.noteYearsEllipsis {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ns-graphite) !important;
+  cursor: pointer !important;
+}
+
+@media screen and (max-width: 900px) {
+  .noteYearsSidebar {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+  .noteYearsGroup {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .noteYearsDivider {
+    border-top: none;
+    border-left: 0.5px solid var(--ns-rule);
+    padding-top: 0;
+    padding-left: 0.5rem;
+  }
 }

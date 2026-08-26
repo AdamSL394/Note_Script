@@ -1,5 +1,4 @@
 import React from 'react';
-import Grid from '@mui/material/Grid/index.js';
 import Container from '@mui/material/Container/index.js';
 import Notes from '../Notes/notes';
 import './entireNoteHistory.css';
@@ -34,11 +33,9 @@ const NoteHistory = () => {
         maxWidth={false}
         style={{ marginTop: "4rem"}}
       >
-        <Grid className="grid" container justifyContent="center">
-          <Notes
-            onStarValueChange={onStarValueChange}
-          ></Notes>
-        </Grid>
+        <Notes
+          onStarValueChange={onStarValueChange}
+        ></Notes>
       </Container>
     </div>
   );

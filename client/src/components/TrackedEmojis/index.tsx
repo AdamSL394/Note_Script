@@ -1,80 +1,30 @@
 import React from 'react';
 import type { Note } from '../../types';
+import { NOTE_TAG_FIELDS } from '../../constants/noteFields';
 
 interface TrackedEmojisProps {
   note: Note;
 }
 
 export const TrackedEmojis = (props: TrackedEmojisProps) => {
+    // 'date/smoosh' isn't a valid identifier, so it has to be read via
+    // bracket access — same pattern as NotesHomeView/Note.
+    const record = props.note as unknown as Record<string, unknown>;
+
     return (
-        <>
-            <div>
-                <span>
-                    {props.note.look ? (
-                        <span
-                            role="img"
-                            aria-label="eyes"
-                            style={{
-                                backgroundColor: 'lightgrey',
-                                marginRight: '.4rem',
-                                border: '2px lightgrey',
-                                borderRadius: '10px 10px 10px 10px',
-                                paddingLeft: '4px',
-                            }}
-                        >
-                            {' '}
-                👀{' '}
-                        </span>
-                    ) : null}
-                </span>
-
-                <span>
-                    {props.note.gym ? (
-                        <span role="img" aria-label="arm" className="emoji">
-                💪🏼{' '}
-                        </span>
-                    ) : null}{' '}
-                </span>
-
-                <span>
-                    {props.note.weed ? (
-                        <span role="img" aria-label="leaf" className="emoji">
-                🍁{' '}
-                        </span>
-                    ) : null}{' '}
-                </span>
-
-                <span>
-                    {props.note.code ? (
-                        <span role="img" aria-label="computer guy" className="emoji">
-                👨🏻‍💻{' '}
-                        </span>
-                    ) : null}{' '}
-                </span>
-
-                <span>
-                    {props.note.read ? (
-                        <span role="img" aria-label="books" className="emoji">
-                📚{' '}
-                        </span>
-                    ) : null}{' '}
-                </span>
-
-                <span>
-                    {props.note.eatOut ? (
-                        <span role="img" aria-label="pizza" className="emoji">
-                🍕{' '}
-                        </span>
-                    ) : null}{' '}
-                </span>
-
-                <span>
-                    {props.note.basketball ? (
-                        <span role="img" aria-label="basketball" className="emoji">
-                ⛹🏻‍♂️{' '}
-                        </span>
-                    ) : null}{' '}
-                </span>
-            </div>
-        </>);
+        <div>
+            {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
+                record[field] ? (
+                    <span
+                        key={field}
+                        role="img"
+                        aria-label={label}
+                        className="emoji"
+                    >
+                        {icon}{' '}
+                    </span>
+                ) : null
+            )}
+        </div>
+    );
 };

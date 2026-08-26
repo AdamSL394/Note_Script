@@ -1,9 +1,9 @@
 import React from 'react';
-import Grid from '@mui/material/Grid/index.js';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import NoteText from '../NoteText/noteText';
 import type { Note as NoteType } from '../../types';
+import { NOTE_TAG_FIELDS } from '../../constants/noteFields';
 
 interface NoteProps {
   note: NoteType;
@@ -21,8 +21,13 @@ function Note(props: NoteProps) {
         sessionStorage.setItem(noteToEdit._id, JSON.stringify(noteToEdit));
         props.updateNote(noteToEdit);
     };
+
+    // 'date/smoosh' isn't a valid identifier, so it has to be read via
+    // bracket access — same pattern as NotesHomeView.
+    const record = props.note as unknown as Record<string, unknown>;
+
     return (
-        <Grid xs={8} sm={5} md={5} lg={2} style={{ margin: '.5%' }} item={true}>
+        <div className="noteCard">
             <Card
                 style={{ marginBottom: '2%' }}
                 id="Card"
@@ -60,123 +65,25 @@ function Note(props: NoteProps) {
 
                 <NoteText note={props.note}></NoteText>
 
-                <div style={{ borderTop: '1px solid #cbcbcb' }}>
-                    <span>
-                        {props.note.look ? (
+                <div style={{ borderTop: '1px solid #cbcbcb', padding: '0.4rem 0' }}>
+                    {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
+                        record[field] ? (
                             <span
+                                key={field}
                                 role="img"
-                                aria-label="eyes"
+                                aria-label={label}
                                 style={{
-                                    backgroundColor: 'lightgrey',
                                     marginRight: '.4rem',
-                                    border: '2px lightgrey',
-                                    borderRadius: '10px 10px 10px 10px',
-                                    paddingLeft: '4px',
+                                    display: 'inline-block',
                                 }}
                             >
-                                {' '}
-                👀{' '}
+                                {icon}
                             </span>
-                        ) : null}
-                    </span>
-                    <span>
-                        {props.note.gym ? (
-                            <span
-                                role="img"
-                                aria-label="arm"
-                                style={{
-                                    backgroundColor: '#ffffff',
-                                    marginRight: '.4rem',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                💪🏼{' '}
-                            </span>
-                        ) : null}{' '}
-                    </span>
-
-                    <span>
-                        {props.note.weed ? (
-                            <span
-                                role="img"
-                                aria-labelledby="leaf"
-                                style={{
-                                    backgroundColor: '#ffffff',
-                                    marginRight: '.4rem',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                🍁{' '}
-                            </span>
-                        ) : null}{' '}
-                    </span>
-
-                    <span>
-                        {props.note.code ? (
-                            <span
-                                role="img"
-                                aria-label="computer guy"
-                                style={{
-                                    backgroundColor: '#ffffff',
-                                    marginRight: '.4rem',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                👨🏻‍💻{' '}
-                            </span>
-                        ) : null}{' '}
-                    </span>
-
-                    <span>
-                        {props.note.read ? (
-                            <span
-                                role="img"
-                                aria-label="books"
-                                style={{
-                                    backgroundColor: '#ffffff',
-                                    marginRight: '.4rem',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                📚{' '}
-                            </span>
-                        ) : null}{' '}
-                    </span>
-
-                    <span>
-                        {props.note.eatOut ? (
-                            <span
-                                role="img"
-                                aria-label="pizza"
-                                style={{
-                                    backgroundColor: '#ffffff',
-                                    marginRight: '.4rem',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                🍕{' '}
-                            </span>
-                        ) : null}{' '}
-                    </span>
-
-                    <span>
-                        {props.note.basketball ? (
-                            <span
-                                role="img"
-                                aria-label="basketball"
-                                style={{
-                                    backgroundColor: '#ffffff',
-                                    marginRight: '.4rem',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                ⛹🏻‍♂️{' '}
-                            </span>
-                        ) : null}{' '}
-                    </span>
+                        ) : null
+                    )}
                 </div>
             </Card>
-        </Grid>
+        </div>
     );
 }
 

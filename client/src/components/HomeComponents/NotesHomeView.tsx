@@ -2,38 +2,11 @@ import React from 'react';
 import Card from '@mui/material/Card/index.js';
 import Grid from '@mui/material/Grid/index.js';
 import type { Note } from '../../types';
+import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
 
 interface HomeNotesProps {
   notes: Note[];
 }
-
-interface TagConfigEntry {
-  field: string;
-  icon: string;
-  label: string;
-}
-
-// Maps each Note field to its emoji + label. One small table + one map
-// instead of nine near-identical hand-written conditional blocks - same
-// fields, same conditions, same icons rendered, just not copy-pasted
-// nine times over.
-const TAG_CONFIG: TagConfigEntry[] = [
-  { field: 'look', icon: '👀', label: 'Eyes' },
-  { field: 'gym', icon: '💪🏼', label: 'arm' },
-  { field: 'weed', icon: '🍁', label: 'Leaf' },
-  { field: 'code', icon: '👨🏻\u200d💻', label: 'Computer guy' },
-  { field: 'read', icon: '📚', label: 'Books' },
-  { field: 'eatOut', icon: '🍕', label: 'Pizza' },
-  { field: 'basketball', icon: '⛹🏻\u200d♂️', label: 'Basketball' },
-  { field: 'king', icon: '🤴🏻', label: 'King' },
-  { field: 'medal', icon: '🥇', label: 'Medal' },
-  { field: 'date/smoosh', icon: '👫', label: 'Date' },
-];
-
-// Same "win" convention as the streak strip and CreateNote's tag chips -
-// a card with one of these tags gets the amber accent, so the same
-// color means the same thing everywhere in the app.
-const WIN_TAGS = new Set(['medal', 'king']);
 
 // Renders a note's star rating ('1'/'2'/'3'/'None', per the schema) as
 // filled stars instead of the raw string - "'s: None" read oddly and
@@ -53,7 +26,7 @@ export const HomeNotes = (props: HomeNotesProps) => {
     // strict, fully-named type everywhere else, so this stays a local
     // cast rather than loosening the shared type for one odd field.
     const record = note as unknown as Record<string, unknown>;
-    const isWinDay = Array.from(WIN_TAGS).some((tag) => Boolean(record[tag]));
+    const isWinDay = WIN_TAGS.some((tag) => Boolean(record[tag]));
     const stars = renderStars(note.star);
 
     return (
@@ -127,7 +100,7 @@ export const HomeNotes = (props: HomeNotesProps) => {
               gap: '4px',
             }}
           >
-            {TAG_CONFIG.map(({ field, icon, label }) =>
+            {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
               record[field] ? (
                 <span
                   key={field}

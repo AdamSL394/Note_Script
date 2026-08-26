@@ -1,78 +1,81 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from '@mui/material/Link/index.js';
-import Grid from '@mui/material/Grid/index.js';
-
-// The minimal shape notesYears() actually needs — not the full
-// NoteYearsProps shape. Callers (like SearchNotes) pass their own props
-// object through here, and that object's exact shape varies by caller;
-// what matters is just that it has these two fields.
-export interface NotesYearsCallbackProps {
-  currentPage: number;
-  setNotesBasedOnYear: (page: unknown, year: string | number) => void;
-}
+import './noteYears.css';
 
 interface NoteYearsProps {
   noteYears: (string | number)[];
-  currentDbCall: string | number;
-  notesYears: (props: NotesYearsCallbackProps, year: string | number) => void;
-  currentPage: number;
-  setNotesBasedOnYear: (page: unknown, year: string | number) => void;
+  currentSelection: string | number;
+  onSelectYear: (year: string | number) => void;
 }
 
-function NoteYears(props: NoteYearsProps) {
-  return (
-    <Grid container style={gridStyles}>
-      {props.noteYears.map((year, key) => (
-        <Grid item xs={0.5} key={key + 11} style={itemStyles}>
-          <Link
-            key={key + 1}
-            onClick={() => handleYearClick(year, props)}
-            className="noteYears"
-            style={getLinkStyles(year, props)}
-          >
-            {year}
-          </Link>
-        </Grid>
-      ))}
-    </Grid>
-  );
-}
+const SPECIAL_ENTRIES = new Set(['Recently Changed', 'All']);
 
-function handleYearClick(year: string | number, props: NoteYearsProps) {
-  if (year !== props.currentDbCall) {
-    props.notesYears(props, year);
-  }
-}
+// Per the "2026, 2025, 2024 ... [oldest]" request: show this many of
+// the most recent years before collapsing the rest behind a "...", which
+// expands to the full list on click.
+const VISIBLE_YEAR_COUNT = 10;
 
-function getLinkStyles(
-  year: string | number,
-  props: NoteYearsProps
-): React.CSSProperties {
-  if (year === props.currentDbCall) {
+function NoteYears({ noteYears, currentSelection, onSelectYear }: NoteYearsProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  // useNoteYears builds the list oldest-first with the two special
+  // entries appended at the end — reversed here for display so the
+  // sidebar reads most-recent-year-first (2026, 2025, 2024, ...), which
+  // is how someone actually scans a list of years.
+  const specials = noteYears.filter((y) => SPECIAL_ENTRIES.has(String(y)));
+  const years = noteYears
+    .filter((y) => !SPECIAL_ENTRIES.has(String(y)))
+    .slice()
+    .reverse();
+
+  const needsTruncation = !expanded && years.length > VISIBLE_YEAR_COUNT + 1;
+  const visibleYears = needsTruncation ? years.slice(0, VISIBLE_YEAR_COUNT) : years;
+  const oldestYear = years[years.length - 1];
+
+  const linkStyle = (year: string | number): React.CSSProperties => {
+    const isSelected = year === currentSelection;
     return {
-      cursor: 'default',
-      color: 'grey',
-      textDecoration: 'none',
+      cursor: isSelected ? 'default' : 'pointer',
+      color: isSelected ? 'var(--ns-graphite)' : 'var(--ns-blue)',
+      textDecoration: isSelected ? 'none' : 'underline',
     };
-  } else {
-    return {
-      cursor: 'pointer',
-      color: 'blue',
-    };
-  }
-}
-
-const itemStyles: React.CSSProperties = {
-    marginBottom: '1.5rem',
   };
 
-const gridStyles: React.CSSProperties = {
-  left: '2%',
-  position: 'absolute',
-  display: 'flex',
-  flexDirection: 'column-reverse',
-  marginTop: '.5%',
-  width: '5%',
-};
+  const yearLink = (year: string | number) => (
+    <Link
+      key={year}
+      onClick={() => onSelectYear(year)}
+      className="noteYears"
+      style={linkStyle(year)}
+    >
+      {year}
+    </Link>
+  );
+
+  return (
+    <nav className="noteYearsSidebar" aria-label="Filter notes by year">
+      <div className="noteYearsGroup">{specials.map(yearLink)}</div>
+
+      {years.length > 0 && (
+        <div className="noteYearsGroup noteYearsDivider">
+          {visibleYears.map(yearLink)}
+          {needsTruncation && (
+            <>
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="noteYears noteYearsEllipsis"
+                aria-label="Show all years"
+              >
+                …
+              </button>
+              {yearLink(oldestYear)}
+            </>
+          )}
+        </div>
+      )}
+    </nav>
+  );
+}
 
 export default NoteYears;
