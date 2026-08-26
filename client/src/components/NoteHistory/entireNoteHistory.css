@@ -1,48 +1,35 @@
-.bubbles{
-    background-color: "lightgrey";
-    margin-right: ".4rem"; 
-    border: "2px lightgrey";
-    border-radius: "10px 10px 10px 10px";
-    cursor: "pointer";
-    font-size: "20px";
-    cursor:"pointer"
-}
-
 .style{
-        position: absolute ;
-        top: 50%; 
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 400px;
-        height: 100px;
-        background-color: white !important;
-        border: 2px solid #000;
-        box-shadow: 24;
-        font: 4;
-        text-align: center;
+    position: absolute ;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 100px;
+    background-color: var(--ns-paper) !important;
+    border: 1px solid var(--ns-rule);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    color: var(--ns-ink);
 }
 
 .closeButton{
-    color:red;
+color:red;
 }
 
 #id{
-    text-align: center;
-    width: 100%;
-    font-size: x-large
+text-align: center;
+width: 100%;
+font-size: x-large
 }
 
 .stack{
-    align-items: center;
-    margin: 1rem;
+align-items: center;
+margin: 1rem;
 }
 
 .date{
-    height: 1.4rem;
-    margin-left: 2rem;
-    float: right;
-}
-
-#search{
-    align-items: center;
+height: 1.4rem;
+margin-left: 2rem;
+float: right;
 }
