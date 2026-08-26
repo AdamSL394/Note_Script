@@ -9,43 +9,21 @@ import { LookBack } from '../HomeComponents/LookBack/index';
 import { HomeNotes } from '../HomeComponents/NotesHomeView';
 import { AlertMessage } from '../HomeComponents/SaveNoteAlert/index';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
+import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
 import './homeView.css';
 
-// Known fields plus an index signature — this object is genuinely
-// accessed with dynamic string keys (`counts[property]++`) below, so a
-// strict named-fields-only interface would fight the actual usage
-// rather than describe it honestly.
-interface PropertyCounts {
-  gym: number;
-  study: number;
-  weed: number;
-  code: number;
-  read: number;
-  eatOut: number;
-  basketball: number;
-  king: number;
-  medal: number;
-  date_smoosh: number;
-  [key: string]: number;
-}
+// Keyed by the Note schema's actual field names (from NOTE_TAG_FIELDS),
+// not a separately hand-typed list. Previously this was its own object
+// with a 'study' key that doesn't correspond to any real Note field
+// (always stayed 0), and a 'date_smoosh' key that never matched the
+// real field name 'date/smoosh' — both were silently dead. Deriving the
+// keys from the same shared list everything else uses means this can't
+// drift out of sync with what a Note can actually have set on it.
+type PropertyCounts = Record<string, number>;
 
-const EMPTY_COUNTS: PropertyCounts = {
-  gym: 0,
-  study: 0,
-  weed: 0,
-  code: 0,
-  read: 0,
-  eatOut: 0,
-  basketball: 0,
-  king: 0,
-  medal: 0,
-  date_smoosh: 0,
-};
-
-// Tags that count as a "win" day for the streak strip's amber dot.
-// Kept in sync by convention with CreateNote's WIN_TAGS - both mark the
-// same two tracked stats (medal, king) as the app's "win" category.
-const WIN_TAGS = ['medal', 'king'];
+const EMPTY_COUNTS: PropertyCounts = Object.fromEntries(
+  NOTE_TAG_FIELDS.map(({ field }) => [field, 0])
+);
 
 interface StreakDay {
   date: string;
@@ -71,17 +49,6 @@ const HomeView = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [propertyCounts, setPropertyCounts] =
     useState<PropertyCounts>(EMPTY_COUNTS);
-  const propertyNames = [
-    'Gym',
-    'Study',
-    'Weed',
-    'Code',
-    'Read',
-    'EatOut',
-    'Basketball',
-    'King',
-    'Medal',
-  ];
 
   // Auth0's `user.sub` is optional (undefined until authentication
   // resolves), so every call site that needs the derived userId goes
@@ -253,15 +220,13 @@ const HomeView = () => {
     }
   };
 
-  const renderPropertyCount = (property: string, count: number) => {
-    if (count > 0) {
-      return (
-        <span id="items">
-          {property}: {count}
-        </span>
-      );
-    }
-    return null;
+  const renderPropertyCount = (icon: string, label: string, count: number) => {
+    if (count <= 0) return null;
+    return (
+      <span id="items" key={label}>
+        <span aria-hidden="true">{icon}</span> {label}: {count}
+      </span>
+    );
   };
 
   // Builds the last 7 days for the streak strip from notes already
@@ -335,14 +300,13 @@ const HomeView = () => {
       <h3 id="pastNoteHeader">{noNotes}</h3>
       <h3 id="pastNoteError">{noteError}</h3>
       <div>
-        <div id="count">
-          {propertyNames.map((property) =>
-            renderPropertyCount(
-              property,
-              propertyCounts[property.toLowerCase()]
-            )
-          )}
-        </div>
+        {Object.values(propertyCounts).some((count) => count > 0) && (
+          <div id="count">
+            {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
+              renderPropertyCount(icon, label, propertyCounts[field] ?? 0)
+            )}
+          </div>
+        )}
         <Grid
           container
           spacing={2}

@@ -4,14 +4,8 @@ import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
+import { WIN_TAGS } from '../../constants/noteFields';
 import './userSettings.css';
-
-// Same "win" convention as CreateNote's tag chips, NotesHomeView's card
-// accent, and homeView's streak strip - a third hand-copied list of the
-// same two tags. Worth pulling all of these (and the tag icon/label
-// tables) into one shared file the next time this page gets touched,
-// rather than keeping four sources of truth in sync by hand.
-const WIN_TAGS = new Set(['medal', 'king']);
 
 const UserSetting = () => {
     const [currentUser, setCurrentUser] = useState<UserRecord | undefined>();
@@ -99,7 +93,7 @@ const UserSetting = () => {
                     <div className="statChipRow">
                         {withoutDups.map((icon, i) => {
                             const active = icon.visible === 'visible';
-                            const isWin = WIN_TAGS.has(icon.name);
+                            const isWin = WIN_TAGS.includes(icon.name);
                             const className = [
                                 'tagChip',
                                 active ? 'active' : '',

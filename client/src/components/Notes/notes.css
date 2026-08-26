@@ -5,6 +5,44 @@
   font-size: xx-large;
   width: 47%;
 }
+
+/* Top-level layout for the AllNotes page: year sidebar on the left,
+   everything else (search, pagination, note cards) in a main column. */
+.notesLayout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 0 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.notesMain {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Replaces a bare MUI <Grid item> per card with no <Grid container>
+   ancestor — item-sizing props (xs/sm/md/lg) are inert without a
+   container, which produced inconsistent card widths. CSS Grid with
+   auto-fill/minmax is a reliable escape hatch that doesn't depend on
+   an ancestor component to work correctly. */
+.noteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.noteGrid .noteCard {
+  min-width: 0;
+}
+
+@media screen and (max-width: 900px) {
+  .notesLayout {
+    flex-direction: column;
+  }
+}
+
 @media screen and (max-width: 1000px) {
   #searchStyle {
     max-width: 80% !important;

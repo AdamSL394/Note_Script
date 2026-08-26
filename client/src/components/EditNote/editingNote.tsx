@@ -1,5 +1,4 @@
 import React from 'react';
-import Grid from '@mui/material/Grid/index.js';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import FormControl from '@mui/material/FormControl/index.js';
@@ -10,6 +9,7 @@ import Textarea from '../TextArea/index';
 import { TrackedEmojis } from '../TrackedEmojis/index';
 import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
 import type { Note } from '../../types';
+import './editingNote.css';
 
 interface EditingNoteProps {
   note: Note;
@@ -26,91 +26,110 @@ interface EditingNoteProps {
 }
 
 function EditingNote(props: EditingNoteProps) {
+  const characterCount = 200;
+  const remaining = props.note.textLength ?? characterCount - props.note.text.length;
+
+  // Guards against both a missing value and legacy notes saved with the
+  // old star:'false' schema-default bug (see server/models/notes.ts) —
+  // either way, falls back to 'None' rather than a value the Select has
+  // no matching MenuItem for (which renders as a blank box).
+  const validStarValues = new Set(['None', '1', '2', '3']);
+  const starValue = validStarValues.has(props.note.star)
+    ? props.note.star
+    : 'None';
+
   return (
-    <Grid xs={8} sm={5} md={5} lg={2} style={{ margin: '.5%' }} item>
-      <Card variant="outlined" id="Card">
-        <Button
-          onClick={() => props.openModal(props.note)}
-          color="primary"
-          id="deleteButton"
-        >
-          <strong>X</strong>
-        </Button>
+    <div className="noteCard">
+      <Card variant="outlined" id="Card" className="editingCard">
+        <div className="editingCardHeader">
+          <div className="editingDateRow">
+            <input
+              onChange={(e) => {
+                props.setDateNote(e, props.note);
+              }}
+              type="date"
+              defaultValue={props.note.date}
+              className="editingDateInput"
+            ></input>
 
-        <div
-          style={{
-            marginLeft: '5%',
-          }}
-          id="dateInput"
-        >
-          <input
-            onChange={(e) => {
-              props.setDateNote(e, props.note);
-            }}
-            type="date"
-            defaultValue={props.note.date}
-            style={{
-              marginTop: '4%',
-              borderRadius: '5px 5px 5px 5px',
-              border: '1px solid #cbcbcb',
-            }}
-          ></input>
+            <FormControl size="small">
+              {/* Was rendered with no text at all, which is why this
+                  looked like an empty box in the UI — a Select still
+                  needs a visible label to not look broken. */}
+              <InputLabel id="star-select-label">Stars</InputLabel>
+              <Select
+                labelId="star-select-label"
+                label="Stars"
+                onChange={(e) => props.onStarValueChange(e, props.note)}
+                // Was hardcoded to '' regardless of the note's actual
+                // saved rating, so opening any note for editing always
+                // showed a blank selector no matter what star value it
+                // already had. Now reflects the real current value.
+                defaultValue={starValue}
+                className="editingStarSelect"
+              >
+                <MenuItem value={'None'}>
+                  <em>None</em>
+                </MenuItem>
+                <MenuItem value={'1'}>
+                  <span role="img" aria-label="Star">
+                    🌟
+                  </span>
+                </MenuItem>
+                <MenuItem value={'2'}>
+                  <span role="img" aria-label="Star">
+                    🌟🌟
+                  </span>
+                </MenuItem>
+                <MenuItem value={'3'}>
+                  <span role="img" aria-label="Star">
+                    🌟🌟🌟
+                  </span>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </div>
 
-          <FormControl
-            sx={{ m: 1, minWidth: 90 }}
-            size="medium"
-            style={{ alignSelf: 'center' }}
+          <Button
+            onClick={() => props.openModal(props.note)}
+            color="primary"
+            id="deleteButton"
           >
-            <InputLabel
-              id="demo-select-small"
-              style={{ alignSelf: 'center' }}
-            ></InputLabel>
-            <Select
-              labelId="demo-select-small"
-              id="demo-select-small"
-              onChange={(e) => props.onStarValueChange(e, props.note)}
-              defaultValue={''}
-              style={{ height: ' 1.3rem',marginTop:'.5rem' }}
-            >
-              <MenuItem value={'None'}>
-                <em>None</em>
-              </MenuItem>
-              <MenuItem value={'1'}>
-                <span role="img" aria-label="Star">
-                  🌟
-                </span>
-              </MenuItem>
-              <MenuItem value={'2'}>
-                <span role="img" aria-label="Star">
-                  🌟🌟
-                </span>
-              </MenuItem>
-              <MenuItem value={'3'}>
-                <span role="img" aria-label="Star">
-                  🌟🌟🌟{' '}
-                </span>
-              </MenuItem>
-            </Select>
-          </FormControl>
+            <strong>X</strong>
+          </Button>
         </div>
+
         <EditingTrackedEmojis
           note={props.note}
           setNoteValue={props.setNoteValue}
         ></EditingTrackedEmojis>
+
         <Textarea
           notes={props.notes}
           note={props.note}
           setNoteValue={props.setNoteValue}
         ></Textarea>
-        <div>
-          <Button onClick={() => props.saveNote(props.note)}>
-            <strong>Save Me</strong>
+
+        <div className="editingFooterRow">
+          <Button
+            onClick={() => props.saveNote(props.note)}
+            variant="contained"
+            sx={{
+              backgroundColor: 'var(--ns-blue)',
+              '&:hover': { backgroundColor: 'var(--ns-blue)', opacity: 0.9 },
+            }}
+          >
+            save
           </Button>
+          <span className="editingCharCount">{remaining} characters left</span>
         </div>
-        <>{props.note.textLength}</>
-        <TrackedEmojis note={props.note}></TrackedEmojis>
+
+        <div>
+          <div className="editingActiveTagsLabel">Active tags</div>
+          <TrackedEmojis note={props.note}></TrackedEmojis>
+        </div>
       </Card>
-    </Grid>
+    </div>
   );
 }
 
