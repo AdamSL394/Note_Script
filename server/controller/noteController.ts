@@ -43,6 +43,12 @@ const getAllNotesOrdered = async (ids: string): Promise<INote[]> => {
     }
 };
 
+const getNoteCount = async (ids: string): Promise<number> => {
+    const id = new mongoose.Types.ObjectId(ids.trim());
+    const count = await Note.countDocuments({ userId: id });
+    return count;
+};
+
 const getallNoteYearsAggregate = async (
     id: string
 ): Promise<NoteYearAggregateResult[]> => {
@@ -207,6 +213,7 @@ const uploadNotes = async (note: UploadNoteInput): Promise<string> => {
 export default {
     postNotes,
     getAllNotes,
+    getNoteCount,
     deleteNotes,
     updateNote,
     getRangeNotes,

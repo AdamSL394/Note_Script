@@ -26,6 +26,17 @@ router.get('/all', async (req: Request, res: Response) => {
     return;
 });
 
+router.get('/count', async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        res.status(401).send('Unauthorized');
+        return;
+    }
+    const count = await noteController.getNoteCount(userId);
+    res.json({ count });
+    return;
+});
+
 router.get('/note/:id', async (req: Request, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {

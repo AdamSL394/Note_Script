@@ -48,7 +48,7 @@ function Note(props: NoteProps) {
                 <div
                     style={{
                         marginBottom: '5%',
-                        borderBottom: '1px solid #e8e8e8',
+                        borderBottom: '1px solid var(--ns-rule)',
                     }}
                 >
                     <span style={{ marginRight: '5%' }}>
@@ -65,7 +65,7 @@ function Note(props: NoteProps) {
 
                 <NoteText note={props.note}></NoteText>
 
-                <div style={{ borderTop: '1px solid #cbcbcb', padding: '0.4rem 0' }}>
+                <div style={{ borderTop: '1px solid var(--ns-rule)', padding: '0.4rem 0' }}>
                     {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
                         record[field] ? (
                             <span

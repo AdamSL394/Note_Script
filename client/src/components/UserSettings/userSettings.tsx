@@ -3,14 +3,18 @@ import { useAuth0 } from '@auth0/auth0-react';
 import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
+import Switch from '@mui/material/Switch/index.js';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
 import { WIN_TAGS } from '../../constants/noteFields';
+import { useThemeMode } from '../../hooks/useThemeMode';
 import './userSettings.css';
 
 const UserSetting = () => {
     const [currentUser, setCurrentUser] = useState<UserRecord | undefined>();
     const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
+    const [noteCount, setNoteCount] = useState<number | undefined>();
     const { user } = useAuth0();
+    const { mode, toggleMode } = useThemeMode();
 
     useEffect(() => {
         // Auth0's `user` is undefined until authentication resolves.
@@ -23,6 +27,7 @@ const UserSetting = () => {
             return;
         }
         getUserInformation();
+        NoteRoutes.getNoteCount().then(setNoteCount);
     }, [user]);
 
     const getUserInformation = async () => {
@@ -120,16 +125,21 @@ const UserSetting = () => {
                 </div>
 
                 <div className="Form">
-                    <h4 className="settingsLabel">
-                        Total Notes
-                        <span className="comingSoon">coming soon</span>
-                    </h4>
+                    <h4 className="settingsLabel">Total Notes</h4>
+                    <div className="settingsValue">
+                        {noteCount !== undefined ? noteCount : '—'}
+                    </div>
                 </div>
                 <div className="Form">
-                    <h4 className="settingsLabel">
-                        Dark Mode
-                        <span className="comingSoon">coming soon</span>
-                    </h4>
+                    <h4 className="settingsLabel">Dark Mode</h4>
+                    <div className="settingsValue" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Switch
+                            checked={mode === 'dark'}
+                            onChange={toggleMode}
+                            inputProps={{ 'aria-label': 'Toggle dark mode' }}
+                        />
+                        <span>{mode === 'dark' ? 'On' : 'Off'}</span>
+                    </div>
                 </div>
             </Grid>
         </Container>

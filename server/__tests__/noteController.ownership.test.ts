@@ -120,6 +120,22 @@ describe('getAllNotes / getAllNotesOrdered / getRangeNotes / getMostRecentlyUpda
     });
 });
 
+describe('getNoteCount — scoping', () => {
+    it("counts only the requesting user's notes", async () => {
+        await seedNote(userA, { text: 'A note 1', date: '2026-01-01' });
+        await seedNote(userA, { text: 'A note 2', date: '2026-01-05' });
+        await seedNote(userB, { text: 'B note 1', date: '2026-01-03' });
+
+        expect(await noteController.getNoteCount(userA)).toBe(2);
+        expect(await noteController.getNoteCount(userB)).toBe(1);
+    });
+
+    it('returns 0 (not an error) for a user with zero notes', async () => {
+        await seedNote(userB);
+        expect(await noteController.getNoteCount(userA)).toBe(0);
+    });
+});
+
 describe('postNotes — userId handling', () => {
     it('saves the note under the exact userId it is given', async () => {
         const result = await noteController.postNotes({

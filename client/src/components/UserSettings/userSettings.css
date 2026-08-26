@@ -54,16 +54,3 @@
   flex-wrap: wrap;
   gap: 6px;
 }
-
-.comingSoon {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  color: var(--ns-graphite);
-  background: var(--ns-fog);
-  border-radius: 20px;
-  padding: 2px 10px;
-  margin-left: 0.6rem;
-  vertical-align: middle;
-}
