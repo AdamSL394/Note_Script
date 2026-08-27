@@ -1,30 +1,47 @@
 import './tokens.css';
 import './App.css';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/index.js';
 import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter } from 'react-router-dom';
 import Router from './router/index';
 import { useAuthTokenSync } from './hooks/useAuthTokenSync';
+import { ThemeModeProvider, useThemeMode } from './hooks/useThemeMode';
+import { NS_TOKENS } from './theme/nsTokens';
 
-// Matches the field-notebook palette (see tokens.css) rather than the
-// original tan/pink pair - anything using MUI's default theme colors
-// (rather than an explicit override) now lands in the right family
-// instead of clashing with the rest of the app.
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#3d5a80',
-        },
-        secondary: {
-            main: '#e8a33d',
-        },
-    },
-});
-
-function App() {
+// Builds MUI's theme from the current mode's real hex values (nsTokens),
+// rather than tokens.css's CSS custom properties directly — MUI's
+// palette system and helpers like alpha() can't parse var(--ns-*)
+// strings. Recreated whenever the mode changes so MUI's own components
+// (Select, Menu, etc.) stay in sync with the CSS-var-driven parts of the
+// app instead of only ever reflecting the light palette.
+function ThemedApp() {
     const { isLoading } = useAuth0();
+    const { mode } = useThemeMode();
     useAuthTokenSync();
+
+    const theme = useMemo(() => {
+        const tokens = NS_TOKENS[mode];
+        return createTheme({
+            palette: {
+                mode: tokens.base,
+                primary: {
+                    main: tokens.blue,
+                },
+                secondary: {
+                    main: tokens.amber,
+                },
+                background: {
+                    default: tokens.fog,
+                    paper: tokens.paper,
+                },
+                text: {
+                    primary: tokens.ink,
+                    secondary: tokens.graphite,
+                },
+            },
+        });
+    }, [mode]);
 
     if (isLoading) {
         // Was an external Giphy GIF, centered via position:absolute + a
@@ -46,6 +63,14 @@ function App() {
                 </BrowserRouter>
             </div>
         </ThemeProvider>
+    );
+}
+
+function App() {
+    return (
+        <ThemeModeProvider>
+            <ThemedApp />
+        </ThemeModeProvider>
     );
 }
 

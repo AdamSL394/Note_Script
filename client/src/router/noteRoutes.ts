@@ -25,6 +25,11 @@ export default {
     return result ?? [];
   },
 
+  getNoteCount: async (): Promise<number> => {
+    const result = await requestJson<{ count: number }>('/notes/count');
+    return result?.count ?? 0;
+  },
+
   getRecentlyUpdatedNotes: async (userid: string): Promise<Note[]> => {
     const result = await requestJson<Note[]>(
       `/notes/recentlyUpdated/${userid}`

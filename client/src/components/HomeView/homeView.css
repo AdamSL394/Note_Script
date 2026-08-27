@@ -20,28 +20,37 @@
   margin: 1.5rem 0;
 }
 
-/* Tracked-property count panel - was an inset-shadow floating box with
-   absolute positioning; now a quiet in-flow card matching the rest of
-   the palette. */
+/* Tracked-property count panel - was a vertical stack of "Label: N"
+   lines, which got noticeably worse once a bug fix meant all 9 tag
+   counts could actually display at once instead of silently 2 of them
+   never rendering. Now a wrapping row of pill chips matching
+   CreateNote's .tagChip so the same "tag" visual language is used
+   consistently across the create form and the summary. */
 #count {
-  position: static;
-  max-width: 24rem;
+  max-width: 46rem;
   margin: 0 auto 1.5rem;
   background: var(--ns-paper);
   border: 0.5px solid var(--ns-rule);
   border-radius: 12px;
   box-shadow: none;
   display: flex;
-  flex-direction: column;
-  padding: 1rem 1.25rem;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0.85rem 1rem;
   box-sizing: border-box;
 }
 
 #items {
-  position: static;
-  margin: 0.25rem 0;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
   color: var(--ns-graphite);
+  background: var(--ns-fog);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 20px;
+  padding: 4px 10px;
+  line-height: 1.6;
+  white-space: nowrap;
 }
 
 /* Streak strip - the signature element. A row of dots representing the

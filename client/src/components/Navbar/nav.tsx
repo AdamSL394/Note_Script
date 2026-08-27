@@ -5,21 +5,38 @@ import AppBar from '@mui/material/AppBar/AppBar.js';
 import Toolbar from '@mui/material/Toolbar/Toolbar.js';
 import IconButton from '@mui/material/IconButton/IconButton.js';
 import Menu from '@mui/material/Menu/Menu.js';
+import MenuItem from '@mui/material/MenuItem/index.js';
 import Box from '@mui/material/Box/Box.js';
 import Typography from '@mui/material/Typography/Typography.js';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import CheckIcon from '@mui/icons-material/Check';
+import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import './nav.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useThemeMode } from '../../hooks/useThemeMode';
+import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 
 function Navbar() {
   const { user } = useAuth0();
   const navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = useState<HTMLElement | null>(null);
+  const [anchorElTheme, setAnchorElTheme] = useState<HTMLElement | null>(null);
+  const { mode, setMode } = useThemeMode();
 
   const pages = ['Home', 'View All Notes', 'User'];
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
+  };
+
+  const handleOpenThemeMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElTheme(event.currentTarget);
+  };
+
+  const handleSelectTheme = (selected: typeof mode) => {
+    setMode(selected);
+    setAnchorElTheme(null);
   };
 
   // Wired to two call sites with genuinely different event shapes: the
@@ -132,6 +149,43 @@ function Navbar() {
             ></img>
           </i>
         </span>
+        <Tooltip title="Change theme">
+          <IconButton
+            onClick={handleOpenThemeMenu}
+            className="themeToggleButton"
+            aria-label="Change theme"
+            aria-controls="theme-menu"
+            aria-haspopup="true"
+            size="small"
+          >
+            <PaletteOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Menu
+          id="theme-menu"
+          anchorEl={anchorElTheme}
+          open={Boolean(anchorElTheme)}
+          onClose={() => setAnchorElTheme(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          {THEME_MODES.map((themeMode) => (
+            <MenuItem
+              key={themeMode}
+              onClick={() => handleSelectTheme(themeMode)}
+              selected={themeMode === mode}
+            >
+              <span
+                className="themeSwatch"
+                style={{ backgroundColor: NS_TOKENS[themeMode].blue }}
+              ></span>
+              {NS_TOKENS[themeMode].label}
+              {themeMode === mode && (
+                <CheckIcon fontSize="small" className="themeMenuCheck" />
+              )}
+            </MenuItem>
+          ))}
+        </Menu>
         <LogOut></LogOut>
       </Toolbar>
     </AppBar>

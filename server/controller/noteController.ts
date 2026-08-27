@@ -1,5 +1,6 @@
 import Note, { INote } from '../models/notes';
 import mongoose from 'mongoose';
+import { normalizeUserId } from '../utils/userId';
 
 interface NoteYearAggregateResult {
     _id: string;
@@ -11,9 +12,7 @@ interface NoteYearAggregateResult {
 const postNotes = async (
     noteData: Partial<INote> & { userId: string }
 ): Promise<string> => {
-    if (noteData.userId.length != 24) {
-        noteData.userId = noteData.userId + '000';
-    }
+    noteData.userId = normalizeUserId(noteData.userId);
     const newNote = new Note(noteData);
     // Previously called newNote.save() with a callback but never awaited
     // it, so this function returned 'Success' before the callback had
@@ -42,6 +41,12 @@ const getAllNotesOrdered = async (ids: string): Promise<INote[]> => {
     } else {
         return notes;
     }
+};
+
+const getNoteCount = async (ids: string): Promise<number> => {
+    const id = new mongoose.Types.ObjectId(ids.trim());
+    const count = await Note.countDocuments({ userId: id });
+    return count;
 };
 
 const getallNoteYearsAggregate = async (
@@ -208,6 +213,7 @@ const uploadNotes = async (note: UploadNoteInput): Promise<string> => {
 export default {
     postNotes,
     getAllNotes,
+    getNoteCount,
     deleteNotes,
     updateNote,
     getRangeNotes,

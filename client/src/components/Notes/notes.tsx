@@ -10,7 +10,9 @@ import NoteRoutes from '../../router/noteRoutes';
 import EditingNote from '../EditNote/editingNote';
 import ModalPop from '../Modal/index';
 import Note from '../Note/index';
+import NoteYears from '../NoteYears/noteYears';
 import { SearchNotes } from '../SearchNotes/searchNotes';
+import { useNoteYears } from '../../hooks/useNoteYears';
 import type { Note as NoteType } from '../../types';
 import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import './notes.css';
@@ -306,6 +308,12 @@ function Notes(props: NotesProps) {
     );
   };
 
+  // Owns the year-sidebar's data and selection state. Selecting a year
+  // routes into the same determineApiCall the pagination/search flows
+  // already use.
+  const { noteYears, currentDbCall, setCurrentDbCall, selectYear } =
+    useNoteYears((year) => determineApiCall(year, 1));
+
   return (
     <>
       <ModalPop
@@ -314,76 +322,86 @@ function Notes(props: NotesProps) {
         modelNoteId={modelNoteId}
         closeModal={closeModal}
       ></ModalPop>
-      <Container style={{ maxWidth: '100%', marginBottom: '1rem' }}>
-        <Box id='searchStyle' style={{ maxWidth: '90%'}}>
-          <SearchNotes
-            setCurrentPage={setCurrentPage}
-            getNoteRange={getNoteRange}
-            setCurrentCall={setCurrentCall}
-            slicePosts={slicePosts}
-            setSearchNoteResults={setSearchNoteResults}
-            setNumberOfPages={setNumberOfPages}
-            setSearchedNote={setSearchedNote}
-            currentPage={currentPage}
-            setNotesBasedOnYear={setNotesBasedOnYear}
-          ></SearchNotes>
-        </Box>
-        <Stack className="stack">
-          <Pagination
-            page={currentPage}
-            count={numberOfPages}
-            onChange={handleChange}
-            defaultPage={1}
-            color="primary"
-          ></Pagination>
-        </Stack>
-      </Container>
-      <Box id="noNotes">{noNotes}</Box>
-      {isloading ? (
-        <img
-          src="https://media4.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif?cid=ecf05e47d78qz3v8umwss2cvzhgxw5siyk2sxf88n7leuzne&rid=giphy.gif&ct=g"
-          alt="Loading Gif"
-        />
-      ) : (
-        <>
-          {notes.map((note, i) => {
-            if (!note.edit) {
-              return (
-                <Note
-                  key={i}
-                  note={note}
-                  openModal={openModal}
-                  updateNote={updateNote}
-                ></Note>
-              );
-            }
-            if (note.edit) {
-              // Compute textLength without mutating the state object
-              // during render — pass it through as part of a new object
-              // instead.
-              const textLength =
-                note.textLength !== undefined
-                  ? note.textLength
-                  : 200 - note.text.length;
-              return (
-                <EditingNote
-                  key={i * 102}
-                  notes={notes}
-                  note={{ ...note, textLength }}
-                  setDateNote={setDateNote}
-                  currentPage={currentPage}
-                  setNoteValue={setNoteValue}
-                  saveNote={saveNote}
-                  openModal={openModal}
-                  updateNote={updateNote}
-                  onStarValueChange={props.onStarValueChange}
-                ></EditingNote>
-              );
-            }
-            return null;
-          })}
-        </>
-      )}
+      <div className="notesLayout">
+        <NoteYears
+          noteYears={noteYears}
+          currentSelection={currentDbCall}
+          onSelectYear={selectYear}
+        ></NoteYears>
+        <div className="notesMain">
+          <Container style={{ maxWidth: '100%', marginBottom: '1rem' }}>
+            <Box id='searchStyle' style={{ maxWidth: '90%'}}>
+              <SearchNotes
+                setCurrentPage={setCurrentPage}
+                getNoteRange={getNoteRange}
+                setCurrentCall={setCurrentCall}
+                slicePosts={slicePosts}
+                setSearchNoteResults={setSearchNoteResults}
+                setNumberOfPages={setNumberOfPages}
+                setSearchedNote={setSearchedNote}
+                currentPage={currentPage}
+                setNotesBasedOnYear={setNotesBasedOnYear}
+                setCurrentDbCall={setCurrentDbCall}
+              ></SearchNotes>
+            </Box>
+            <Stack className="stack">
+              <Pagination
+                page={currentPage}
+                count={numberOfPages}
+                onChange={handleChange}
+                defaultPage={1}
+                color="primary"
+              ></Pagination>
+            </Stack>
+          </Container>
+          <Box id="noNotes">{noNotes}</Box>
+          {isloading ? (
+            <img
+              src="https://media4.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif?cid=ecf05e47d78qz3v8umwss2cvzhgxw5siyk2sxf88n7leuzne&rid=giphy.gif&ct=g"
+              alt="Loading Gif"
+            />
+          ) : (
+            <div className="noteGrid">
+              {notes.map((note, i) => {
+                if (!note.edit) {
+                  return (
+                    <Note
+                      key={i}
+                      note={note}
+                      openModal={openModal}
+                      updateNote={updateNote}
+                    ></Note>
+                  );
+                }
+                if (note.edit) {
+                  // Compute textLength without mutating the state object
+                  // during render — pass it through as part of a new object
+                  // instead.
+                  const textLength =
+                    note.textLength !== undefined
+                      ? note.textLength
+                      : 200 - note.text.length;
+                  return (
+                    <EditingNote
+                      key={i * 102}
+                      notes={notes}
+                      note={{ ...note, textLength }}
+                      setDateNote={setDateNote}
+                      currentPage={currentPage}
+                      setNoteValue={setNoteValue}
+                      saveNote={saveNote}
+                      openModal={openModal}
+                      updateNote={updateNote}
+                      onStarValueChange={props.onStarValueChange}
+                    ></EditingNote>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 }

@@ -4,19 +4,17 @@ import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
+import { WIN_TAGS } from '../../constants/noteFields';
+import { useThemeMode } from '../../hooks/useThemeMode';
+import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 import './userSettings.css';
-
-// Same "win" convention as CreateNote's tag chips, NotesHomeView's card
-// accent, and homeView's streak strip - a third hand-copied list of the
-// same two tags. Worth pulling all of these (and the tag icon/label
-// tables) into one shared file the next time this page gets touched,
-// rather than keeping four sources of truth in sync by hand.
-const WIN_TAGS = new Set(['medal', 'king']);
 
 const UserSetting = () => {
     const [currentUser, setCurrentUser] = useState<UserRecord | undefined>();
     const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
+    const [noteCount, setNoteCount] = useState<number | undefined>();
     const { user } = useAuth0();
+    const { mode, setMode } = useThemeMode();
 
     useEffect(() => {
         // Auth0's `user` is undefined until authentication resolves.
@@ -29,6 +27,7 @@ const UserSetting = () => {
             return;
         }
         getUserInformation();
+        NoteRoutes.getNoteCount().then(setNoteCount);
     }, [user]);
 
     const getUserInformation = async () => {
@@ -99,7 +98,7 @@ const UserSetting = () => {
                     <div className="statChipRow">
                         {withoutDups.map((icon, i) => {
                             const active = icon.visible === 'visible';
-                            const isWin = WIN_TAGS.has(icon.name);
+                            const isWin = WIN_TAGS.includes(icon.name);
                             const className = [
                                 'tagChip',
                                 active ? 'active' : '',
@@ -126,16 +125,33 @@ const UserSetting = () => {
                 </div>
 
                 <div className="Form">
-                    <h4 className="settingsLabel">
-                        Total Notes
-                        <span className="comingSoon">coming soon</span>
-                    </h4>
+                    <h4 className="settingsLabel">Total Notes</h4>
+                    <div className="settingsValue">
+                        {noteCount !== undefined ? noteCount : '—'}
+                    </div>
                 </div>
                 <div className="Form">
-                    <h4 className="settingsLabel">
-                        Dark Mode
-                        <span className="comingSoon">coming soon</span>
-                    </h4>
+                    <h4 className="settingsLabel">Theme</h4>
+                    <div className="statChipRow">
+                        {THEME_MODES.map((themeMode) => {
+                            const tokens = NS_TOKENS[themeMode];
+                            const active = themeMode === mode;
+                            return (
+                                <button
+                                    key={themeMode}
+                                    type="button"
+                                    className={active ? 'themeChip active' : 'themeChip'}
+                                    onClick={() => setMode(themeMode)}
+                                >
+                                    <span
+                                        className="themeChipSwatch"
+                                        style={{ backgroundColor: tokens.blue }}
+                                    ></span>
+                                    <span>{tokens.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </Grid>
         </Container>

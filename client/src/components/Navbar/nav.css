@@ -49,6 +49,30 @@
   padding-left: 1.5rem;
 }
 
+.themeToggleButton {
+  color: var(--ns-graphite) !important;
+  margin-right: 0.25rem !important;
+}
+
+.themeToggleButton:hover {
+  color: var(--ns-blue) !important;
+  background-color: var(--ns-blue-tint) !important;
+}
+
+.themeSwatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 0.6rem;
+  border: 0.5px solid var(--ns-rule);
+}
+
+.themeMenuCheck {
+  margin-left: 0.6rem;
+  color: var(--ns-blue) !important;
+}
+
 @media screen and (max-width: 899px) {
   #navItems {
     visibility: hidden;

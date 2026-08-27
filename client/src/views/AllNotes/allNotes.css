@@ -1,32 +1,18 @@
-#editCard {
-    display: flex;
-    position: relative;
-    width: 59%;
-    height: 3.5rem;
-    background: rgb(252, 251, 251);
-    margin: 0 auto;
-    border-color: #dadada;
-    margin-top: 3px;
-}
-
-#editCard:hoover {
-    cursor: pointer;
-}
-
 #Card {
     text-align: center;
-    box-shadow: 1px 1px lightgrey, -0.7em 0 0.5em lightgrey;
+    box-shadow: 0 1px 3px rgba(35, 38, 43, 0.04);
 }
 
 #deleteButton {
     float: right;
-    color: rgb(210, 115, 115);
-    margin-right: 3.5%;
-    padding: 0%;
-    justify-content: right;
-    width: 1%;
-    min-width: 0px;
+    color: var(--ns-graphite);
+    padding: 2px 8px;
+    min-width: 0;
     margin-left: 8px;
+}
+
+#deleteButton:hover {
+    color: #b3261e;
 }
 
 .modalButtons {
@@ -46,6 +32,6 @@
     width:30%;
     text-align:center;
     margin-top:3%;
-    color:#005fcc;
+    color:var(--ns-blue);
     display:none;
 }
