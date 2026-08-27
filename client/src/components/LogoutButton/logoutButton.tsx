@@ -1,5 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import Button from '@mui/material/Button/index.js';
+import IconButton from '@mui/material/IconButton/index.js';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import React from 'react';
 import './logoutButton.css';
 
@@ -21,12 +23,16 @@ const LogOut = (): React.ReactElement | null => {
     }
 
     return (
-        <Button
-            onClick={() => logouts()}
-            className='logoutButton'
-        >
-            sign out
-        </Button>
+        <Tooltip title="Sign out">
+            <IconButton
+                onClick={() => logouts()}
+                className="logoutButton"
+                aria-label="Sign out"
+                size="small"
+            >
+                <LogoutOutlinedIcon fontSize="small" />
+            </IconButton>
+        </Tooltip>
     );
 };
 

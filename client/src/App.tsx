@@ -24,7 +24,7 @@ function ThemedApp() {
         const tokens = NS_TOKENS[mode];
         return createTheme({
             palette: {
-                mode,
+                mode: tokens.base,
                 primary: {
                     main: tokens.blue,
                 },

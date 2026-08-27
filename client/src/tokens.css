@@ -36,12 +36,55 @@
   --font-serif: 'Source Serif 4', Georgia, serif;
 }
 
+/* Warm, aged-paper palette — leans into the "field notebook" branding
+   more literally than the neutral light theme. Keep in sync with
+   theme/nsTokens.ts's 'sepia' entry — this file drives the CSS-var
+   parts of the app, nsTokens.ts drives MUI's own components. */
+[data-theme="sepia"] {
+  --ns-fog: #ede4d3;
+  --ns-paper: #faf5ea;
+  --ns-ink: #3a2f22;
+  --ns-graphite: #7a6a54;
+  --ns-blue: #a15c38;
+  --ns-blue-tint: #f0e2d0;
+  --ns-amber: #c9942f;
+  --ns-amber-tint: #f7ecd3;
+  --ns-amber-dark: #6b4a12;
+  --ns-rule: #d9c7a8;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+}
+
+/* Cool, muted green — a nature-journal alternative to the neutral light
+   theme, still bright rather than dark. Keep in sync with
+   theme/nsTokens.ts's 'forest' entry. */
+[data-theme="forest"] {
+  --ns-fog: #eef1ee;
+  --ns-paper: #f8faf8;
+  --ns-ink: #232b26;
+  --ns-graphite: #5c6b60;
+  --ns-blue: #3d7a5c;
+  --ns-blue-tint: #e5f0ea;
+  --ns-amber: #c98a3d;
+  --ns-amber-tint: #f7ecd8;
+  --ns-amber-dark: #7a4f10;
+  --ns-rule: #d3ddd6;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+}
+
 * {
   font-family: var(--font-mono);
 }
 
+html {
+  background: var(--ns-fog);
+  height: 100%;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
   background: var(--ns-fog);
   color: var(--ns-ink);
   -webkit-font-smoothing: antialiased;

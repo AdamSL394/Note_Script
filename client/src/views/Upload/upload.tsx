@@ -205,7 +205,7 @@ const UploadNotes = () => {
                     <div
                       style={{
                         marginBottom: '5%',
-                        borderBottom: '1px solid #e8e8e8',
+                        borderBottom: '1px solid var(--ns-rule)',
                       }}
                     >
                       <span style={{ marginRight: '12%' }}>

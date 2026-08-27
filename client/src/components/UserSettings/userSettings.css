@@ -54,3 +54,33 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+
+.themeChip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.6;
+}
+
+.themeChip.active {
+  border-color: var(--ns-blue);
+  background: var(--ns-blue-tint);
+  color: var(--ns-ink);
+}
+
+.themeChipSwatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 0.5px solid var(--ns-rule);
+}

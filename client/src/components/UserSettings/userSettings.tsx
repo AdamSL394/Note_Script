@@ -3,10 +3,10 @@ import { useAuth0 } from '@auth0/auth0-react';
 import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
-import Switch from '@mui/material/Switch/index.js';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
 import { WIN_TAGS } from '../../constants/noteFields';
 import { useThemeMode } from '../../hooks/useThemeMode';
+import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 import './userSettings.css';
 
 const UserSetting = () => {
@@ -14,7 +14,7 @@ const UserSetting = () => {
     const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
     const [noteCount, setNoteCount] = useState<number | undefined>();
     const { user } = useAuth0();
-    const { mode, toggleMode } = useThemeMode();
+    const { mode, setMode } = useThemeMode();
 
     useEffect(() => {
         // Auth0's `user` is undefined until authentication resolves.
@@ -131,14 +131,26 @@ const UserSetting = () => {
                     </div>
                 </div>
                 <div className="Form">
-                    <h4 className="settingsLabel">Dark Mode</h4>
-                    <div className="settingsValue" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Switch
-                            checked={mode === 'dark'}
-                            onChange={toggleMode}
-                            inputProps={{ 'aria-label': 'Toggle dark mode' }}
-                        />
-                        <span>{mode === 'dark' ? 'On' : 'Off'}</span>
+                    <h4 className="settingsLabel">Theme</h4>
+                    <div className="statChipRow">
+                        {THEME_MODES.map((themeMode) => {
+                            const tokens = NS_TOKENS[themeMode];
+                            const active = themeMode === mode;
+                            return (
+                                <button
+                                    key={themeMode}
+                                    type="button"
+                                    className={active ? 'themeChip active' : 'themeChip'}
+                                    onClick={() => setMode(themeMode)}
+                                >
+                                    <span
+                                        className="themeChipSwatch"
+                                        style={{ backgroundColor: tokens.blue }}
+                                    ></span>
+                                    <span>{tokens.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </Grid>
