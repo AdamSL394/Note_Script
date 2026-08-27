@@ -17,14 +17,11 @@ interface UserBody {
 }
 
 router.post('/user/:id', async (req: Request<{ id: string }, unknown, UserBody>, res: Response) => {
-    const userId = getUserId(req);
+    const userId : string | undefined = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
         return;
     }
-    // The URL's :id segment is ignored in favor of the verified token
-    // identity — kept in the path only because the client still sends
-    // it there.
     const userDetails = req.body['user'];
     const user = await userController.getSingleUser(userId, userDetails);
     const searchedUser = user[0];
