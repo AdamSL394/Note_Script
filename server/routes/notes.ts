@@ -78,7 +78,7 @@ interface NoteRangeBody {
     end: string;
 }
 
-router.post('/noterange', async (req: Request<{}, unknown, NoteRangeBody>, res: Response) => {
+router.post('/noterange', async (req: Request<Record<string, never>, unknown, NoteRangeBody>, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
@@ -145,7 +145,7 @@ interface UploadBody {
     note: string;
 }
 
-router.post('/upload', async (req: Request<{}, unknown, UploadBody>, res: Response) => {
+router.post('/upload', async (req: Request<Record<string, never>, unknown, UploadBody>, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');

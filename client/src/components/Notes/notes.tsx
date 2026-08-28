@@ -96,8 +96,8 @@ function Notes(props: NotesProps) {
     }
     const noteYears = await NoteRoutes.getNoteRangeYear(
       userid,
-      year + '-12-' + '31',
-      year + '-01-' + '01'
+      year + '-12-31',
+      year + '-01-01'
     );
     if (!checkNoteApiResponse(noteYears)) {
       return;

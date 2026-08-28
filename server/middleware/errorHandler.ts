@@ -7,7 +7,8 @@ export const asyncHandler =
         };
 
 
-export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): void {
+
+export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
 }
