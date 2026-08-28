@@ -205,7 +205,7 @@ const uploadNotes = async (note: UploadNoteInput): Promise<string> => {
     try {
         const savedNote = await newNote.save();
         return savedNote === newNote ? 'correct' : 'incorrect';
-    } catch (err) {
+    } catch {
         return 'incorrect';
     }
 };
