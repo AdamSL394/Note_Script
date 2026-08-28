@@ -16,7 +16,7 @@ interface UpdateNotePayload {
   basketball?: boolean;
 }
 
-export default {
+const NoteRoutes = {
   deleteNote: (noteId: string) =>
     request(`/notes/delete/${noteId}`, { method: 'DELETE' }),
 
@@ -140,3 +140,5 @@ export default {
   getNoteYears: (id: string): Promise<string> =>
     request('/notes/aggregateNoteyears', { method: 'POST', body: { id } }),
 };
+
+export default NoteRoutes;
