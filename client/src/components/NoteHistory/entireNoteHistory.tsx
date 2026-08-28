@@ -1,4 +1,3 @@
-import React from 'react';
 import Container from '@mui/material/Container/index.js';
 import Notes from '../Notes/notes';
 import type { Note } from '../../types';

@@ -93,10 +93,6 @@
   background: var(--ns-amber);
 }
 
-.css-julti5-MuiSwitch-root {
-  vertical-align: unset !important;
-}
-
 .lookBackRow {
   display: flex;
   align-items: center;

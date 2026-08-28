@@ -69,6 +69,7 @@ NoteSchema.index({ text: 'text' });
 // compound index covers the userId-filter + date-sort pattern used
 // throughout noteController.ts.
 NoteSchema.index({ userId: 1, date: -1 });
+NoteSchema.index({ userId: 1, updatedAt: -1 });
 
 const Note: Model<INote> = mongoose.model<INote>('Note', NoteSchema);
 

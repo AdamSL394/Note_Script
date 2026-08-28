@@ -1,4 +1,3 @@
-import React from 'react';
 import Search from '../Search/search';
 import { useAuth0 } from '@auth0/auth0-react';
 import { DateRange } from '../DateRange/index';

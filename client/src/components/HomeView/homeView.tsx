@@ -2,7 +2,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import { CreateNote } from '../HomeComponents/CreateNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
