@@ -1,4 +1,3 @@
-import React from 'react';
 import Nav from '../../components/Navbar/nav';
 import { HomeView } from '../../components/HomeView/homeView';
 

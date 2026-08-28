@@ -152,7 +152,6 @@ router.post('/upload', async (req: Request<{}, unknown, UploadBody>, res: Respon
         return;
     }
     const arrayOfNotes = await parseNotes(userId, { note: req.body.note });
-    const data: string[] = [];
 
     const results: string[] = [];
     for (const note of arrayOfNotes) {

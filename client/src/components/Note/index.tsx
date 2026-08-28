@@ -1,4 +1,3 @@
-import React from 'react';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import NoteText from '../NoteText/noteText';
