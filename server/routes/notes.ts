@@ -1,9 +1,12 @@
 /* eslint-disable max-len */
 import express, { Request, Response } from 'express';
 import { AuthResult } from 'express-oauth2-jwt-bearer';
+import { z } from 'zod';
 import noteController from '../controller/noteController';
 import parseNotes from '../middleware/upload';
 import { getVerifiedUserId } from '../middleware/checkJwt';
+import { validateBody } from '../middleware/validate';
+import { noteRangeSchema, updateNoteSchema, createNoteSchema, uploadNotesSchema } from '../validation/schemas';
 
 const router = express.Router();
 
@@ -73,12 +76,9 @@ router.get('/search/:id/:user', async (req: Request, res: Response) => {
     return;
 });
 
-interface NoteRangeBody {
-    start: string;
-    end: string;
-}
+type NoteRangeBody = z.infer<typeof noteRangeSchema>;
 
-router.post('/noterange', async (req: Request<Record<string, never>, unknown, NoteRangeBody>, res: Response) => {
+router.post('/noterange', validateBody(noteRangeSchema), async (req: Request<Record<string, never>, unknown, NoteRangeBody>, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
@@ -101,21 +101,9 @@ router.delete('/delete/:id', async (req: Request, res: Response) => {
     return;
 });
 
-interface UpdateNoteBody {
-    edit: boolean;
-    text: string;
-    date: string;
-    star: string;
-    look: boolean;
-    gym: boolean;
-    weed: boolean;
-    code: boolean;
-    read: boolean;
-    eatOut: boolean;
-    basketball: boolean;
-}
+type UpdateNoteBody = z.infer<typeof updateNoteSchema>;
 
-router.patch('/update/:id', async (req: Request<{ id: string }, unknown, UpdateNoteBody>, res: Response) => {
+router.patch('/update/:id', validateBody(updateNoteSchema), async (req: Request<{ id: string }, unknown, UpdateNoteBody>, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
@@ -127,7 +115,7 @@ router.patch('/update/:id', async (req: Request<{ id: string }, unknown, UpdateN
     return;
 });
 
-router.post('/note', async (req: Request, res: Response) => {
+router.post('/note', validateBody(createNoteSchema), async (req: Request, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
@@ -135,17 +123,17 @@ router.post('/note', async (req: Request, res: Response) => {
     }
     // Overrides any userId the client may have included in the body
     // with the verified one, so a note can never be created on another
-    // user's behalf.
+    // user's behalf. req.body has already been through createNoteSchema
+    // by this point (see validateBody), so this is the validated shape,
+    // not raw client input.
     const response = await noteController.postNotes({ ...req.body, userId });
     res.send(response);
     return;
 });
 
-interface UploadBody {
-    note: string;
-}
+type UploadBody = z.infer<typeof uploadNotesSchema>;
 
-router.post('/upload', async (req: Request<Record<string, never>, unknown, UploadBody>, res: Response) => {
+router.post('/upload', validateBody(uploadNotesSchema), async (req: Request<Record<string, never>, unknown, UploadBody>, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');

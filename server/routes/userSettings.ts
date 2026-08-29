@@ -1,7 +1,10 @@
 import express, { Request, Response } from 'express';
 import { AuthResult } from 'express-oauth2-jwt-bearer';
+import { z } from 'zod';
 import userController from '../controller/userController';
 import { getVerifiedUserId } from '../middleware/checkJwt';
+import { validateBody } from '../middleware/validate';
+import { getUserSchema, trackedStatsSchema } from '../validation/schemas';
 
 const router = express.Router();
 
@@ -12,16 +15,17 @@ router.get('/callback', async (req: Request, res: Response) => {
     return res.sendStatus(200);
 });
 
-interface UserBody {
-    user: { email: string };
-}
+type UserBody = z.infer<typeof getUserSchema>;
 
-router.post('/user/:id', async (req: Request<{ id: string }, unknown, UserBody>, res: Response) => {
-    const userId : string | undefined = getUserId(req);
+router.post('/user/:id', validateBody(getUserSchema), async (req: Request<{ id: string }, unknown, UserBody>, res: Response) => {
+    const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
         return;
     }
+    // The URL's :id segment is ignored in favor of the verified token
+    // identity — kept in the path only because the client still sends
+    // it there.
     const userDetails = req.body['user'];
     const user = await userController.getSingleUser(userId, userDetails);
     const searchedUser = user[0];
@@ -29,12 +33,9 @@ router.post('/user/:id', async (req: Request<{ id: string }, unknown, UserBody>,
     return;
 });
 
-interface TrackedStatsBody {
-    user: { email: string };
-    trackedStats: { icon: string; name: string; visible: 'visible' | 'hidden' };
-}
+type TrackedStatsBody = z.infer<typeof trackedStatsSchema>;
 
-router.post('/user/trackedstats/:id', async (req: Request<{ id: string }, unknown, TrackedStatsBody>, res: Response) => {
+router.post('/user/trackedstats/:id', validateBody(trackedStatsSchema), async (req: Request<{ id: string }, unknown, TrackedStatsBody>, res: Response) => {
     const userId = getUserId(req);
     if (!userId) {
         res.status(401).send('Unauthorized');
