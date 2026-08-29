@@ -31,10 +31,26 @@ export const setAuthToken = (token: string | null): void => {
   }
 };
 
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 300;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Shared fetch wrapper. Returns raw response text (or '' on network/parse
  * failure) — callers decide whether/how to JSON.parse it, matching each
  * endpoint's actual behavior (some return JSON, some return plain text).
+ *
+ * Retries with backoff on network-level failures (fetch() throwing —
+ * DNS failure, connection refused, dropped connection, etc.), but only
+ * for GET requests. A GET is safe to retry regardless of whether a
+ * prior attempt "actually" reached the server, since it has no side
+ * effects. That's not true for POST/PATCH/DELETE: if the request body
+ * already reached the server and only the response was lost, retrying
+ * a POST (e.g. creating a note) could silently create a duplicate.
+ * Determining true per-endpoint idempotency safety is a larger exercise
+ * than this fix — GET-only is the conservative, unambiguously-safe
+ * scope for now.
  */
 async function request(
   path: string,
@@ -64,13 +80,24 @@ async function request(
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   };
 
-  try {
-    const response = await fetch(`${BASE_URL}${path}`, requestOptions);
-    return await response.text();
-  } catch (error) {
-    console.log('error', error);
-    return '';
+  const isRetryable = method === 'GET';
+  const attempts = isRetryable ? MAX_RETRIES : 1;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(`${BASE_URL}${path}`, requestOptions);
+      return await response.text();
+    } catch (error) {
+      const isLastAttempt = attempt === attempts;
+      console.log(`request error (attempt ${attempt}/${attempts})`, error);
+      if (isLastAttempt) {
+        return '';
+      }
+      await sleep(BASE_DELAY_MS * 2 ** (attempt - 1));
+    }
   }
+
+  return '';
 }
 
 /** Convenience wrapper for endpoints that always return JSON. */

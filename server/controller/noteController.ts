@@ -1,6 +1,15 @@
 import Note, { INote } from '../models/notes';
 import mongoose from 'mongoose';
 import { normalizeUserId } from '../utils/userId';
+import { logger } from '../logger';
+
+// Safety net, not a real pagination API — getAllNotes/getAllNotesOrdered
+// previously had no limit at all, returning a user's entire note
+// history in one response regardless of how large it's grown. This caps
+// worst-case response size/memory without changing behavior for any
+// realistic user today. A real paginated API (skip/limit with a total
+// count) is a bigger, separate change if note counts ever approach this.
+const MAX_NOTES_RETURNED = 2000;
 
 interface NoteYearAggregateResult {
     _id: string;
@@ -28,25 +37,19 @@ const postNotes = async (
         return 'Success';
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.log(message);
+        logger.error({ err }, 'Failed to save new note');
         return message;
     }
 };
 
 const getAllNotesOrdered = async (ids: string): Promise<INote[]> => {
     const id = new mongoose.Types.ObjectId(ids.trim());
-    const notes = await Note.find({ userId: id }).sort({ date: -1 }).exec();
+    const notes = await Note.find({ userId: id }).sort({ date: -1 }).limit(MAX_NOTES_RETURNED).exec();
     if (notes.length < 1) {
         return [];
     } else {
         return notes;
     }
-};
-
-const getNoteCount = async (ids: string): Promise<number> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
-    const count = await Note.countDocuments({ userId: id });
-    return count;
 };
 
 const getallNoteYearsAggregate = async (
@@ -66,9 +69,18 @@ const getallNoteYearsAggregate = async (
 
 const getAllNotes = async (ids: string): Promise<INote[]> => {
     const id = new mongoose.Types.ObjectId(ids.trim());
-    const range = await Note.find({ userId: id }).sort({ date: -1 });
+    const range = await Note.find({ userId: id }).sort({ date: -1 }).limit(MAX_NOTES_RETURNED);
 
     return range;
+};
+
+// countDocuments() rather than find().length — avoids pulling every
+// note document over the wire just to count them, which matters once a
+// user has hundreds/thousands of notes.
+const getNoteCount = async (ids: string): Promise<number> => {
+    const id = new mongoose.Types.ObjectId(ids.trim());
+    const count = await Note.countDocuments({ userId: id });
+    return count;
 };
 
 const getRangeNotes = async (
