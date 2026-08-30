@@ -39,6 +39,7 @@ export interface UserRecord {
   _id: string;
   email: string;
   settings: TrackedStat[];
+  role: 'user' | 'admin';
 }
 
 // The wrapper shape /api/users/user/:id actually responds with
