@@ -19,6 +19,7 @@ export interface IUser {
     _id: string;
     settings: ISetting[];
     email: string;
+    role: 'user' | 'admin';
 }
 
 const SettingSchema = new Schema<ISetting>(
@@ -38,6 +39,7 @@ const UserSchema = new Schema<IUser>({
     // all. This sub-schema means each entry is now properly validated.
     settings: { type: [SettingSchema], default: [] },
     email: String,
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
 });
 
 const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);

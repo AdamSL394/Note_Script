@@ -85,8 +85,14 @@ const updateUserStats = async (
     return userWithUpdatedStats;
 };
 
+const getAllUsers = async (): Promise<Pick<IUser, '_id' | 'email' | 'role'>[]> => {
+    const users = await User.find({}, '_id email role').exec();
+    return users;
+};
+
 export default {
     getSingleUser,
     saveNewUser,
     updateUserStats,
+    getAllUsers,
 };

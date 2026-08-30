@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import userController from '../controller/userController';
 import { requireAuth, getRequiredUserId } from '../middleware/requireAuth';
+import { requireAdmin } from '../middleware/requireAdmin';
 import { validateBody } from '../middleware/validate';
 import { getUserSchema, trackedStatsSchema } from '../validation/schemas';
 
@@ -33,6 +34,12 @@ router.post('/user/trackedstats', requireAuth, validateBody(trackedStatsSchema),
     const userDetails = req.body['user'];
     const user = await userController.updateUserStats(userId, userDetails, stats);
     res.send(user);
+    return;
+});
+
+router.get('/admin/users', requireAuth, requireAdmin, async (req: Request, res: Response) => {
+    const users = await userController.getAllUsers();
+    res.json(users);
     return;
 });
 
