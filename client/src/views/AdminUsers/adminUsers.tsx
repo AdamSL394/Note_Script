@@ -12,7 +12,7 @@ import Box from '@mui/material/Box/index.js';
 import Typography from '@mui/material/Typography/index.js';
 import NoteRoutes from '../../router/noteRoutes';
 import type { UserRecord } from '../../types';
-import Navbar from '../../components/Navbar/nav';
+import Navbar from '../../components/Navbar/navbar';
 
 type LoadState = 'loading' | 'forbidden' | 'error' | 'ready';
 

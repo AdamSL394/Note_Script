@@ -9,7 +9,7 @@ import Textarea from '../TextArea/index';
 import { TrackedEmojis } from '../TrackedEmojis/index';
 import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
 import type { Note } from '../../types';
-import './editingNote.css';
+import './editNote.css';
 
 interface EditingNoteProps {
   note: Note;

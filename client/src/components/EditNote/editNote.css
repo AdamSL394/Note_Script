@@ -1,0 +1,132 @@
+.editingCard {
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(35, 38, 43, 0.04) !important;
+  padding: 1rem 1.1rem;
+  text-align: left !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.editingCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.editingCardHeader #deleteButton {
+  float: none;
+  margin: 0;
+  color: var(--ns-graphite);
+  min-width: 0;
+  width: auto;
+  padding: 2px 8px;
+}
+
+.editingCardHeader #deleteButton:hover {
+  color: #b3261e;
+}
+
+.editingDateRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.editingDateInput {
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: var(--ns-paper);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ns-ink);
+  padding: 0.3rem 0.6rem;
+}
+
+.editingDateInput:focus {
+  outline: none;
+  border-color: var(--ns-blue);
+}
+
+.editingStarSelect {
+  height: 2rem !important;
+  min-width: 5.5rem;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.editingTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0.5rem 0;
+  border-top: 0.5px solid var(--ns-rule);
+  border-bottom: 0.5px solid var(--ns-rule);
+}
+
+.editingTagRow .tagChip {
+  font-size: 15px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  line-height: 1.6;
+}
+
+.editingTagRow .tagChip.active {
+  border-color: var(--ns-blue);
+  background: var(--ns-blue-tint);
+}
+
+.editingTextarea {
+  width: 100%;
+  min-height: 10rem;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 0.5px solid var(--ns-rule);
+  background: var(--ns-paper);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ns-ink);
+}
+
+.editingTextarea:focus {
+  outline: none;
+  border-color: var(--ns-blue);
+}
+
+.editingFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.editingCharCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+  white-space: nowrap;
+}
+
+.editingActiveTagsLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ns-graphite);
+  margin-bottom: 0.25rem;
+}
+
+.editingActiveTagsLabel + div .emoji {
+  font-size: 15px;
+  margin-right: 0.3rem;
+}

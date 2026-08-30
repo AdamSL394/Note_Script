@@ -2,12 +2,13 @@
 
 import { useAuth0 } from '@auth0/auth0-react';
 import { Container } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress/index.js';
 import Pagination from '@mui/material/Pagination/index.js';
 import Stack from '@mui/material/Stack/index.js';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
-import EditingNote from '../EditNote/editingNote';
+import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import Note from '../Note/index';
 import NoteYears from '../NoteYears/noteYears';
@@ -18,7 +19,7 @@ import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import './notes.css';
 
 interface NotesProps {
-  // Bound to a MUI <Select>'s onChange (see editingNote.tsx), not a
+  // Bound to a MUI <Select>'s onChange (see editNote.tsx), not a
   // plain input — SelectChangeEvent is the correct type here.
   onStarValueChange: (e: SelectChangeEvent, note: NoteType) => void;
 }
@@ -361,10 +362,9 @@ function Notes(props: NotesProps) {
           </Container>
           <Box id="noNotes">{noNotes}</Box>
           {isloading ? (
-            <img
-              src="https://media4.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif?cid=ecf05e47d78qz3v8umwss2cvzhgxw5siyk2sxf88n7leuzne&rid=giphy.gif&ct=g"
-              alt="Loading Gif"
-            />
+            <Box sx={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+              <CircularProgress />
+            </Box>
           ) : (
             <div className="noteGrid">
               {notes.map((note, i) => {

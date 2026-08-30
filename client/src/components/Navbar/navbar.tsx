@@ -11,11 +11,11 @@ import Typography from '@mui/material/Typography/Typography.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
-import './nav.css';
+import './navbar.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useThemeMode } from '../../hooks/useThemeMode';
-import { useIsAdmin } from '../../hooks/userIsAdmin';
+import { useIsAdmin } from '../../hooks/useIsAdmin';
 import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 
 function Navbar() {

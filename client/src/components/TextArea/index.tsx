@@ -3,7 +3,7 @@ import type { Note } from '../../types';
 
 interface TextareaProps {
   note: Note;
-  // Passed in from editingNote.tsx but never actually used inside this
+  // Passed in from editNote.tsx but never actually used inside this
   // component — kept in the type to match reality rather than hiding it.
   notes?: Note[];
   setNoteValue: (note: Note) => void;
