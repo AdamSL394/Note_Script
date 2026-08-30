@@ -30,6 +30,11 @@ const verifyJwt = auth({
     issuerBaseURL: `https://${domain}`,
 });
 
+// Exported so server.ts can scope the CSP's connect-src directive to
+// this exact domain, rather than either duplicating this resolution
+// logic a second time or using an overly broad wildcard.
+export const auth0Domain = domain;
+
 const checkJwt = (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'OPTIONS') {
         return next();
