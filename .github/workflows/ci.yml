@@ -5,6 +5,7 @@ on:
     branches: [master, develop]
   pull_request:
     branches: [master, develop]
+  workflow_dispatch:
 
 # Cancels a still-running CI run for the same branch/PR when new commits
 # land, instead of letting a superseded run keep burning minutes.
@@ -100,13 +101,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Set up server config for build
-        # tsc's compile-time import of config.json (via resolveJsonModule)
-        # needs the file to physically exist in the build context - this
-        # job is a separate runner, so it needs its own copy.
-        # Placeholder values only; production always gets its real config
-        # from wherever the actual Heroku deploy sources it, not this file.
-        run: cp server/config/config.example.json server/config/config.json
       - name: Build Docker image
         run: docker compose -f "docker-compose.yml" build
         env:
@@ -154,14 +148,20 @@ jobs:
       - name: Release
         run: heroku container:release web --app $HEROKU_APP_NAME
 
-  # Deploys master -> the prod Heroku app -- same steps as dev, but
-  # referencing the "production" environment pauses this job for
-  # required-reviewer approval (configured in repo Settings ->
-  # Environments, not in this file) before it runs at all. A human
-  # consciously confirms every production release; the build itself is
-  # still fully automated.
+  # Deploys to the prod Heroku app -- but only when someone manually
+  # triggers this workflow from the Actions tab (Run workflow -> pick
+  # "master"), never automatically on push. GitHub's environment
+  # required-reviewer protection rule (pause-then-approve) needs
+  # GitHub Pro/Team for a private repo, which this isn't on -- this is
+  # the free equivalent: a human has to deliberately choose to run
+  # this, there's no "it happens automatically unless someone
+  # objects" path at all. Guards the ref too, so selecting a
+  # non-master branch in the manual-run dropdown can't accidentally
+  # deploy it to prod. `environment: production` no longer gates
+  # anything here, but it's kept for the deployment-history tracking
+  # GitHub shows in the repo's Environments sidebar.
   deploy-prod:
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
     needs: [server-checks, client-checks, docker-build]
     runs-on: ubuntu-latest
     timeout-minutes: 30

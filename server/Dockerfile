@@ -24,6 +24,15 @@ RUN npm run build --prefix client
 
 # Copy server source and compile TypeScript -> server/dist/*.js.
 COPY ./server ./server
+# tsc statically imports config.json (resolveJsonModule) to type-check
+# against its shape, so the file has to exist at build time -- but its
+# actual VALUES don't matter anymore. AUTH0_DOMAIN/AUTH0_AUDIENCE and
+# MONGODB_URI env vars take priority over config.json at runtime (see
+# checkJwt.ts / validateEnv.ts), which is how Heroku config vars
+# actually deliver real production secrets. Only creates a placeholder
+# if one isn't already there, so a local machine with a real
+# config.json (from actually running the app) keeps using it.
+RUN test -f server/config/config.json || cp server/config/config.example.json server/config/config.json
 RUN npm run build --prefix server
 
 ENV NODE_ENV=production
