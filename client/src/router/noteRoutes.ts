@@ -2,6 +2,11 @@
 import { request, requestJson } from './client';
 import type { Note, AuthUser } from '../types';
 
+interface PaginatedNotesResponse {
+  notes: Note[];
+  totalCount: number;
+}
+
 interface UpdateNotePayload {
   text: string;
   date: string;
@@ -20,9 +25,14 @@ const NoteRoutes = {
   deleteNote: (noteId: string) =>
     request(`/notes/delete/${noteId}`, { method: 'DELETE' }),
 
-  getAllNotes: async (userid: string): Promise<Note[]> => {
-    const result = await requestJson<Note[]>(`/notes/all?id=${userid}`);
-    return result ?? [];
+  getAllNotes: async (
+    page: number,
+    pageSize: number
+  ): Promise<PaginatedNotesResponse> => {
+    const result = await requestJson<PaginatedNotesResponse>(
+      `/notes/all?page=${page}&pageSize=${pageSize}`
+    );
+    return result ?? { notes: [], totalCount: 0 };
   },
 
   getNoteCount: async (): Promise<number> => {
@@ -30,10 +40,8 @@ const NoteRoutes = {
     return result?.count ?? 0;
   },
 
-  getRecentlyUpdatedNotes: async (userid: string): Promise<Note[]> => {
-    const result = await requestJson<Note[]>(
-      `/notes/recentlyUpdated/${userid}`
-    );
+  getRecentlyUpdatedNotes: async (): Promise<Note[]> => {
+    const result = await requestJson<Note[]>('/notes/recentlyUpdated');
     return result ?? [];
   },
 
@@ -55,18 +63,14 @@ const NoteRoutes = {
       } as UpdateNotePayload,
     }),
 
-  searchNote: async (searchValue: string, userId: string): Promise<Note[]> => {
+  searchNote: async (searchValue: string): Promise<Note[]> => {
     const query = encodeURIComponent(searchValue);
-    const result = await requestJson<Note[]>(
-      `/notes/search/${query}/${userId}`
-    );
+    const result = await requestJson<Note[]>(`/notes/search/${query}`);
     return result ?? [];
   },
 
-  getNotesOrdered: async (userId: string): Promise<Note[]> => {
-    const orderedNotes = await requestJson<Note[]>(
-      `/notes/all/order/${userId}`
-    );
+  getNotesOrdered: async (): Promise<Note[]> => {
+    const orderedNotes = await requestJson<Note[]>('/notes/all/order');
     if (!orderedNotes || orderedNotes.length < 1) {
       return [];
     }
@@ -76,13 +80,12 @@ const NoteRoutes = {
   getNote: (noteId: string): Promise<string> => request(`/notes/note/${noteId}`),
 
   getNoteRange: async (
-    userId: string,
     start: string,
     end: string
   ): Promise<Note[] | undefined> => {
     const text = await request('/notes/noterange', {
       method: 'POST',
-      body: { userId, start, end },
+      body: { start, end },
     });
     if (text.length > 0) {
       return JSON.parse(text) as Note[];
@@ -97,11 +100,10 @@ const NoteRoutes = {
     }),
 
   getNoteRangeYear: (
-    userid: string,
     tdYearAgo: string,
     lwYearAgo: string
   ): Promise<Note[] | null> =>
-    requestJson<Note[]>(`/notes/lastyear/${userid}/${tdYearAgo}/${lwYearAgo}`),
+    requestJson<Note[]>(`/notes/lastyear/${tdYearAgo}/${lwYearAgo}`),
 
   Leetcode_stats: async (): Promise<unknown> => {
     try {
@@ -118,8 +120,7 @@ const NoteRoutes = {
 
   getUserInfomation: (user: AuthUser): Promise<string> => {
     if (!user.sub) return Promise.resolve('');
-    const userid = user.sub.split('|')[1];
-    return request(`/api/users/user/${userid}`, {
+    return request('/api/users/user', {
       method: 'POST',
       body: { user },
     });
@@ -130,15 +131,14 @@ const NoteRoutes = {
 
   postUserStats: (user: AuthUser, trackedStat: unknown): Promise<string> => {
     if (!user.sub) return Promise.resolve('');
-    const userid = user.sub.split('|')[1];
-    return request(`/api/users/user/trackedstats/${userid}`, {
+    return request('/api/users/user/trackedstats', {
       method: 'POST',
       body: { user, trackedStats: trackedStat },
     });
   },
 
-  getNoteYears: (id: string): Promise<string> =>
-    request('/notes/aggregateNoteyears', { method: 'POST', body: { id } }),
+  getNoteYears: (): Promise<string> =>
+    request('/notes/aggregateNoteyears', { method: 'POST' }),
 };
 
 export default NoteRoutes;

@@ -107,7 +107,6 @@ const HomeView = () => {
     const raw: Record<string, unknown> = {
       text,
       date,
-      userId,
     };
     if (!text || text.length < 1 || !date) {
       setErrorMessage('Please set a message & date');
@@ -182,7 +181,6 @@ const HomeView = () => {
   ) => {
     try {
       const res = await NoteRoutes.getNoteRange(
-        userid,
         lastWeeksDate,
         todaysDate
       );

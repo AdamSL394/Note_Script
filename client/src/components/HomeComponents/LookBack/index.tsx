@@ -63,7 +63,6 @@ export const LookBack = (props: LookBackProps) => {
 
     try {
       const res = await NoteRoutes.getNoteRangeYear(
-        userid,
         weekAheadLastYear,
         todayLastYear
       );
@@ -132,7 +131,6 @@ export const LookBack = (props: LookBackProps) => {
         const { today: todayLastYear, weekAhead: weekAheadLastYear } =
           computeYearAgoRange(2);
         const res = await NoteRoutes.getNoteRangeYear(
-          userid,
           weekAheadLastYear,
           todayLastYear
         );
@@ -153,7 +151,6 @@ export const LookBack = (props: LookBackProps) => {
         const { today: todayLastYear, weekAhead: weekAheadLastYear } =
           computeYearAgoRange(3);
         const res = await NoteRoutes.getNoteRangeYear(
-          userid,
           weekAheadLastYear,
           todayLastYear
         );

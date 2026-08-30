@@ -1,6 +1,14 @@
 import Note, { INote } from '../models/notes';
 import mongoose from 'mongoose';
 import { normalizeUserId } from '../utils/userId';
+import { logger } from '../logger';
+
+// getAllNotesOrdered isn't called from the UI (confirmed dead client-side
+// during a pagination audit — client/src/router/noteRoutes.ts defines a
+// wrapper for it, but nothing ever calls that wrapper), so it keeps the
+// blanket safety cap below rather than real pagination. If that changes,
+// it should get the same treatment as getAllNotes.
+const MAX_NOTES_RETURNED = 2000;
 
 interface NoteYearAggregateResult {
     _id: string;
@@ -28,25 +36,19 @@ const postNotes = async (
         return 'Success';
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.log(message);
+        logger.error({ err }, 'Failed to save new note');
         return message;
     }
 };
 
 const getAllNotesOrdered = async (ids: string): Promise<INote[]> => {
     const id = new mongoose.Types.ObjectId(ids.trim());
-    const notes = await Note.find({ userId: id }).sort({ date: -1 }).exec();
+    const notes = await Note.find({ userId: id }).sort({ date: -1 }).limit(MAX_NOTES_RETURNED).exec();
     if (notes.length < 1) {
         return [];
     } else {
         return notes;
     }
-};
-
-const getNoteCount = async (ids: string): Promise<number> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
-    const count = await Note.countDocuments({ userId: id });
-    return count;
 };
 
 const getallNoteYearsAggregate = async (
@@ -64,11 +66,43 @@ const getallNoteYearsAggregate = async (
     return noteYears;
 };
 
-const getAllNotes = async (ids: string): Promise<INote[]> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
-    const range = await Note.find({ userId: id }).sort({ date: -1 });
+export interface PaginatedNotes {
+    notes: INote[];
+    totalCount: number;
+}
 
-    return range;
+const MAX_PAGE_SIZE = 100;
+
+// Real pagination — was a blanket .limit(2000) with no way to ever get
+// past the 2000th note (silently truncated, no error, no indication to
+// the user that older notes existed and were being hidden). Now the
+// caller drives skip/limit via page/pageSize, and totalCount lets the
+// client compute how many pages exist and actually reach all of them.
+const getAllNotes = async (
+    ids: string,
+    page: number,
+    pageSize: number
+): Promise<PaginatedNotes> => {
+    const id = new mongoose.Types.ObjectId(ids.trim());
+    const clampedPageSize = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
+    const clampedPage = Math.max(1, page);
+    const skip = (clampedPage - 1) * clampedPageSize;
+
+    const [notes, totalCount] = await Promise.all([
+        Note.find({ userId: id }).sort({ date: -1 }).skip(skip).limit(clampedPageSize),
+        Note.countDocuments({ userId: id }),
+    ]);
+
+    return { notes, totalCount };
+};
+
+// countDocuments() rather than find().length — avoids pulling every
+// note document over the wire just to count them, which matters once a
+// user has hundreds/thousands of notes.
+const getNoteCount = async (ids: string): Promise<number> => {
+    const id = new mongoose.Types.ObjectId(ids.trim());
+    const count = await Note.countDocuments({ userId: id });
+    return count;
 };
 
 const getRangeNotes = async (
