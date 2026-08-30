@@ -30,7 +30,7 @@ if (
 ) {
   const root = path.join(__dirname, '..', '..', 'client', 'build');
   app.use(express.static(root));
-  app.get('*', function (req: Request, res: Response) {
+  app.get('/{*splat}', function (req: Request, res: Response) {
     res.sendFile('index.html', { root });
   });
 }

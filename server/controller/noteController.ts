@@ -3,12 +3,11 @@ import mongoose from 'mongoose';
 import { normalizeUserId } from '../utils/userId';
 import { logger } from '../logger';
 
-// Safety net, not a real pagination API — getAllNotes/getAllNotesOrdered
-// previously had no limit at all, returning a user's entire note
-// history in one response regardless of how large it's grown. This caps
-// worst-case response size/memory without changing behavior for any
-// realistic user today. A real paginated API (skip/limit with a total
-// count) is a bigger, separate change if note counts ever approach this.
+// getAllNotesOrdered isn't called from the UI (confirmed dead client-side
+// during a pagination audit — client/src/router/noteRoutes.ts defines a
+// wrapper for it, but nothing ever calls that wrapper), so it keeps the
+// blanket safety cap below rather than real pagination. If that changes,
+// it should get the same treatment as getAllNotes.
 const MAX_NOTES_RETURNED = 2000;
 
 interface NoteYearAggregateResult {
@@ -67,11 +66,34 @@ const getallNoteYearsAggregate = async (
     return noteYears;
 };
 
-const getAllNotes = async (ids: string): Promise<INote[]> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
-    const range = await Note.find({ userId: id }).sort({ date: -1 }).limit(MAX_NOTES_RETURNED);
+export interface PaginatedNotes {
+    notes: INote[];
+    totalCount: number;
+}
 
-    return range;
+const MAX_PAGE_SIZE = 100;
+
+// Real pagination — was a blanket .limit(2000) with no way to ever get
+// past the 2000th note (silently truncated, no error, no indication to
+// the user that older notes existed and were being hidden). Now the
+// caller drives skip/limit via page/pageSize, and totalCount lets the
+// client compute how many pages exist and actually reach all of them.
+const getAllNotes = async (
+    ids: string,
+    page: number,
+    pageSize: number
+): Promise<PaginatedNotes> => {
+    const id = new mongoose.Types.ObjectId(ids.trim());
+    const clampedPageSize = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
+    const clampedPage = Math.max(1, page);
+    const skip = (clampedPage - 1) * clampedPageSize;
+
+    const [notes, totalCount] = await Promise.all([
+        Note.find({ userId: id }).sort({ date: -1 }).skip(skip).limit(clampedPageSize),
+        Note.countDocuments({ userId: id }),
+    ]);
+
+    return { notes, totalCount };
 };
 
 // countDocuments() rather than find().length — avoids pulling every

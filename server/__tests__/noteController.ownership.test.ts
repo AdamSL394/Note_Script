@@ -96,9 +96,10 @@ describe('getAllNotes / getAllNotesOrdered / getRangeNotes / getMostRecentlyUpda
         await seedNote(userA, { text: 'A note 2', date: '2026-01-05' });
         await seedNote(userB, { text: 'B note 1', date: '2026-01-03' });
 
-        const all = await noteController.getAllNotes(userA);
-        expect(all).toHaveLength(2);
-        expect(all.every((n) => n.userId === userA)).toBe(true);
+        const all = await noteController.getAllNotes(userA, 1, 30);
+        expect(all.notes).toHaveLength(2);
+        expect(all.totalCount).toBe(2);
+        expect(all.notes.every((n) => n.userId === userA)).toBe(true);
 
         const ordered = await noteController.getAllNotesOrdered(userA);
         expect(ordered).toHaveLength(2);
@@ -115,8 +116,39 @@ describe('getAllNotes / getAllNotesOrdered / getRangeNotes / getMostRecentlyUpda
 
     it('returns an empty array (not an error) for a user with zero notes', async () => {
         await seedNote(userB);
-        const result = await noteController.getAllNotes(userA);
-        expect(result).toEqual([]);
+        const result = await noteController.getAllNotes(userA, 1, 30);
+        expect(result.notes).toEqual([]);
+        expect(result.totalCount).toBe(0);
+    });
+});
+
+describe('getAllNotes — pagination', () => {
+    it('skips (page-1)*pageSize documents and returns the real total count', async () => {
+        await seedNote(userA, { text: 'note 1', date: '2026-01-01' });
+        await seedNote(userA, { text: 'note 2', date: '2026-01-02' });
+        await seedNote(userA, { text: 'note 3', date: '2026-01-03' });
+
+        const pageOne = await noteController.getAllNotes(userA, 1, 2);
+        expect(pageOne.notes).toHaveLength(2);
+        expect(pageOne.totalCount).toBe(3);
+
+        const pageTwo = await noteController.getAllNotes(userA, 2, 2);
+        expect(pageTwo.notes).toHaveLength(1);
+        expect(pageTwo.totalCount).toBe(3);
+
+        // Page 1 and page 2 should never overlap.
+        const pageOneIds = pageOne.notes.map((n) => n._id.toString());
+        const pageTwoIds = pageTwo.notes.map((n) => n._id.toString());
+        expect(pageOneIds).not.toEqual(expect.arrayContaining(pageTwoIds));
+    });
+
+    it('clamps an absurd pageSize instead of returning everything in one response', async () => {
+        for (let i = 0; i < 5; i++) {
+            await seedNote(userA, { text: `note ${i}`, date: `2026-01-0${i + 1}` });
+        }
+        const result = await noteController.getAllNotes(userA, 1, 999999);
+        expect(result.notes.length).toBeLessThanOrEqual(100);
+        expect(result.totalCount).toBe(5);
     });
 });
 

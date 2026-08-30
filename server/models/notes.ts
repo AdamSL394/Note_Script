@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 // Deliberately NOT extending Document — see models/user.ts for why.
 export interface INote {
+    _id: mongoose.Types.ObjectId;
     userId: string;
     text: string;
     date: string;

@@ -16,6 +16,7 @@ jest.mock('../models/notes', () => ({
         findOneAndUpdate: jest.fn(),
         find: jest.fn(),
         findById: jest.fn(),
+        countDocuments: jest.fn(),
     },
 }));
 
@@ -25,6 +26,7 @@ import noteController from '../controller/noteController';
 const mockDeleteOne = Note.deleteOne as jest.Mock;
 const mockFindOneAndUpdate = Note.findOneAndUpdate as jest.Mock;
 const mockFind = Note.find as jest.Mock;
+const mockCountDocuments = Note.countDocuments as jest.Mock;
 
 const chainable = (result: unknown) => ({ exec: jest.fn().mockResolvedValue(result) });
 
@@ -72,8 +74,15 @@ describe('getSingleNote — filter shape sent to Mongoose', () => {
 
 describe('getAllNotes / getAllNotesOrdered / getRangeNotes / getMostRecentlyUpdatedNotes — always filter by the caller-supplied userId', () => {
     it('getAllNotes never omits userId from its filter', async () => {
-        mockFind.mockReturnValue({ sort: jest.fn().mockResolvedValue([]) });
-        await noteController.getAllNotes('507f1f77bcf86cd799439011');
+        mockFind.mockReturnValue({
+            sort: jest.fn().mockReturnValue({
+                skip: jest.fn().mockReturnValue({
+                    limit: jest.fn().mockResolvedValue([]),
+                }),
+            }),
+        });
+        mockCountDocuments.mockResolvedValue(0);
+        await noteController.getAllNotes('507f1f77bcf86cd799439011', 1, 30);
         const [filter] = mockFind.mock.calls[0];
         expect(filter).toHaveProperty('userId');
     });
