@@ -11,18 +11,59 @@ import userRouter from './routes/userSettings';
 import bodyParser from 'body-parser';
 import connectToDB from './database/db';
 import checkJwt from './middleware/checkJwt';
+import { apiRateLimiter, rateLimitStore } from './middleware/apiRateLimiter';
 import { resolveMongoUri } from './validateEnv';
 import { logger } from './logger';
 
 const app = express();
 
+// Heroku's router sits in front of every dyno as a reverse proxy --
+// without this, req.ip returns Heroku's internal routing address for
+// every single request, making IP-based rate limiting completely
+// useless (every real client would appear to share one IP, and the
+// whole app would share one rate-limit budget). `1` trusts exactly one
+// hop of proxy (Heroku's own router), not an arbitrary chain.
+app.set('trust proxy', 1);
+
 app.use(helmet());
-app.use(pinoHttp({ logger }));
+app.use(
+  pinoHttp({
+    logger,
+    // Full header dumps on every single request -- including the raw
+    // bearer token in plaintext -- were both noisy and a real security
+    // hygiene issue. Tokens shouldn't sit in logs even in development;
+    // logs get pasted into chat, screenshotted, and shipped to
+    // aggregators. Redact unconditionally, regardless of log level or
+    // whatever the serializers below end up including.
+    redact: {
+      paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+      censor: '[redacted]',
+    },
+    // One compact line per request instead of the full req/res object
+    // dump -- deeper error context is already handled separately by
+    // errorHandler.ts when something actually fails.
+    customSuccessMessage: (req, res) => `${req.method} ${req.url} -> ${res.statusCode}`,
+    customErrorMessage: (req, res, err) => `${req.method} ${req.url} -> ${res.statusCode} (${err.message})`,
+    // Just the remaining count, not the full header — express-rate-limit
+    // attaches this to req.rateLimit once its middleware has run, and
+    // since this logs on response finish (after the whole middleware
+    // chain completes), it's already populated by the time this reads
+    // it. undefined on routes the rate limiter doesn't cover (static
+    // assets, the SPA fallback).
+    customProps: (req) => ({
+      rateLimitRemaining: (req as Request & { rateLimit?: { remaining: number } }).rateLimit?.remaining,
+    }),
+    serializers: {
+      req: (req) => ({ method: req.method, url: req.url }),
+      res: (res) => ({ statusCode: res.statusCode }),
+    },
+  })
+);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-app.use('/notes', checkJwt, notesRouter);
-app.use('/api/users', checkJwt, userRouter);
+app.use('/notes', apiRateLimiter, checkJwt, notesRouter);
+app.use('/api/users', apiRateLimiter, checkJwt, userRouter);
 
 if (
   process.env.NODE_ENV === 'development' ||
@@ -62,3 +103,9 @@ async function main() {
 }
 
 main();
+
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  await rateLimitStore.shutdown();
+  process.exit(0);
+});
