@@ -10,7 +10,7 @@ import notesRouter from './routes/notes';
 import userRouter from './routes/userSettings';
 import bodyParser from 'body-parser';
 import connectToDB from './database/db';
-import checkJwt from './middleware/checkJwt';
+import checkJwt, { auth0Domain } from './middleware/checkJwt';
 import { apiRateLimiter, rateLimitStore } from './middleware/apiRateLimiter';
 import { resolveMongoUri } from './validateEnv';
 import { logger } from './logger';
