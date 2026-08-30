@@ -96,7 +96,7 @@ async function main() {
     logger.fatal({ err }, 'Failed to connect to MongoDB after retries, exiting');
     process.exit(1);
   }
-
+ 
   app.listen(PORT, () => {
     logger.info(`App listening on port ${PORT}`);
   });
