@@ -37,6 +37,7 @@ app.use(
         // broad *.auth0.com wildcard that would trust every Auth0
         // customer's tenant.
         'connect-src': ["'self'", `https://${auth0Domain}`],
+        'img-src': ["'self'", 'data:', 'https://*.googleusercontent.com'],
       },
     },
   })
