@@ -25,7 +25,22 @@ const app = express();
 // hop of proxy (Heroku's own router), not an arbitrary chain.
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        // Default CSP has no connect-src at all, which falls back to
+        // default-src 'self' -- blocking the Auth0 SDK's direct
+        // browser-to-Auth0 call to exchange the OAuth code for a
+        // token. Scoped to the exact configured tenant domain, not a
+        // broad *.auth0.com wildcard that would trust every Auth0
+        // customer's tenant.
+        'connect-src': ["'self'", `https://${auth0Domain}`],
+      },
+    },
+  })
+);
 app.use(
   pinoHttp({
     logger,
