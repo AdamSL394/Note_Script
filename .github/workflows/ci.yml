@@ -132,10 +132,15 @@ jobs:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Log in to Heroku Container Registry
-        # Non-interactive -- the CLI picks up HEROKU_API_KEY from the
-        # environment automatically and skips the interactive login
-        # flow deploy.sh uses locally.
-        run: heroku container:login
+        # `heroku container:login` has a known, documented bug where it
+        # can report "not logged in" even with HEROKU_API_KEY correctly
+        # set (heroku/cli#1565) -- this is the exact symptom we hit.
+        # Logging in directly via `docker login`, using the credentials
+        # Heroku's own docs specify (email as username, API key as
+        # password), sidesteps the CLI's login logic entirely.
+        # --password-stdin keeps the key out of the process list/shell
+        # history.
+        run: echo "$HEROKU_API_KEY" | docker login --username="${{ secrets.HEROKU_EMAIL }}" --password-stdin registry.heroku.com
       - name: Build Docker image
         run: |
           docker build \
@@ -169,7 +174,7 @@ jobs:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Log in to Heroku Container Registry
-        run: heroku container:login
+        run: echo "$HEROKU_API_KEY" | docker login --username="${{ secrets.HEROKU_EMAIL }}" --password-stdin registry.heroku.com
       - name: Build Docker image
         run: |
           docker build \
