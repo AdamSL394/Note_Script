@@ -13,7 +13,9 @@ interface OldestNoteYearResult {
 // and selection state, not the note-fetching itself.
 export const useNoteYears = (onSelectYear: (year: string | number) => void) => {
   const [noteYears, setNoteYears] = useState<(string | number)[]>([]);
-  const [currentDbCall, setCurrentDbCall] = useState<string | number>('All');
+  const [currentDbCall, setCurrentDbCall] = useState<string | number>(
+    new Date().getFullYear()
+  );
   const { user } = useAuth0();
 
   useEffect(() => {

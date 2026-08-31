@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toLocalDateString } from '../../utils/date';
+import { getTagColor } from '../../utils/tagColor';
 import TextField from '@mui/material/TextField/index.js';
 import FormControl from '@mui/material/FormControl/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
@@ -9,7 +11,7 @@ import NoteRoutes from '../../router/noteRoutes';
 import type { TrackedStat, AuthUser } from '../../types';
 import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
 import './createNote.css';
- 
+
 interface CreateNoteProps {
   disabled: boolean;
   trackedStats: TrackedStat[];
@@ -42,7 +44,34 @@ const EMOJI_LIST: TrackedStat[] = [
 ];
 
 export const CreateNote = (props: CreateNoteProps) => {
-  const [date, setDate] = useState<string | undefined>();
+  const [date, setDate] = useState<string>(
+    toLocalDateString(new Date())
+  );
+  const CHARACTER_LIMIT = 200;
+  const tagRowRef = useRef<HTMLDivElement>(null);
+  const [hasMoreTags, setHasMoreTags] = useState(false);
+
+  // Only shows the fade when there is genuinely more content scrolled
+  // out of view -- a fade that never disappears (even once you have
+  // actually scrolled to the end, or when there are few enough tags
+  // that nothing overflows at all) would misrepresent the actual
+  // state rather than signal it.
+  useEffect(() => {
+    const el = tagRowRef.current;
+    if (!el) return;
+    const checkOverflow = () => {
+      const hasOverflow = el.scrollWidth > el.clientWidth + 1;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+      setHasMoreTags(hasOverflow && !atEnd);
+    };
+    checkOverflow();
+    el.addEventListener('scroll', checkOverflow);
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      el.removeEventListener('scroll', checkOverflow);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [props.trackedStats]);
 
   // Toggle a tracked stat's visibility without mutating the existing
   // objects/array — build a new array with a new object for the changed
@@ -95,18 +124,24 @@ export const CreateNote = (props: CreateNoteProps) => {
   return (
     <div className="createNoteCard">
       <div className="createNoteMain">
+        <p className="composeHeading">What&apos;s on your mind?</p>
         <TextField
           autoFocus={true}
           multiline
           rows={7}
           fullWidth
           label="Note"
-          placeholder="Note"
-          value={props.text}
-          onChange={(e) => props.setText(e.target.value)}
+          placeholder={'Gym in the morning\nCoffee with friends\nFinished the report'}
+          value={props.text ?? ''}
+          onChange={(e) => {
+            const clamped = e.target.value.slice(0, CHARACTER_LIMIT);
+            props.setText(clamped);
+          }}
+          helperText={`${(props.text ?? '').length}/${CHARACTER_LIMIT}`}
           InputProps={{ style: { fontFamily: 'var(--font-serif)', fontSize: '15px' } }}
         />
-        <div className="tagRow">
+        <div className="tagRowWrap">
+          <div className="tagRow" ref={tagRowRef}>
           {props.trackedStats?.map((stat, key) => {
             if (!stat) return null;
             const active = stat.visible === 'visible';
@@ -118,11 +153,25 @@ export const CreateNote = (props: CreateNoteProps) => {
             ]
               .filter(Boolean)
               .join(' ');
+            // Win tags keep their amber treatment from the CSS class
+            // above (a meaningful signal, not decoration) -- only
+            // non-win active tags get the per-tag hash color, so it
+            // never overrides that existing meaning.
+            const tagColor = active && !isWin ? getTagColor(stat.name) : null;
             return (
               <button
                 key={key}
                 type="button"
                 className={className}
+                style={
+                  tagColor
+                    ? {
+                        borderColor: 'transparent',
+                        background: tagColor.background,
+                        color: tagColor.text,
+                      }
+                    : undefined
+                }
                 onClick={() => setCodeIcon(stat)}
               >
                 <span aria-hidden="true">{stat.icon}</span>
@@ -130,6 +179,8 @@ export const CreateNote = (props: CreateNoteProps) => {
               </button>
             );
           })}
+          </div>
+          {hasMoreTags && <div className="tagFade" aria-hidden="true"></div>}
         </div>
       </div>
 
@@ -145,11 +196,11 @@ export const CreateNote = (props: CreateNoteProps) => {
         />
 
         <FormControl size="small" fullWidth>
-          <InputLabel id="demo-simple-select-label">Icons</InputLabel>
+          <InputLabel id="demo-simple-select-label">Add a tag</InputLabel>
           <Select
             labelId="demo-simple-select-label"
             id="demo-simple-select"
-            label="Icons"
+            label="Add a tag"
             value={''}
             onChange={(e: SelectChangeEvent) => {
               addToEmojiList(e.target.value, EMOJI_LIST, props.user);
@@ -177,7 +228,7 @@ export const CreateNote = (props: CreateNoteProps) => {
             '&:hover': { backgroundColor: 'var(--ns-blue)', opacity: 0.9 },
           }}
         >
-          save entry
+          Add note
         </Button>
       </div>
     </div>

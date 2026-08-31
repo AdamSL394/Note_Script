@@ -1,12 +1,15 @@
 import React from 'react';
 import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
+import IconButton from '@mui/material/IconButton/index.js';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CloseIcon from '@mui/icons-material/Close';
 import FormControl from '@mui/material/FormControl/index.js';
 import InputLabel from '@mui/material/InputLabel/index.js';
 import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import Textarea from '../TextArea/index';
-import { TrackedEmojis } from '../TrackedEmojis/index';
 import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
 import type { Note } from '../../types';
 import './editNote.css';
@@ -20,6 +23,7 @@ interface EditingNoteProps {
   saveNote: (note: Note) => void;
   openModal: (note: Note) => void;
   updateNote: (note: Note) => void;
+  cancelEdit: (note: Note) => void;
   // Bound to a MUI <Select>'s onChange, not a plain input — SelectChangeEvent
   // is the correct type here, not React.ChangeEvent<HTMLInputElement>.
   onStarValueChange: (e: SelectChangeEvent, note: Note) => void;
@@ -56,10 +60,10 @@ function EditingNote(props: EditingNoteProps) {
               {/* Was rendered with no text at all, which is why this
                   looked like an empty box in the UI — a Select still
                   needs a visible label to not look broken. */}
-              <InputLabel id="star-select-label">Stars</InputLabel>
+              <InputLabel id="star-select-label">Rating</InputLabel>
               <Select
                 labelId="star-select-label"
-                label="Stars"
+                label="Rating"
                 onChange={(e) => props.onStarValueChange(e, props.note)}
                 // Was hardcoded to '' regardless of the note's actual
                 // saved rating, so opening any note for editing always
@@ -67,36 +71,43 @@ function EditingNote(props: EditingNoteProps) {
                 // already had. Now reflects the real current value.
                 defaultValue={starValue}
                 className="editingStarSelect"
+                renderValue={(value) => {
+                  const count = value === 'None' ? 0 : Number(value);
+                  if (count === 0) return 'None';
+                  return '★'.repeat(count) + '☆'.repeat(3 - count);
+                }}
               >
                 <MenuItem value={'None'}>
                   <em>None</em>
                 </MenuItem>
-                <MenuItem value={'1'}>
-                  <span role="img" aria-label="Star">
-                    🌟
-                  </span>
-                </MenuItem>
-                <MenuItem value={'2'}>
-                  <span role="img" aria-label="Star">
-                    🌟🌟
-                  </span>
-                </MenuItem>
-                <MenuItem value={'3'}>
-                  <span role="img" aria-label="Star">
-                    🌟🌟🌟
-                  </span>
-                </MenuItem>
+                <MenuItem value={'1'}>★☆☆</MenuItem>
+                <MenuItem value={'2'}>★★☆</MenuItem>
+                <MenuItem value={'3'}>★★★</MenuItem>
               </Select>
             </FormControl>
           </div>
 
-          <Button
-            onClick={() => props.openModal(props.note)}
-            color="primary"
-            id="deleteButton"
-          >
-            <strong>X</strong>
-          </Button>
+          <div className="editingHeaderActions">
+            <Tooltip title="Close without saving">
+              <IconButton
+                onClick={() => props.cancelEdit(props.note)}
+                aria-label="Close without saving"
+                size="small"
+              >
+                <CloseIcon style={{ fontSize: '16px' }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete entry">
+              <IconButton
+                onClick={() => props.openModal(props.note)}
+                aria-label="Delete note"
+                size="small"
+                id="deleteButton"
+              >
+                <DeleteOutlineIcon style={{ fontSize: '16px' }} />
+              </IconButton>
+            </Tooltip>
+          </div>
         </div>
 
         <EditingTrackedEmojis
@@ -119,14 +130,9 @@ function EditingNote(props: EditingNoteProps) {
               '&:hover': { backgroundColor: 'var(--ns-blue)', opacity: 0.9 },
             }}
           >
-            save
+            Save
           </Button>
           <span className="editingCharCount">{remaining} characters left</span>
-        </div>
-
-        <div>
-          <div className="editingActiveTagsLabel">Active tags</div>
-          <TrackedEmojis note={props.note}></TrackedEmojis>
         </div>
       </Card>
     </div>

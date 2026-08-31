@@ -6,10 +6,14 @@ import { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import { CreateNote } from '../HomeComponents/createNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
-import { HomeNotes } from '../HomeComponents/notesHomeView';
+import { HomeNoteCard } from '../HomeComponents/notesHomeView';
 import { AlertMessage } from '../HomeComponents/SaveNoteAlert/index';
+import EditingNote from '../EditNote/editNote';
+import ModalPop from '../Modal/index';
+import { useNoteEditing } from '../../hooks/useNoteEditing';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
 import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
+import { toLocalDateString } from '../../utils/date';
 import './homeView.css';
 
 // Keyed by the Note schema's actual field names (from NOTE_TAG_FIELDS),
@@ -40,6 +44,13 @@ const HomeView = () => {
   const [disabled, setDisabled] = useState(false);
 
   const [notes, setNotes] = useState<NoteType[]>([]);
+  // Deliberately separate from `notes` -- Look Back freely mutates
+  // `notes` to show historical content (that's its entire purpose),
+  // but the streak strip needs to always reflect genuine current
+  // momentum regardless of what's being browsed. Fetched once on mount
+  // and refreshed only when a new note is saved within the current
+  // week (see storeNewNote), never touched by anything Look Back does.
+  const [streakNotes, setStreakNotes] = useState<NoteType[]>([]);
   const [noteview, setNoteView] = useState('week');
   const [timePeriod, setTimePeriod] = useState('1');
   const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
@@ -55,24 +66,80 @@ const HomeView = () => {
   // through this instead of asserting non-null and hoping.
   const getUserId = (): string | undefined => user?.sub?.split('|')[1];
 
+  const refreshAfterChange = () => {
+    const userid = getUserId();
+    if (!userid) return;
+    const todaysDate = toLocalDateString(new Date());
+    const myPastDate = new Date();
+    myPastDate.setDate(myPastDate.getDate() - 7);
+    const lastWeeksDate = toLocalDateString(myPastDate);
+    getNoteRanges(userid, todaysDate, lastWeeksDate);
+    fetchStreakData(lastWeeksDate, todaysDate);
+  };
+
+  const {
+    updateNote,
+    saveNote,
+    setNoteValue,
+    setDateNote,
+    openModal,
+    closeModal,
+    cancelEdit,
+    onStarValueChange,
+    open,
+    modelNoteId,
+  } = useNoteEditing(setNotes, refreshAfterChange);
+
+  // Marks a note as being edited in place -- matches Note/index.tsx's
+  // existing editNote logic exactly, since EditingNote reads the same
+  // sessionStorage-staged-draft convention regardless of which screen
+  // opened it.
+  const editNote = (note: NoteType) => {
+    // Stashed BEFORE entering edit mode so cancelEdit can revert to it
+    // -- the live notes array gets mutated on every keystroke via
+    // setNoteValue, so without this separate snapshot there'd be no
+    // way to recover the pre-edit content once typing starts.
+    sessionStorage.setItem(`${note._id}-original`, JSON.stringify(note));
+    const noteToEdit: NoteType = {
+      ...note,
+      textLength: 200 - note.text.length,
+      edit: true,
+    };
+    sessionStorage.setItem(noteToEdit._id, JSON.stringify(noteToEdit));
+    setNotes((prevNotes) =>
+      prevNotes.map((n) => (n._id === noteToEdit._id ? noteToEdit : n))
+    );
+  };
+
   useEffect(() => {
     const userid = getUserId();
     if (!userid || !user) {
       return;
     }
-    const todaysDate = new Date().toISOString().split('T')[0];
+    const todaysDate = toLocalDateString(new Date());
     const myCurrentDate = new Date();
     const myPastDate = new Date(myCurrentDate);
     myPastDate.setDate(myPastDate.getDate() - 7);
-    const lastWeeksDate = myPastDate.toISOString().split('T')[0];
+    const lastWeeksDate = toLocalDateString(myPastDate);
 
     async function fetchData() {
       await getNoteRanges(userid as string, todaysDate, lastWeeksDate);
+      await fetchStreakData(lastWeeksDate, todaysDate);
       getUserInformation();
     }
 
     fetchData();
   }, [user]);
+
+  // Fetches the real, current last-7-days data specifically for the
+  // streak strip -- see streakNotes above for why this is kept
+  // separate from the general notes fetch.
+  const fetchStreakData = async (start: string, end: string) => {
+    const res = await NoteRoutes.getNoteRange(start, end);
+    if (res) {
+      setStreakNotes(res);
+    }
+  };
 
   useEffect(() => {
     const counts: PropertyCounts = { ...EMPTY_COUNTS };
@@ -125,11 +192,11 @@ const HomeView = () => {
     }
 
     const res = await NoteRoutes.postNote(raw);
-    const todaysDate = new Date().toISOString().split('T')[0];
+    const todaysDate = toLocalDateString(new Date());
     const myCurrentDate = new Date();
     const myPastDate = new Date(myCurrentDate);
     myPastDate.setDate(myPastDate.getDate() - 7);
-    const lastWeeksDate = myPastDate.toISOString().split('T')[0];
+    const lastWeeksDate = toLocalDateString(myPastDate);
 
     if (res && res.toString().includes('failed')) {
       setErrorMessage(res);
@@ -169,6 +236,7 @@ const HomeView = () => {
     const isWithinLastWeek = date >= lastWeeksDate && date <= todaysDate;
     if (isWithinLastWeek) {
       getNoteRanges(userId, todaysDate, lastWeeksDate);
+      fetchStreakData(lastWeeksDate, todaysDate);
     }
 
     return;
@@ -211,7 +279,7 @@ const HomeView = () => {
   ): boolean => {
     if (!notesResponse || notesResponse.length < 1) {
       setNotes([]);
-      setnoNotes('No Notes for last week.');
+      setnoNotes('Start your streak today.');
       return false;
     } else {
       return true;
@@ -227,18 +295,20 @@ const HomeView = () => {
     );
   };
 
-  // Builds the last 7 days for the streak strip from notes already
-  // in state (the default fetch on mount already scopes to the last
-  // week, so this needs no extra request). A day is a "win" if any
-  // note logged that day has one of the WIN_TAGS set.
+  // Builds the last 7 days for the streak strip from streakNotes --
+  // deliberately not `notes`, which Look Back mutates freely. Using
+  // `notes` here was the actual bug: once Look Back replaced it with
+  // historical data, none of those old dates could ever match this
+  // week's range, making the strip look frozen/broken rather than
+  // genuinely reflecting current momentum.
   const getStreakDays = (): StreakDay[] => {
     const days: StreakDay[] = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const iso = d.toISOString().split('T')[0];
-      const dayNotes = notes.filter((note) => note.date === iso);
+      const iso = toLocalDateString(d);
+      const dayNotes = streakNotes.filter((note) => note.date === iso);
       const hasNote = dayNotes.length > 0;
       const isWin = dayNotes.some((note) => {
         const record = note as unknown as Record<string, unknown>;
@@ -248,6 +318,30 @@ const HomeView = () => {
     }
     return days;
   };
+
+  // Consecutive win-days counting backward from today. Only 7 days of
+  // notes are loaded on this page (the initial fetch scopes to "last
+  // week"), so this can only ever report up to 7 -- a real unbounded
+  // streak would need more historical data than what's fetched here,
+  // which is exactly the kind of thing the deferred calendar-heatmap
+  // view should own, not this. Deliberately never claims an exact
+  // number it can't back up: {getCurrentStreak, isStreakAtLoadedCap}
+  // together let the UI show "7+" instead of falsely implying the
+  // streak stops at exactly 7.
+  const getCurrentStreak = (): { count: number; atLoadedCap: boolean } => {
+    const days = getStreakDays();
+    let count = 0;
+    for (let i = days.length - 1; i >= 0; i--) {
+      if (days[i].isWin) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return { count, atLoadedCap: count === days.length };
+  };
+
+  const streak = getCurrentStreak();
 
   return (
     <Container id="container">
@@ -270,6 +364,12 @@ const HomeView = () => {
       ></AlertMessage>
 
       <div className="streakStrip">
+        {streak.count > 0 && (
+          <span className="streakCount">
+            <span aria-hidden="true">🔥</span>{' '}
+            {streak.count}{streak.atLoadedCap ? '+' : ''} day streak
+          </span>
+        )}
         <span className="streakLabel">past 7 days</span>
         <span className="streakRule"></span>
         {getStreakDays().map((day) => (
@@ -312,9 +412,33 @@ const HomeView = () => {
           justifyContent="center"
           alignItems="flex-start"
         >
-          <HomeNotes notes={notes}></HomeNotes>
+          {notes.map((note) => (
+            <Grid key={note._id} item xs={12} sm={6} md={4} lg={3}>
+              {note.edit ? (
+                <EditingNote
+                  notes={notes}
+                  note={note}
+                  setDateNote={setDateNote}
+                  currentPage={1}
+                  setNoteValue={setNoteValue}
+                  saveNote={saveNote}
+                  openModal={openModal}
+                  updateNote={updateNote}
+                  cancelEdit={cancelEdit}
+                  onStarValueChange={onStarValueChange}
+                ></EditingNote>
+              ) : (
+                <HomeNoteCard note={note} onEdit={editNote} onDelete={openModal} />
+              )}
+            </Grid>
+          ))}
         </Grid>
       </div>
+      <ModalPop
+        open={open}
+        modelNoteId={modelNoteId}
+        closeModal={closeModal}
+      ></ModalPop>
     </Container>
   );
 };
