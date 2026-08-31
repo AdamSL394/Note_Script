@@ -2,12 +2,13 @@
 
 import { useAuth0 } from '@auth0/auth0-react';
 import { Container } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress/index.js';
 import Pagination from '@mui/material/Pagination/index.js';
 import Stack from '@mui/material/Stack/index.js';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
-import EditingNote from '../EditNote/editingNote';
+import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import Note from '../Note/index';
 import NoteYears from '../NoteYears/noteYears';
@@ -95,9 +96,8 @@ function Notes(props: NotesProps) {
       return;
     }
     const noteYears = await NoteRoutes.getNoteRangeYear(
-      userid,
-      year + '-12-' + '31',
-      year + '-01-' + '01'
+      year + '-12-31',
+      year + '-01-01'
     );
     if (!checkNoteApiResponse(noteYears)) {
       return;
@@ -115,22 +115,25 @@ function Notes(props: NotesProps) {
     await determineApiCall(year, 1);
   };
 
-  const allNotes = async (value: number) => {
+  const allNotes = async (page: number) => {
     setIsLoading(true);
     const userid = getUserId();
     if (!userid) {
       setIsLoading(false);
       return;
     }
-    const getNotes = await NoteRoutes.getAllNotes(userid);
+    const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
+      page,
+      postPerPage
+    );
 
-    if (!checkNoteApiResponse(getNotes)) {
+    if (!checkNoteApiResponse(pageNotes)) {
       return;
     }
     setIsLoading(false);
-    const currentPosts = slicePosts(getNotes, value);
-    setNotes(currentPosts);
-    setNumberOfPages(Math.ceil(getNotes.length / postPerPage));
+    setCurrentPage(page);
+    setNotes(pageNotes);
+    setNumberOfPages(Math.ceil(totalCount / postPerPage));
     return;
   };
 
@@ -185,7 +188,7 @@ function Notes(props: NotesProps) {
       return;
     }
     setIsLoading(true);
-    const noteDateRange = await NoteRoutes.getNoteRange(userId, start, end);
+    const noteDateRange = await NoteRoutes.getNoteRange(start, end);
     setIsLoading(false);
     setDateaRangeNoteResults(noteDateRange);
     setCurrentCall('Date Range');
@@ -225,14 +228,17 @@ function Notes(props: NotesProps) {
         if (!userid) return;
         setCurrentCall('All');
         setIsLoading(true);
-        const getNotes = await NoteRoutes.getAllNotes(userid);
-        if (!checkNoteApiResponse(getNotes)) {
+        const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
+          value,
+          postPerPage
+        );
+        if (!checkNoteApiResponse(pageNotes)) {
           return;
         }
         setIsLoading(false);
-        const currentPosts = slicePosts(getNotes, value);
-        setNotes(currentPosts);
-        setNumberOfPages(Math.ceil(getNotes.length / postPerPage));
+        setCurrentPage(value);
+        setNotes(pageNotes);
+        setNumberOfPages(Math.ceil(totalCount / postPerPage));
         break;
       }
       case 'Recently Changed': {
@@ -240,7 +246,7 @@ function Notes(props: NotesProps) {
         if (!userid) return;
         setCurrentCall('Recently Changed');
         setIsLoading(true);
-        const getNotes = await NoteRoutes.getRecentlyUpdatedNotes(userid);
+        const getNotes = await NoteRoutes.getRecentlyUpdatedNotes();
         if (!checkNoteApiResponse(getNotes)) {
           return;
         }
@@ -356,10 +362,9 @@ function Notes(props: NotesProps) {
           </Container>
           <Box id="noNotes">{noNotes}</Box>
           {isloading ? (
-            <img
-              src="https://media4.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif?cid=ecf05e47d78qz3v8umwss2cvzhgxw5siyk2sxf88n7leuzne&rid=giphy.gif&ct=g"
-              alt="Loading Gif"
-            />
+            <Box sx={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+              <CircularProgress />
+            </Box>
           ) : (
             <div className="noteGrid">
               {notes.map((note, i) => {

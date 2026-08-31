@@ -1,5 +1,4 @@
-import React from 'react';
-import Navbar from '../../components/Navbar/nav';
+import Navbar from '../../components/Navbar/navbar';
 import { UserSetting } from '../../components/UserSettings/userSettings';
 
 function UserSettings() {

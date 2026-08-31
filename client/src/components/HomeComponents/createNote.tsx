@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TextField from '@mui/material/TextField/index.js';
 import FormControl from '@mui/material/FormControl/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
@@ -9,7 +9,7 @@ import NoteRoutes from '../../router/noteRoutes';
 import type { TrackedStat, AuthUser } from '../../types';
 import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
 import './createNote.css';
-
+ 
 interface CreateNoteProps {
   disabled: boolean;
   trackedStats: TrackedStat[];

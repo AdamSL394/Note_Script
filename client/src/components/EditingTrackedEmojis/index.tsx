@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Note } from '../../types';
 import { NOTE_TAG_FIELDS } from '../../constants/noteFields';
 

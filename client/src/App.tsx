@@ -1,13 +1,20 @@
 import './tokens.css';
 import './App.css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/index.js';
 import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter } from 'react-router-dom';
 import Router from './router/index';
+import AnalyticsTracker from './components/AnalyticsTracker';
 import { useAuthTokenSync } from './hooks/useAuthTokenSync';
 import { ThemeModeProvider, useThemeMode } from './hooks/useThemeMode';
 import { NS_TOKENS } from './theme/nsTokens';
+import { initAnalytics } from './analytics';
+
+// Runs once at module load, not per-render -- initialize() itself is a
+// one-time setup call, not something that needs to re-run on every
+// mount/re-render of the component tree.
+initAnalytics();
 
 // Builds MUI's theme from the current mode's real hex values (nsTokens),
 // rather than tokens.css's CSS custom properties directly — MUI's
@@ -59,6 +66,7 @@ function ThemedApp() {
         <ThemeProvider theme={theme}>
             <div className="App">
                 <BrowserRouter basename="/">
+                    <AnalyticsTracker />
                     <Router />
                 </BrowserRouter>
             </div>

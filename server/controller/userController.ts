@@ -1,5 +1,6 @@
 import User, { IUser, ISetting } from '../models/user';
 import mongoose from 'mongoose';
+import { logger } from '../logger';
 
 interface UserDetails {
     email: string;
@@ -10,7 +11,7 @@ const getSingleUser = async (
     userDetails: UserDetails
 ): Promise<IUser[]> => {
     const mongooseId = new mongoose.Types.ObjectId(id);
-    let user = await User.find({ _id: mongooseId }).exec();
+    let user: IUser[] = await User.find({ _id: mongooseId }).exec();
     // User.find() always returns an array (possibly empty), never
     // null/undefined — `!user` was never true here, so a missing user
     // never actually triggered account creation.
@@ -43,7 +44,7 @@ const saveNewUser = async (
         return [savedUser];
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.log(message);
+        logger.error({ err }, message);
         return [];
     }
 };
@@ -55,7 +56,7 @@ const updateUserStats = async (
 ): Promise<IUser | null> => {
     const mongooseId = new mongoose.Types.ObjectId(id);
     const filter = { _id: mongooseId };
-    let user = await User.find(filter).exec();
+    let user: IUser[] = await User.find(filter).exec();
     if (user.length < 1 || user == undefined) {
         user = await saveNewUser(id, userDetails);
     }
@@ -84,8 +85,14 @@ const updateUserStats = async (
     return userWithUpdatedStats;
 };
 
+const getAllUsers = async (): Promise<Pick<IUser, '_id' | 'email' | 'role'>[]> => {
+    const users = await User.find({}, '_id email role').exec();
+    return users;
+};
+
 export default {
     getSingleUser,
     saveNewUser,
     updateUserStats,
+    getAllUsers,
 };

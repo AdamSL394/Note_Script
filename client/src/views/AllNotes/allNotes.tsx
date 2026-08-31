@@ -1,7 +1,6 @@
-import React from 'react';
-import Navbar from '../../components/Navbar/nav';
+import Navbar from '../../components/Navbar/navbar';
 import './allNotes.css';
-import { NoteHistory } from '../../components/NoteHistory/entireNoteHistory';
+import { NoteHistory } from '../../components/NoteHistory/noteHistory';
 
 const AllNotes = () => {
     return (

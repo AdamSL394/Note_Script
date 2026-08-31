@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import React, { useState } from 'react';
-import Navbar from '../../components/Navbar/nav';
+import Navbar from '../../components/Navbar/navbar';
 import Container from '@mui/material/Container/index.js';
 import { useAuth0 } from '@auth0/auth0-react';
 import Card from '@mui/material/Card/index.js';

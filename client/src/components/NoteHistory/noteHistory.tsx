@@ -1,12 +1,11 @@
-import React from 'react';
 import Container from '@mui/material/Container/index.js';
 import Notes from '../Notes/notes';
 import type { Note } from '../../types';
 import type { SelectChangeEvent } from '@mui/material/Select/index.js';
-import './entireNoteHistory.css';
+import './noteHistory.css';
 
 const NoteHistory = () => {
-  // Bound to a MUI <Select>'s onChange (see editingNote.tsx), not a
+  // Bound to a MUI <Select>'s onChange (see editNote.tsx), not a
   // plain input — SelectChangeEvent is the correct type here, matching
   // how notes.tsx types the same callback.
   const onStarValueChange = (e: SelectChangeEvent, note: Note) => {

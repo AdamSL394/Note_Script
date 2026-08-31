@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-
 interface UploadPayload {
     note: string;
 }

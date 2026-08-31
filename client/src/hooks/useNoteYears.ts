@@ -29,7 +29,7 @@ export const useNoteYears = (onSelectYear: (year: string | number) => void) => {
   const fetchNoteYears = async () => {
     const userid = user?.sub?.split('|')[1];
     if (!userid) return;
-    const fullListOfNoteYears = await NoteRoutes.getNoteYears(userid);
+    const fullListOfNoteYears = await NoteRoutes.getNoteYears();
 
     // Guard against an empty/failed response before parsing — an empty
     // string is falsy but not strictly `undefined`, and JSON.parse('')

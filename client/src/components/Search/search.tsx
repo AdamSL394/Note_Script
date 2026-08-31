@@ -45,7 +45,7 @@ function Search(props: SearchProps) {
       return;
     }
     e.preventDefault();
-    const searchedNotes = await Notes.searchNote(searchValue, userId);
+    const searchedNotes = await Notes.searchNote(searchValue);
     props.searchNotes(searchedNotes, searchValue);
   };
 

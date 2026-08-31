@@ -4,17 +4,36 @@ import config from './../config/config.json'
 import { normalizeUserId } from '../utils/userId';
 
 const environment = (process.env.NODE_ENV || 'development') as keyof typeof config;
+const environmentCreds = config[environment];
 
-if (!config[environment]["auth0"]) {
+// Env vars take priority, matching validateEnv.ts's resolveMongoUri()
+// pattern -- this is what an actual production deploy should use
+// (Heroku config vars set these directly), not config.json, which is
+// gitignored and never committed. Previously this file only ever read
+// config.json, meaning Auth0 credentials had no way to reach a
+// container built anywhere other than a machine that happened to
+// already have a real local config.json sitting on disk -- a fresh CI
+// checkout has nothing to read at all.
+const domain = process.env.AUTH0_DOMAIN || environmentCreds?.auth0?.domain;
+const audience = process.env.AUTH0_AUDIENCE || environmentCreds?.auth0?.audience;
+
+if (!domain || !audience) {
     throw new Error(
-        `Missing "auth0" config block for environment "${String(environment)}" in config.json`
+        `Missing Auth0 configuration for environment "${String(environment)}". Set ` +
+        'AUTH0_DOMAIN and AUTH0_AUDIENCE environment variables, or add an "auth0" ' +
+        `block to config.json's "${String(environment)}" section.`
     );
 }
 
 const verifyJwt = auth({
-    audience: config[environment]["auth0"]['audience'],
-    issuerBaseURL: `https://${config[environment]["auth0"]['domain']}`,
+    audience,
+    issuerBaseURL: `https://${domain}`,
 });
+
+// Exported so server.ts can scope the CSP's connect-src directive to
+// this exact domain, rather than either duplicating this resolution
+// logic a second time or using an overly broad wildcard.
+export const auth0Domain = domain;
 
 const checkJwt = (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'OPTIONS') {

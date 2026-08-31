@@ -1,6 +1,8 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Model } from 'mongoose';
 
-export interface INote extends Document {
+// Deliberately NOT extending Document — see models/user.ts for why.
+export interface INote {
+    _id: mongoose.Types.ObjectId;
     userId: string;
     text: string;
     date: string;
@@ -62,13 +64,18 @@ const NoteSchema = new Schema<INote>({
 // `Note.syncIndexes()` once during a deploy/migration step.
 NoteSchema.index({ text: 'text' });
 
-// Every note query (getAllNotes, getRangeNotes, deleteNotes, updateNote,
-// getSingleNote, getMostRecentlyUpdatedNotes) filters by userId, and
-// several also sort by date — there was no index supporting either,
-// meaning every one of those queries did a full collection scan. This
-// compound index covers the userId-filter + date-sort pattern used
-// throughout noteController.ts.
+// Every note query that filters by userId and sorts by *date*
+// (getAllNotes, getAllNotesOrdered, getRangeNotes, deleteNotes,
+// updateNote, getSingleNote) is covered by this compound index.
 NoteSchema.index({ userId: 1, date: -1 });
+
+// getMostRecentlyUpdatedNotes sorts by updatedAt, not date — a
+// previous comment on the index above incorrectly claimed it covered
+// this function too. It didn't: the userId filter benefited from that
+// index's prefix, but the sort itself still fell back to an in-memory
+// sort since updatedAt isn't part of it. This index covers that query
+// specifically.
+NoteSchema.index({ userId: 1, updatedAt: -1 });
 
 const Note: Model<INote> = mongoose.model<INote>('Note', NoteSchema);
 

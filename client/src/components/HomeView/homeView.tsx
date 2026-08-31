@@ -2,11 +2,11 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
-import { CreateNote } from '../HomeComponents/CreateNote';
+import { CreateNote } from '../HomeComponents/createNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
-import { HomeNotes } from '../HomeComponents/NotesHomeView';
+import { HomeNotes } from '../HomeComponents/notesHomeView';
 import { AlertMessage } from '../HomeComponents/SaveNoteAlert/index';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
 import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
@@ -107,7 +107,6 @@ const HomeView = () => {
     const raw: Record<string, unknown> = {
       text,
       date,
-      userId,
     };
     if (!text || text.length < 1 || !date) {
       setErrorMessage('Please set a message & date');
@@ -182,7 +181,6 @@ const HomeView = () => {
   ) => {
     try {
       const res = await NoteRoutes.getNoteRange(
-        userid,
         lastWeeksDate,
         todaysDate
       );
