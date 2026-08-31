@@ -13,9 +13,14 @@ RUN npm install --prefix server
 # because Create React App bakes REACT_APP_* vars into the compiled JS
 # at build time, not runtime — so dev and prod need two separately built
 # images, each with the right value baked in, rather than one shared
-# image configured at deploy time.
+# image configured at deploy time. REACT_APP_GA_MEASUREMENT_ID follows
+# the same rule -- defaults to empty, so any build that doesn't
+# explicitly pass it (dev, by design -- see ci.yml) ships with
+# analytics disabled, matching analytics.ts's no-op-when-unset behavior.
 ARG REACT_APP_HOST=production
+ARG REACT_APP_GA_MEASUREMENT_ID=""
 ENV REACT_APP_HOST=$REACT_APP_HOST
+ENV REACT_APP_GA_MEASUREMENT_ID=$REACT_APP_GA_MEASUREMENT_ID
 
 COPY ./client/package*.json ./client/
 RUN npm install --prefix client

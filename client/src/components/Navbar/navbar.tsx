@@ -11,20 +11,24 @@ import Typography from '@mui/material/Typography/Typography.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
-import './nav.css';
+import './navbar.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useThemeMode } from '../../hooks/useThemeMode';
+import { useIsAdmin } from '../../hooks/useIsAdmin';
 import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 
 function Navbar() {
   const { user } = useAuth0();
   const navigate = useNavigate();
+  const isAdmin = useIsAdmin();
   const [anchorElNav, setAnchorElNav] = useState<HTMLElement | null>(null);
   const [anchorElTheme, setAnchorElTheme] = useState<HTMLElement | null>(null);
   const { mode, setMode } = useThemeMode();
 
-  const pages = ['Home', 'View All Notes', 'User'];
+  const pages = isAdmin
+    ? ['Home', 'View All Notes', 'User', 'Admin']
+    : ['Home', 'View All Notes', 'User'];
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -56,6 +60,9 @@ function Navbar() {
       if (value.target.innerHTML === 'User') {
         navigate('/userSettings');
       }
+      if (value.target.innerHTML === 'Admin') {
+        navigate('/admin/users');
+      }
     }
     setAnchorElNav(null);
   };
@@ -69,6 +76,10 @@ function Navbar() {
   };
   const userSettings = () => {
     const path = `/userSettings`;
+    navigate(path);
+  };
+  const adminUsers = () => {
+    const path = `/admin/users`;
     navigate(path);
   };
   return (
@@ -134,6 +145,11 @@ function Navbar() {
           <span className="tabs" id="all" onClick={routeChanges}>
             View All Notes
           </span>
+          {isAdmin && (
+            <span className="tabs" id="admin" onClick={adminUsers}>
+              Admin
+            </span>
+          )}
           <i className="tabs" id="userName" onClick={userSettings}>
             Hi{' '}
             <span role="img" aria-label="Star">

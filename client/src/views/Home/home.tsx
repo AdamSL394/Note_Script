@@ -1,4 +1,4 @@
-import Nav from '../../components/Navbar/nav';
+import Nav from '../../components/Navbar/navbar';
 import { HomeView } from '../../components/HomeView/homeView';
 
 export default function Home() {

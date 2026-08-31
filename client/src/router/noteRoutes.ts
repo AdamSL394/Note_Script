@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson } from './client';
-import type { Note, AuthUser } from '../types';
+import type { Note, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -124,6 +124,10 @@ const NoteRoutes = {
       method: 'POST',
       body: { user },
     });
+  },
+
+  getAllUsers: async (): Promise<UserRecord[] | null> => {
+    return requestJson<UserRecord[]>('/api/users/admin/users');
   },
 
   postNote: (raw: Record<string, unknown>): Promise<string> =>

@@ -5,6 +5,7 @@ import { ProtectedRoute } from '../hooks/protectedRoute';
 import AllNotes from '../views/AllNotes/allNotes';
 import UserSettings from '../views/UserSettings/userSettings'
 import Upload from '../views/Upload/upload'
+import AdminUsers from '../views/AdminUsers/adminUsers'
 
 
 const Router = () => {
@@ -17,6 +18,7 @@ const Router = () => {
                     <Route path="/all" element={<AllNotes />} />
                     <Route path="/userSettings" element={<UserSettings />} />
                     <Route path="/upload" element={<Upload />} />
+                    <Route path="/admin/users" element={<AdminUsers />} />
                 </Route>
             </Routes>
         </>

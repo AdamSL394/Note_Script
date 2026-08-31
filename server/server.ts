@@ -36,8 +36,17 @@ app.use(
         // token. Scoped to the exact configured tenant domain, not a
         // broad *.auth0.com wildcard that would trust every Auth0
         // customer's tenant.
-        'connect-src': ["'self'", `https://${auth0Domain}`],
-        'img-src': ["'self'", 'data:', 'https://*.googleusercontent.com'],
+        'connect-src': ["'self'", `https://${auth0Domain}`, 'https://www.google-analytics.com', 'https://*.google-analytics.com'],
+        // Default img-src is 'self' data: only -- blocks the Google
+        // profile picture shown after logging in via Google OAuth
+        // (through Auth0). Wildcarded subdomain since Google serves
+        // these across several numbered hosts (lh1-lh6 historically),
+        // not always the same one for a given user. Also allows GA4's
+        // pixel-fallback tracking domain.
+        'img-src': ["'self'", 'data:', 'https://*.googleusercontent.com', 'https://www.google-analytics.com'],
+        // GA4's loader script (gtag.js) is hosted here -- default
+        // script-src is 'self' only, which blocks it entirely.
+        'script-src': ["'self'", 'https://www.googletagmanager.com'],
       },
     },
   })
@@ -112,7 +121,7 @@ async function main() {
     logger.fatal({ err }, 'Failed to connect to MongoDB after retries, exiting');
     process.exit(1);
   }
- 
+
   app.listen(PORT, () => {
     logger.info(`App listening on port ${PORT}`);
   });
