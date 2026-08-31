@@ -1,0 +1,27 @@
+#!/bin/sh
+# Catches package-lock.json drift locally, before it ever reaches a
+# commit -- npm install --package-lock-only regenerates the lockfile
+# from package.json (fast, doesn't touch node_modules), then checks
+# whether that produced any actual change. If it did, the lockfile was
+# out of sync and the commit is blocked with a clear next step.
+
+set -e
+
+check_lockfile() {
+  dir=$1
+  echo "Checking $dir/package-lock.json..."
+  (cd "$dir" && npm install --package-lock-only --silent)
+  if ! git diff --quiet -- "$dir/package-lock.json"; then
+    echo ""
+    echo "BLOCKED: $dir/package-lock.json was out of sync with $dir/package.json"
+    echo "It has just been regenerated to match. Review the diff, then:"
+    echo "  git add $dir/package-lock.json"
+    echo "  git commit"
+    exit 1
+  fi
+}
+
+check_lockfile server
+check_lockfile client
+
+echo "Both lockfiles in sync."
