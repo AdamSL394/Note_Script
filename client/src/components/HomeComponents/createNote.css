@@ -21,11 +21,44 @@
   gap: 0.75rem;
 }
 
+.composeHeading {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ns-graphite);
+  margin: 0 0 0.6rem;
+}
+
+.tagRowWrap {
+  position: relative;
+}
+
+.tagFade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 4px;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--ns-paper));
+  pointer-events: none;
+}
+
 .tagRow {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 6px;
   margin-top: 1rem;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.tagRow::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tagRow::-webkit-scrollbar-thumb {
+  background: var(--ns-rule);
+  border-radius: 4px;
 }
 
 .tagChip {
@@ -42,11 +75,10 @@
   align-items: center;
   gap: 4px;
   line-height: 1.6;
+  flex-shrink: 0;
 }
 
 .tagChip.active {
-  border-color: var(--ns-blue);
-  background: var(--ns-blue-tint);
   color: var(--ns-ink);
 }
 

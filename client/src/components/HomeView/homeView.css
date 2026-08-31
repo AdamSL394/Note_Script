@@ -67,6 +67,15 @@
   color: var(--ns-graphite);
 }
 
+.streakStrip .streakCount {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ns-amber-dark);
+  white-space: nowrap;
+  margin-right: 0.5rem;
+}
+
 .streakStrip .streakLabel {
   white-space: nowrap;
 }
@@ -99,6 +108,13 @@
   justify-content: center;
   gap: 0.75rem;
   margin: 1rem auto;
+}
+
+.lookBackHeading {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
 }
 
 .lookBackSelect {

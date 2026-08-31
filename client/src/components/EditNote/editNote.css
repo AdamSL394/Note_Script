@@ -17,6 +17,13 @@
   gap: 0.5rem;
 }
 
+.editingHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
 .editingCardHeader #deleteButton {
   float: none;
   margin: 0;
@@ -33,8 +40,9 @@
 .editingDateRow {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .editingDateInput {
@@ -42,9 +50,11 @@
   border: 0.5px solid var(--ns-rule);
   background: var(--ns-paper);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ns-ink);
-  padding: 0.3rem 0.6rem;
+  padding: 0.3rem 0.4rem;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .editingDateInput:focus {
@@ -54,9 +64,10 @@
 
 .editingStarSelect {
   height: 2rem !important;
-  min-width: 5.5rem;
+  min-width: 3.75rem;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .editingTagRow {
@@ -75,11 +86,6 @@
   border: 0.5px solid var(--ns-rule);
   background: transparent;
   line-height: 1.6;
-}
-
-.editingTagRow .tagChip.active {
-  border-color: var(--ns-blue);
-  background: var(--ns-blue-tint);
 }
 
 .editingTextarea {
@@ -115,18 +121,4 @@
   letter-spacing: 0.03em;
   color: var(--ns-graphite);
   white-space: nowrap;
-}
-
-.editingActiveTagsLabel {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ns-graphite);
-  margin-bottom: 0.25rem;
-}
-
-.editingActiveTagsLabel + div .emoji {
-  font-size: 15px;
-  margin-right: 0.3rem;
 }

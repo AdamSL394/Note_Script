@@ -114,5 +114,42 @@ async function requestJson<T>(
     return null;
   }
 }
+async function requestWithStatus(
+  path: string,
+  { method = 'GET', body, extraHeaders }: RequestOptions = {}
+): Promise<{ ok: boolean; status: number }> {
+  await tokenReadyPromise;
 
-export { request, requestJson, BASE_URL };
+  const headers = new Headers();
+  headers.append('X-Requested-With', 'XMLHttpRequest');
+  headers.append('origin', BASE_URL);
+  if (body !== undefined) {
+    headers.append('Content-Type', 'application/json');
+  }
+  if (currentToken) {
+    headers.append('Authorization', `Bearer ${currentToken}`);
+  }
+  if (extraHeaders) {
+    Object.entries(extraHeaders).forEach(([key, value]) =>
+      headers.append(key, value)
+    );
+  }
+
+  const requestOptions: RequestInit = {
+    method,
+    headers,
+    redirect: 'follow',
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  };
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, requestOptions);
+    return { ok: response.ok, status: response.status };
+  } catch (error) {
+    console.log('request error', error);
+    return { ok: false, status: 0 };
+  }
+}
+
+export { request, requestJson, requestWithStatus, BASE_URL };
+

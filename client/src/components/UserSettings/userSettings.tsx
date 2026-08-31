@@ -3,6 +3,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
+import Button from '@mui/material/Button/index.js';
+import DeleteAccountDialog from '../DeleteAccountDialog';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
 import { WIN_TAGS } from '../../constants/noteFields';
 import { useThemeMode } from '../../hooks/useThemeMode';
@@ -13,7 +15,10 @@ const UserSetting = () => {
     const [currentUser, setCurrentUser] = useState<UserRecord | undefined>();
     const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
     const [noteCount, setNoteCount] = useState<number | undefined>();
-    const { user } = useAuth0();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | undefined>();
+    const { user, logout } = useAuth0();
     const { mode, setMode } = useThemeMode();
 
     useEffect(() => {
@@ -61,6 +66,22 @@ const UserSetting = () => {
             const userInfo = JSON.parse(updatedStates);
             setTrackedStats(userInfo['settings']);
         }
+    };
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        setDeleteError(undefined);
+        const success = await NoteRoutes.deleteAccount();
+        if (success) {
+            // The account no longer exists server-side, so the local
+            // Auth0 session needs to be cleared too -- otherwise the app
+            // would still think the user is logged in as an account
+            // that no longer has any data behind it.
+            logout({ returnTo: window.location.origin });
+            return;
+        }
+        setIsDeleting(false);
+        setDeleteError('Something went wrong deleting your account. Please try again.');
     };
 
     const changeName = () => {};
@@ -153,7 +174,26 @@ const UserSetting = () => {
                         })}
                     </div>
                 </div>
+
+                <div className="Form">
+                    <h4 className="settingsLabel">Danger Zone</h4>
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => setDeleteDialogOpen(true)}
+                    >
+                        Delete my account
+                    </Button>
+                </div>
             </Grid>
+
+            <DeleteAccountDialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                onConfirm={handleDeleteAccount}
+                isDeleting={isDeleting}
+                errorMessage={deleteError}
+            />
         </Container>
     );
 };

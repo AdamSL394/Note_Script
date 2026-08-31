@@ -5,6 +5,7 @@ import { requireAuth, getRequiredUserId } from '../middleware/requireAuth';
 import { requireAdmin } from '../middleware/requireAdmin';
 import { validateBody } from '../middleware/validate';
 import { getUserSchema, trackedStatsSchema } from '../validation/schemas';
+import { logger } from '../logger';
 
 const router = express.Router();
 
@@ -40,6 +41,18 @@ router.post('/user/trackedstats', requireAuth, validateBody(trackedStatsSchema),
 router.get('/admin/users', requireAuth, requireAdmin, async (req: Request, res: Response) => {
     const users = await userController.getAllUsers();
     res.json(users);
+    return;
+});
+
+router.delete('/user', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    try {
+        await userController.deleteAccount(userId);
+        res.status(204).send();
+    } catch (err) {
+        logger.error({ err, userId }, 'Failed to delete account');
+        res.status(500).json({ error: 'Failed to delete account' });
+    }
     return;
 });
 

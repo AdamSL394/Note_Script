@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { request, requestJson } from './client';
+import { request, requestJson, requestWithStatus } from './client';
 import type { Note, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
@@ -128,6 +128,11 @@ const NoteRoutes = {
 
   getAllUsers: async (): Promise<UserRecord[] | null> => {
     return requestJson<UserRecord[]>('/api/users/admin/users');
+  },
+
+   deleteAccount: async (): Promise<boolean> => {
+    const { ok } = await requestWithStatus('/api/users/user', { method: 'DELETE' });
+    return ok;
   },
 
   postNote: (raw: Record<string, unknown>): Promise<string> =>

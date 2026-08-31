@@ -5,6 +5,7 @@ import Switch from '@mui/material/Switch/index.js';
 import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import type { Note } from '../../../types';
+import { toLocalDateString } from '../../../utils/date';
 
 interface LookBackProps {
   timePeriod: string;
@@ -89,11 +90,11 @@ export const LookBack = (props: LookBackProps) => {
       if (!userid) return;
       if (value === '1') {
         props.setNoteView('week');
-        const todaysDate = new Date().toISOString().split('T')[0];
+        const todaysDate = toLocalDateString(new Date());
         const myCurrentDate = new Date();
         const myPastDate = new Date(myCurrentDate);
         myPastDate.setDate(myPastDate.getDate() - 7);
-        const lastWeeksDate = myPastDate.toISOString().split('T')[0];
+        const lastWeeksDate = toLocalDateString(myPastDate);
         props.getNoteRanges(userid, todaysDate, lastWeeksDate);
       }
       if (value === '2') {
@@ -101,10 +102,10 @@ export const LookBack = (props: LookBackProps) => {
         const myCurrentDate = new Date();
         const myPastDate = new Date(myCurrentDate);
         myPastDate.setDate(myPastDate.getDate() - 7);
-        const eightDaysago = myPastDate.toISOString().split('T')[0];
+        const eightDaysago = toLocalDateString(myPastDate);
         const pastDate = new Date(myCurrentDate);
         pastDate.setDate(pastDate.getDate() - 14);
-        const fourteenDaysAgo = pastDate.toISOString().split('T')[0];
+        const fourteenDaysAgo = toLocalDateString(pastDate);
         props.getNoteRanges(userid, eightDaysago, fourteenDaysAgo);
       }
       if (value === '3') {
@@ -112,10 +113,10 @@ export const LookBack = (props: LookBackProps) => {
         const myCurrentDate = new Date();
         const myPastDate = new Date(myCurrentDate);
         myPastDate.setDate(myPastDate.getDate() - 14);
-        const eightDaysago = myPastDate.toISOString().split('T')[0];
+        const eightDaysago = toLocalDateString(myPastDate);
         const pastDate = new Date(myCurrentDate);
         pastDate.setDate(pastDate.getDate() - 22);
-        const fourteenDaysAgo = pastDate.toISOString().split('T')[0];
+        const fourteenDaysAgo = toLocalDateString(pastDate);
         props.getNoteRanges(userid, eightDaysago, fourteenDaysAgo);
       }
     }
@@ -192,6 +193,7 @@ export const LookBack = (props: LookBackProps) => {
 
   return (
     <div className="lookBackRow">
+      <span className="lookBackHeading">Look back</span>
       <Select
         size="small"
         value={props.timePeriod}
