@@ -19,7 +19,7 @@ import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import './notes.css';
 
 interface NotesProps {
-  // Bound to a MUI <Select>'s onChange (see editNote.tsx), not a
+  // Bound to a MUI <Select>'s onChange (see editingNote.tsx), not a
   // plain input — SelectChangeEvent is the correct type here.
   onStarValueChange: (e: SelectChangeEvent, note: NoteType) => void;
 }
