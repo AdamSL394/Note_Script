@@ -103,6 +103,7 @@
     width: 100%;
   }
   .createNoteMain textarea {
-    max-height: 130px;
+    max-height: 130px !important;
+    overflow-y: auto !important;
   }
 }

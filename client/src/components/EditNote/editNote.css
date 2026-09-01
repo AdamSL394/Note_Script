@@ -55,6 +55,13 @@
   padding: 0.3rem 0.4rem;
   min-width: 0;
   flex-shrink: 1;
+  /* See DateRange/dateRange.css's .date for the full explanation --
+     same underlying issue, same input type. */
+  color-scheme: light;
+}
+
+[data-theme="dark"] .editingDateInput {
+  color-scheme: dark;
 }
 
 .editingDateInput:focus {

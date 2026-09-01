@@ -15,6 +15,18 @@
   font-size: 12px;
   color: var(--ns-ink);
   padding: 0.3rem 0.6rem;
+  /* Safari uses this specifically to decide how to render native
+     form control internals (a date input's text/calendar icon) --
+     without it, on a dark theme, Safari can still render that
+     internal text assuming a light background, producing text that
+     is technically there but invisible against the actual dark
+     background behind it. Defaults to light; overridden below for
+     dark specifically. */
+  color-scheme: light;
+}
+
+[data-theme="dark"] .date {
+  color-scheme: dark;
 }
 
 .date:focus {
@@ -27,15 +39,19 @@
     flex-direction: column;
   }
   .date {
+    /* Two targeted fixes (font-family reset, then color-scheme) did
+       not resolve this on real device testing. Rather than guess a
+       third specific property without the ability to verify directly,
+       this resets everything about this input on mobile and lets the
+       browser use its own internally-consistent default background
+       AND text color together -- a custom dark background paired
+       with a text color Safari may not apply the way we expect is
+       exactly how this could still look broken even after the color-
+       scheme fix. Must come first: 'all' resets every property
+       regardless of declaration order, so anything meant to survive
+       has to be re-declared AFTER this, not before it. */
+    all: revert;
+    border-radius: 20px;
     margin-bottom: 12%;
-    /* Falls back to the system font specifically for this native
-       date input on mobile -- iOS Safari's internal rendering of
-       input[type=date] doesn't reliably handle a custom web font
-       (IBM Plex Mono), and can end up clipping the visible mm/dd/yyyy
-       text and calendar icon while the outer border/background still
-       render fine, producing what looks like an empty pill. */
-    font-family: -apple-system, system-ui, sans-serif;
-    -webkit-appearance: none;
-    min-height: 2.2rem;
   }
 }
