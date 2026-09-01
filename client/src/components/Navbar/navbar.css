@@ -34,14 +34,6 @@
   vertical-align: middle;
 }
 
-.menuIcon {
-  width: 28px;
-  height: 2px;
-  background-color: var(--ns-graphite);
-  margin: 6px 0;
-  border-radius: 4px;
-}
-
 #navItems {
   display: flex;
   align-items: center;

@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography/Typography.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
+import MenuIcon from '@mui/icons-material/Menu';
 import './navbar.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -27,8 +28,8 @@ function Navbar() {
   const { mode, setMode } = useThemeMode();
 
   const pages = isAdmin
-    ? ['Home', 'View All Notes', 'User', 'Admin']
-    : ['Home', 'View All Notes', 'User'];
+    ? ['Home', 'All Notes', 'User', 'Admin']
+    : ['Home', 'All Notes', 'User'];
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -54,7 +55,7 @@ function Navbar() {
       if (value.target.innerHTML === 'Home') {
         navigate('/');
       }
-      if (value.target.innerHTML === 'View All Notes') {
+      if (value.target.innerHTML === 'All Notes') {
         navigate('/all');
       }
       if (value.target.innerHTML === 'User') {
@@ -94,11 +95,7 @@ function Navbar() {
             onClick={handleOpenNavMenu}
             color="inherit"
           >
-            <div>
-              <div className="menuIcon"></div>
-              <div className="menuIcon"></div>
-              <div className="menuIcon"></div>
-            </div>
+            <MenuIcon style={{ color: 'var(--ns-graphite)' }} />
           </IconButton>
           <Menu
             id="menu-appbar"
@@ -143,7 +140,7 @@ function Navbar() {
             Home
           </span>
           <span className="tabs" id="all" onClick={routeChanges}>
-            View All Notes
+            All Notes
           </span>
           {isAdmin && (
             <span className="tabs" id="admin" onClick={adminUsers}>

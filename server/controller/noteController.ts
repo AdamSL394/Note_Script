@@ -81,7 +81,8 @@ const MAX_PAGE_SIZE = 100;
 const getAllNotes = async (
     ids: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    sortDirection: 'asc' | 'desc' = 'desc'
 ): Promise<PaginatedNotes> => {
     const id = new mongoose.Types.ObjectId(ids.trim());
     const clampedPageSize = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
@@ -89,7 +90,10 @@ const getAllNotes = async (
     const skip = (clampedPage - 1) * clampedPageSize;
 
     const [notes, totalCount] = await Promise.all([
-        Note.find({ userId: id }).sort({ date: -1 }).skip(skip).limit(clampedPageSize),
+        Note.find({ userId: id })
+            .sort({ date: sortDirection === 'asc' ? 1 : -1 })
+            .skip(skip)
+            .limit(clampedPageSize),
         Note.countDocuments({ userId: id }),
     ]);
 
@@ -108,7 +112,8 @@ const getNoteCount = async (ids: string): Promise<number> => {
 const getRangeNotes = async (
     ids: string,
     start: string,
-    end: string
+    end: string,
+    sortDirection: 'asc' | 'desc' = 'desc'
 ): Promise<INote[]> => {
     const id = new mongoose.Types.ObjectId(ids.trim());
     const notes = await Note.find({
@@ -117,7 +122,7 @@ const getRangeNotes = async (
             $gte: start,
             $lt: end,
         },
-    }).sort({ date: 1 });
+    }).sort({ date: sortDirection === 'asc' ? 1 : -1 });
     return notes;
 };
 

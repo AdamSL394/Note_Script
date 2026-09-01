@@ -4,6 +4,7 @@ import Container from '@mui/material/Container/index.js';
 import Grid from '@mui/material/Grid/index.js';
 import { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
+import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import { CreateNote } from '../HomeComponents/createNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
 import { HomeNoteCard } from '../HomeComponents/notesHomeView';
@@ -12,7 +13,7 @@ import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import { useNoteEditing } from '../../hooks/useNoteEditing';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
+import { NOTE_TAG_FIELDS, WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
 import { toLocalDateString } from '../../utils/date';
 import './homeView.css';
 
@@ -88,6 +89,7 @@ const HomeView = () => {
     onStarValueChange,
     open,
     modelNoteId,
+    saveError,
   } = useNoteEditing(setNotes, refreshAfterChange);
 
   // Marks a note as being edited in place -- matches Note/index.tsx's
@@ -102,6 +104,7 @@ const HomeView = () => {
     sessionStorage.setItem(`${note._id}-original`, JSON.stringify(note));
     const noteToEdit: NoteType = {
       ...note,
+      star: sanitizeStarValue(note.star),
       textLength: 200 - note.text.length,
       edit: true,
     };
@@ -136,10 +139,18 @@ const HomeView = () => {
   // separate from the general notes fetch.
   const fetchStreakData = async (start: string, end: string) => {
     const res = await NoteRoutes.getNoteRange(start, end);
-    if (res) {
+    if (Array.isArray(res)) {
       setStreakNotes(res);
     }
   };
+
+  useEffect(() => {
+    if (!saveError) return;
+    setErrorMessage(saveError);
+    setErrorFlag('visible');
+    const timeout = setTimeout(() => setErrorFlag('hidden'), 3000);
+    return () => clearTimeout(timeout);
+  }, [saveError]);
 
   useEffect(() => {
     const counts: PropertyCounts = { ...EMPTY_COUNTS };
@@ -186,7 +197,7 @@ const HomeView = () => {
     }
 
     for (const stat of stats) {
-      if (stat.visible === 'visible') {
+      if (stat.visible === 'visible' && !RESERVED_NOTE_FIELDS.has(stat.name)) {
         raw[stat.name] = true;
       }
     }
@@ -277,7 +288,7 @@ const HomeView = () => {
   const checkNoteApiResponse = (
     notesResponse: NoteType[] | undefined
   ): boolean => {
-    if (!notesResponse || notesResponse.length < 1) {
+    if (!Array.isArray(notesResponse) || notesResponse.length < 1) {
       setNotes([]);
       setnoNotes('Start your streak today.');
       return false;

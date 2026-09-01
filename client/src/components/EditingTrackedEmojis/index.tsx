@@ -1,6 +1,7 @@
 import type { Note } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
+import { WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
 import { getTagColor } from '../../utils/tagColor';
+import { getRelevantTagFields } from '../../utils/resolveNoteTags';
 
 interface EditingTrackedEmojisProps {
   note: Note;
@@ -17,14 +18,33 @@ export const EditingTrackedEmojis = (props: EditingTrackedEmojisProps) => {
     // since 'date/smoosh' isn't a valid identifier — bracket access via
     // Record cast, same pattern used everywhere else this list is read.
     const toggleField = (note: Note, field: string) => {
-        const record = note as unknown as Record<string, unknown>;
-        const updatedNote: Note = { ...note, [field]: !record[field] };
+        if (RESERVED_NOTE_FIELDS.has(field)) {
+            // A tag whose name collides with a real Note schema field
+            // (e.g. a tag literally named "star") would otherwise
+            // overwrite that field instead of behaving as a tag --
+            // this is exactly what broke saving entirely. Safe no-op
+            // rather than corrupting real data.
+            return;
+        }
+        // Reads any existing draft first, exactly matching setDateNote
+        // and onStarValueChange -- without this, a tag toggle only
+        // updated React state, never sessionStorage. saveNote reads
+        // sessionStorage as its source of truth, so a toggle applied
+        // after any text/date edit (which DOES write a draft) got
+        // silently discarded the moment Save read that now-stale
+        // draft, even though the toggle visibly changed on screen.
+        const rawStored = sessionStorage.getItem(note._id);
+        const storedNote: Note | null = rawStored ? JSON.parse(rawStored) : null;
+        const baseNote = storedNote ?? note;
+        const record = baseNote as unknown as Record<string, unknown>;
+        const updatedNote: Note = { ...baseNote, [field]: !record[field] };
+        sessionStorage.setItem(updatedNote._id, JSON.stringify(updatedNote));
         props.setNoteValue(updatedNote);
     };
 
     return (
         <div className="editingTagRow">
-            {NOTE_TAG_FIELDS.map(({ field, icon, label }) => {
+            {getRelevantTagFields(props.note).map(({ field, icon, label }) => {
                 const record = props.note as unknown as Record<string, unknown>;
                 const isActive = Boolean(record[field]);
                 const isWin = WIN_TAGS.includes(field);

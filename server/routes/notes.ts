@@ -18,7 +18,8 @@ router.get('/all', requireAuth, async (req: Request, res: Response) => {
     // rejecting the request.
     const page = parseInt(String(req.query.page ?? ''), 10) || 1;
     const pageSize = parseInt(String(req.query.pageSize ?? ''), 10) || 30;
-    const response = await noteController.getAllNotes(userId, page, pageSize);
+    const sortDirection = req.query.sort === 'asc' ? 'asc' : 'desc';
+    const response = await noteController.getAllNotes(userId, page, pageSize, sortDirection);
     res.json(response);
     return;
 });
@@ -48,7 +49,7 @@ router.get('/search/:id', requireAuth, async (req: Request<{ id: string }>, res:
     const userId = getRequiredUserId(req);
     // `:id` here is the search query text, not a user id.
     const { id } = req.params;
-     try {
+    try {
         const response = await noteController.searchNotes(id, userId);
         res.send(response);
     } catch (err) {
@@ -68,8 +69,8 @@ type NoteRangeBody = z.infer<typeof noteRangeSchema>;
 
 router.post('/noterange', requireAuth, validateBody(noteRangeSchema), async (req: Request<Record<string, never>, unknown, NoteRangeBody>, res: Response) => {
     const userId = getRequiredUserId(req);
-    const { start, end } = req.body;
-    const response = await noteController.getRangeNotes(userId, start, end);
+    const { start, end, sort } = req.body;
+    const response = await noteController.getRangeNotes(userId, start, end, sort ?? 'desc');
     res.send(response);
     return;
 });
@@ -131,7 +132,8 @@ router.post('/upload', requireAuth, validateBody(uploadNotesSchema), async (req:
 router.get('/lastyear/:tdYearAgo/:lwYearAgo', requireAuth, async (req: Request<{ tdYearAgo: string; lwYearAgo: string }>, res: Response) => {
     const userId = getRequiredUserId(req);
     const { lwYearAgo, tdYearAgo } = req.params;
-    const response = await noteController.getRangeNotes(userId, lwYearAgo, tdYearAgo);
+    const sortDirection = req.query.sort === 'asc' ? 'asc' : 'desc';
+    const response = await noteController.getRangeNotes(userId, lwYearAgo, tdYearAgo, sortDirection);
     res.send(response);
 });
 

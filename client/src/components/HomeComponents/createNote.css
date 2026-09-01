@@ -102,4 +102,7 @@
     flex: 1 1 auto;
     width: 100%;
   }
+  .createNoteMain textarea {
+    max-height: 130px;
+  }
 }

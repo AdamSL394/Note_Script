@@ -6,10 +6,13 @@ import CircularProgress from '@mui/material/CircularProgress/index.js';
 import { Box } from '@mui/system';
 import React, { useEffect, useRef, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
+import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import Note from '../Note/index';
 import NoteYears from '../NoteYears/noteYears';
+import Snackbar from '@mui/material/Snackbar/index.js';
+import Alert from '@mui/material/Alert/index.js';
 import { SearchNotes } from '../SearchNotes/searchNotes';
 import { useNoteYears } from '../../hooks/useNoteYears';
 import type { Note as NoteType } from '../../types';
@@ -84,6 +87,8 @@ function Notes(props: NotesProps) {
   const [hasMore, setHasMore] = useState(true);
   const nextPageRef = useRef(1);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [saveError, setSaveError] = useState<string | undefined>();
 
   // Auth0's `user.sub` is typed as optional by @auth0/auth0-react (it's
   // undefined until authentication resolves), so every call site that
@@ -115,7 +120,7 @@ function Notes(props: NotesProps) {
     updateNote(noteToSave);
   };
 
-  const getNoteYears = async (year: string | number) => {
+  const getNoteYears = async (year: string | number, direction: 'asc' | 'desc' = sortDirection) => {
     setIsLoading(true);
     const userid = getUserId();
     if (!userid) {
@@ -124,7 +129,8 @@ function Notes(props: NotesProps) {
     }
     const noteYears = await NoteRoutes.getNoteRangeYear(
       year + '-12-31',
-      year + '-01-01'
+      year + '-01-01',
+      direction
     );
     setIsLoading(false);
     setHasMore(false);
@@ -144,7 +150,7 @@ function Notes(props: NotesProps) {
   // The only mode with true server-side pagination -- fetches one
   // batch and REPLACES the list (used for the initial load and
   // whenever switching back into 'All' mode from something else).
-  const loadAllNotes = async () => {
+  const loadAllNotes = async (direction: 'asc' | 'desc' = sortDirection) => {
     setIsLoading(true);
     const userid = getUserId();
     if (!userid) {
@@ -154,7 +160,8 @@ function Notes(props: NotesProps) {
     setCurrentCall('All');
     const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
       1,
-      NOTES_PER_BATCH
+      NOTES_PER_BATCH,
+      direction
     );
     setIsLoading(false);
     if (!checkNoteApiResponse(pageNotes)) {
@@ -177,9 +184,17 @@ function Notes(props: NotesProps) {
     setIsLoadingMore(true);
     const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
       nextPageRef.current,
-      NOTES_PER_BATCH
+      NOTES_PER_BATCH,
+      sortDirection
     );
     setIsLoadingMore(false);
+    if (!Array.isArray(pageNotes)) {
+      // A failed "load more" (rate limit, network issue, any other
+      // error) shouldn't wipe out notes already loaded and showing --
+      // just stop trying to load more, leaving what's already there.
+      setHasMore(false);
+      return;
+    }
     setNotes((prev) => {
       const combined = [...prev, ...pageNotes];
       setHasMore(combined.length < totalCount);
@@ -225,8 +240,10 @@ function Notes(props: NotesProps) {
   const updateNote = async (note: NoteType) => {
     const updatedNoteFromServer = await NoteRoutes.updateNote(note);
     if (!updatedNoteFromServer || !updatedNoteFromServer._id) {
+      setSaveError('Something went wrong saving your changes. Please try again.');
       return;
     }
+    setSaveError(undefined);
     // Trust whatever `edit` value the server echoes back — don't force
     // it to false here. updateNote is called both to *save* a note
     // (saveNote sends edit: false) and to *open* one for editing
@@ -250,11 +267,11 @@ function Notes(props: NotesProps) {
     sessionStorage.removeItem(`${note._id}-original`);
     if (rawOriginal) {
       const original: NoteType = JSON.parse(rawOriginal);
-      updateNote({ ...original, edit: false });
+      updateNote({ ...original, star: sanitizeStarValue(original.star), edit: false });
     } else {
       // No snapshot exists for some reason -- exit edit mode on
       // whatever is currently there rather than leaving it stuck.
-      updateNote({ ...note, edit: false });
+      updateNote({ ...note, star: sanitizeStarValue(note.star), edit: false });
     }
   };
 
@@ -266,7 +283,7 @@ function Notes(props: NotesProps) {
       return;
     }
     setIsLoading(true);
-    const noteDateRange = await NoteRoutes.getNoteRange(start, end);
+    const noteDateRange = await NoteRoutes.getNoteRange(start, end, sortDirection);
     setIsLoading(false);
     setCurrentCall('Date Range');
     setHasMore(false);
@@ -280,11 +297,11 @@ function Notes(props: NotesProps) {
     notesResponse: NoteType[] | null | undefined
   ): boolean => {
     const noNotesElement = document.getElementById('noNotes');
-    if (!notesResponse || notesResponse.length < 1) {
+    if (!Array.isArray(notesResponse) || notesResponse.length < 1) {
       if (noNotesElement) {
         noNotesElement.style.display = 'grid';
       }
-      setNoNotes('Get started... Upload or make your first Note!');
+      setNoNotes('No notes here yet. Write one from Home, or upload your history to get started.');
       setIsLoading(false);
       setNotes([]);
       return false;
@@ -343,6 +360,9 @@ function Notes(props: NotesProps) {
   const setSearchedNote = (searchedNotes: NoteType[]) => {
     setCurrentCall('Search');
     setHasMore(false);
+    if (!checkNoteApiResponse(searchedNotes)) {
+      return;
+    }
     setNotes(searchedNotes);
   };
 
@@ -368,10 +388,41 @@ function Notes(props: NotesProps) {
   const { noteYears, currentDbCall, setCurrentDbCall, selectYear } =
     useNoteYears((year) => determineApiCall(year));
 
+  const toggleSortDirection = () => {
+    const newDirection: 'asc' | 'desc' = sortDirection === 'desc' ? 'asc' : 'desc';
+    setSortDirection(newDirection);
+
+    if (currentCall === 'All') {
+      loadAllNotes(newDirection);
+      return;
+    }
+
+    // Every other mode (year browsing, date range, search, recently
+    // changed) already fetches its complete result set in a single
+    // call -- reversing the already-loaded array locally is exactly
+    // equivalent to re-fetching with the opposite sort, without the
+    // round-trip.
+    setNotes((prev) => [...prev].reverse());
+  };
+
   const monthGroups = groupByMonth(notes);
 
   return (
     <>
+      <Snackbar
+        open={Boolean(saveError)}
+        autoHideDuration={4000}
+        onClose={() => setSaveError(undefined)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="error"
+          onClose={() => setSaveError(undefined)}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', borderRadius: '8px' }}
+        >
+          {saveError}
+        </Alert>
+      </Snackbar>
       <ModalPop
         note={notes}
         open={open}
@@ -392,6 +443,9 @@ function Notes(props: NotesProps) {
                 setSearchedNote={setSearchedNote}
                 setNotesBasedOnYear={setNotesBasedOnYear}
                 setCurrentDbCall={setCurrentDbCall}
+                sortDirection={sortDirection}
+                onToggleSortDirection={toggleSortDirection}
+                showSortToggle={!isloading && notes.length > 0}
               ></SearchNotes>
             </Box>
           </Container>
@@ -402,9 +456,11 @@ function Notes(props: NotesProps) {
             </Box>
           ) : (
             <>
-              {monthGroups.map((group) => (
+              {monthGroups.map((group, groupIndex) => (
                 <div key={group.label}>
-                  <p className="monthHeader">{group.label}</p>
+                  <p className={groupIndex === 0 ? 'monthHeader monthHeaderFirst' : 'monthHeader'}>
+                    {group.label}
+                  </p>
                   <div className="noteGrid">
                     {group.notes.map((note, i) => {
                       if (!note.edit) {

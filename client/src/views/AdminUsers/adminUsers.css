@@ -1,0 +1,73 @@
+.adminPage {
+  max-width: 900px;
+  margin: 2rem auto 4rem;
+  padding: 0 1.5rem;
+}
+
+.adminMessage {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ns-graphite);
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.adminEyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ns-graphite);
+  margin: 0 0 0.4rem;
+}
+
+.adminHeading {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--ns-ink);
+  margin: 0 0 1.5rem;
+}
+
+.adminTableContainer {
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(35, 38, 43, 0.04);
+  overflow: hidden;
+}
+
+.adminTableHeadCell {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ns-graphite) !important;
+  border-bottom: 0.5px solid var(--ns-rule) !important;
+}
+
+.adminTableCell {
+  font-family: var(--font-serif) !important;
+  font-size: 14px !important;
+  color: var(--ns-ink) !important;
+  border-bottom: 0.5px solid var(--ns-rule) !important;
+}
+
+.adminIdCell {
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  color: var(--ns-graphite) !important;
+}
+
+.adminRoleChip {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  background: var(--ns-fog) !important;
+  color: var(--ns-graphite) !important;
+  border-radius: 20px !important;
+}
+
+.adminRoleChip.admin {
+  background: var(--ns-amber-tint) !important;
+  color: var(--ns-amber-dark) !important;
+}

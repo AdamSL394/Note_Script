@@ -68,7 +68,7 @@ export const LookBack = (props: LookBackProps) => {
         todayLastYear
       );
 
-      if (res) {
+      if (Array.isArray(res)) {
         if (res.length < 1) {
           props.setNotes(res);
           props.setnoNotes('No Notes for last year.');
@@ -135,7 +135,7 @@ export const LookBack = (props: LookBackProps) => {
           weekAheadLastYear,
           todayLastYear
         );
-        if (res) {
+        if (Array.isArray(res)) {
           if (res.length < 1) {
             props.setNotes(res);
             props.setnoNotes('No Notes for last year.');
@@ -155,7 +155,7 @@ export const LookBack = (props: LookBackProps) => {
           weekAheadLastYear,
           todayLastYear
         );
-        if (res) {
+        if (Array.isArray(res)) {
           if (res.length < 1) {
             props.setNotes(res);
             props.setnoNotes('No Notes for last year.');

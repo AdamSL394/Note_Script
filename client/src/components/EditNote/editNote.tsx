@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem/index.js';
 import Textarea from '../TextArea/index';
 import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
 import type { Note } from '../../types';
+import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import './editNote.css';
 
 interface EditingNoteProps {
@@ -36,11 +37,12 @@ function EditingNote(props: EditingNoteProps) {
   // Guards against both a missing value and legacy notes saved with the
   // old star:'false' schema-default bug (see server/models/notes.ts) —
   // either way, falls back to 'None' rather than a value the Select has
-  // no matching MenuItem for (which renders as a blank box).
-  const validStarValues = new Set(['None', '1', '2', '3']);
-  const starValue = validStarValues.has(props.note.star)
-    ? props.note.star
-    : 'None';
+  // no matching MenuItem for (which renders as a blank box). The
+  // underlying note data itself is now also sanitized where edit mode
+  // is entered (Note/index.tsx, homeView.tsx) -- this display guard
+  // remains as a second layer in case a note ever reaches this
+  // component without going through that path.
+  const starValue = sanitizeStarValue(props.note.star);
 
   return (
     <div className="noteCard">

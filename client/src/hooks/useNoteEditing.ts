@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import NoteRoutes from '../router/noteRoutes';
 import type { Note as NoteType } from '../types';
+import { sanitizeStarValue } from '../utils/sanitizeStarValue';
 
 type SetNotes = (updater: NoteType[] | ((prev: NoteType[]) => NoteType[])) => void;
 
 export function useNoteEditing(setNotes: SetNotes, onDeleted?: () => void) {
     const [open, setOpen] = useState(false);
     const [modelNoteId, setModelNoteId] = useState<string | undefined>();
+    const [saveError, setSaveError] = useState<string | undefined>();
 
     // Applies the server's response (the source of truth after an
     // update) to the matching note in state. Called both to *save* a
@@ -16,16 +18,26 @@ export function useNoteEditing(setNotes: SetNotes, onDeleted?: () => void) {
     // server echoes back rather than hardcoding it, since forcing it to
     // false here would silently kick a note back out of edit mode the
     // instant you opened it.
-    const updateNote = async (note: NoteType) => {
+    //
+    // Returns whether the update actually succeeded, and sets
+    // saveError on failure -- previously this silently returned on
+    // failure with zero signal to the caller or the user, which is
+    // exactly what made the star-collision bug confusing: a rejected
+    // save just did nothing, with no indication anything had gone
+    // wrong.
+    const updateNote = async (note: NoteType): Promise<boolean> => {
         const updatedNoteFromServer = await NoteRoutes.updateNote(note);
         if (!updatedNoteFromServer || !updatedNoteFromServer._id) {
-            return;
+            setSaveError('Something went wrong saving your changes. Please try again.');
+            return false;
         }
+        setSaveError(undefined);
         setNotes((prevNotes) =>
             prevNotes.map((n) =>
                 n._id === updatedNoteFromServer._id ? updatedNoteFromServer : n
             )
         );
+        return true;
     };
 
     // Saves whatever draft exists in sessionStorage for this note (or
@@ -88,11 +100,11 @@ export function useNoteEditing(setNotes: SetNotes, onDeleted?: () => void) {
         sessionStorage.removeItem(`${note._id}-original`);
         if (rawOriginal) {
             const original: NoteType = JSON.parse(rawOriginal);
-            updateNote({ ...original, edit: false });
+            updateNote({ ...original, star: sanitizeStarValue(original.star), edit: false });
         } else {
             // No snapshot exists for some reason -- exit edit mode on
             // whatever is currently there rather than leaving it stuck.
-            updateNote({ ...note, edit: false });
+            updateNote({ ...note, star: sanitizeStarValue(note.star), edit: false });
         }
     };
 
@@ -105,21 +117,8 @@ export function useNoteEditing(setNotes: SetNotes, onDeleted?: () => void) {
     ) => {
         const rawDraft = sessionStorage.getItem(note._id);
         const updatedNote: NoteType | null = rawDraft ? JSON.parse(rawDraft) : null;
-        const newNote: Partial<NoteType> = updatedNote
-            ? {
-                  text: updatedNote.text,
-                  date: updatedNote.date,
-                  star: e.target.value,
-                  _id: updatedNote._id,
-                  edit: updatedNote.edit,
-              }
-            : {
-                  text: note.text,
-                  date: note.date,
-                  star: e.target.value,
-                  _id: note._id,
-                  edit: note.edit,
-              };
+        const baseNote = updatedNote ?? note;
+        const newNote: NoteType = { ...baseNote, star: e.target.value };
         sessionStorage.setItem(note._id, JSON.stringify(newNote));
     };
 
@@ -145,5 +144,6 @@ export function useNoteEditing(setNotes: SetNotes, onDeleted?: () => void) {
         onStarValueChange,
         open,
         modelNoteId,
+        saveError,
     };
 }

@@ -24,8 +24,9 @@ export const NOTE_TAG_FIELDS: NoteFieldConfig[] = [
   { field: 'basketball', icon: '⛹🏻\u200d♂️', label: 'Basketball' },
   { field: 'king', icon: '🤴🏻', label: 'King' },
   { field: 'medal', icon: '🥇', label: 'Medal' },
-  { field: 'ice', icon: '👫', label: 'Date' },
-  { field: 'coffee', icon: '☕️', label: 'Coffee' },
+  { field: 'date/smoosh', icon: '👫', label: 'Date' },
+  { field: 'starred', icon: '🌟', label: 'Starred' },
+  { field: 'coffee', icon: '☕', label: 'Coffee' },
 ];
 
 // Tags that count as a "win" — gets the amber accent wherever notes are
@@ -33,3 +34,23 @@ export const NOTE_TAG_FIELDS: NoteFieldConfig[] = [
 // separately redefined in CreateNote, NotesHomeView, homeView, and
 // userSettings.
 export const WIN_TAGS: string[] = ['medal', 'king'];
+
+// Every non-tag field the Note schema actually uses (server/models/
+// notes.ts). A custom or built-in tag sharing one of these names would
+// silently overwrite that real field instead of behaving as a tag --
+// this is exactly what happened with a built-in 'star' tag colliding
+// with the note's own star RATING field, corrupting it with a boolean
+// and breaking every subsequent save (400: invalid enum value). Used
+// as a guard everywhere a tag gets toggled, so this class of bug can't
+// recur even if a future tag name happens to collide with a field
+// added to the schema later.
+export const RESERVED_NOTE_FIELDS = new Set([
+  '_id',
+  'userId',
+  'text',
+  'date',
+  'star',
+  'edit',
+  'updatedAt',
+  'textLength',
+]);
