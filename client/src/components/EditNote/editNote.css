@@ -122,3 +122,15 @@
   color: var(--ns-graphite);
   white-space: nowrap;
 }
+
+@media screen and (max-width: 758px) {
+  .editingDateInput {
+    /* Same reasoning as DateRange/dateRange.css -- a custom web font
+       on a native input[type=date] doesn't reliably render on iOS
+       Safari, and can end up clipping the visible date text invisible
+       while the outer border/background still render fine. */
+    font-family: -apple-system, system-ui, sans-serif;
+    -webkit-appearance: none;
+    min-height: 2.2rem;
+  }
+}

@@ -127,3 +127,8 @@
   letter-spacing: 0.03em;
   color: var(--ns-graphite);
 }
+@media screen and (max-width: 500px) {
+  .streakStrip {
+    max-width: 100%;
+  }
+}

@@ -28,5 +28,14 @@
   }
   .date {
     margin-bottom: 12%;
+    /* Falls back to the system font specifically for this native
+       date input on mobile -- iOS Safari's internal rendering of
+       input[type=date] doesn't reliably handle a custom web font
+       (IBM Plex Mono), and can end up clipping the visible mm/dd/yyyy
+       text and calendar icon while the outer border/background still
+       render fine, producing what looks like an empty pill. */
+    font-family: -apple-system, system-ui, sans-serif;
+    -webkit-appearance: none;
+    min-height: 2.2rem;
   }
 }
