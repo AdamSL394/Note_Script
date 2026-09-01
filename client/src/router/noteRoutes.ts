@@ -27,10 +27,11 @@ const NoteRoutes = {
 
   getAllNotes: async (
     page: number,
-    pageSize: number
+    pageSize: number,
+    sortDirection: 'asc' | 'desc' = 'desc'
   ): Promise<PaginatedNotesResponse> => {
     const result = await requestJson<PaginatedNotesResponse>(
-      `/notes/all?page=${page}&pageSize=${pageSize}`
+      `/notes/all?page=${page}&pageSize=${pageSize}&sort=${sortDirection}`
     );
     return result ?? { notes: [], totalCount: 0 };
   },
@@ -81,11 +82,12 @@ const NoteRoutes = {
 
   getNoteRange: async (
     start: string,
-    end: string
+    end: string,
+    sortDirection: 'asc' | 'desc' = 'desc'
   ): Promise<Note[] | undefined> => {
     const text = await request('/notes/noterange', {
       method: 'POST',
-      body: { start, end },
+      body: { start, end, sort: sortDirection },
     });
     if (text.length > 0) {
       return JSON.parse(text) as Note[];
@@ -101,9 +103,10 @@ const NoteRoutes = {
 
   getNoteRangeYear: (
     tdYearAgo: string,
-    lwYearAgo: string
+    lwYearAgo: string,
+    sortDirection: 'asc' | 'desc' = 'desc'
   ): Promise<Note[] | null> =>
-    requestJson<Note[]>(`/notes/lastyear/${tdYearAgo}/${lwYearAgo}`),
+    requestJson<Note[]>(`/notes/lastyear/${tdYearAgo}/${lwYearAgo}?sort=${sortDirection}`),
 
   Leetcode_stats: async (): Promise<unknown> => {
     try {
@@ -130,7 +133,7 @@ const NoteRoutes = {
     return requestJson<UserRecord[]>('/api/users/admin/users');
   },
 
-   deleteAccount: async (): Promise<boolean> => {
+  deleteAccount: async (): Promise<boolean> => {
     const { ok } = await requestWithStatus('/api/users/user', { method: 'DELETE' });
     return ok;
   },

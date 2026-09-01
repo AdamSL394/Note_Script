@@ -34,14 +34,11 @@ interface CreateNoteProps {
 // already clobbers that field. Not fixed here since it's a
 // backend/schema concern, not a styling one — flagging so it doesn't
 // get lost.
-const EMOJI_LIST: TrackedStat[] = [
-  ...NOTE_TAG_FIELDS.map(({ field, icon }) => ({
-    icon,
-    name: field,
-    visible: 'hidden' as const,
-  })),
-  { icon: '🌟', name: 'star', visible: 'hidden' },
-];
+const EMOJI_LIST: TrackedStat[] = NOTE_TAG_FIELDS.map(({ field, icon }) => ({
+  icon,
+  name: field,
+  visible: 'hidden' as const,
+}));
 
 export const CreateNote = (props: CreateNoteProps) => {
   const [date, setDate] = useState<string>(

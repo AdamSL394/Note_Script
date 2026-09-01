@@ -5,10 +5,11 @@ import Tooltip from '@mui/material/Tooltip/index.js';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import type { Note } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
+import { WIN_TAGS } from '../../constants/noteFields';
 import { getTagColor } from '../../utils/tagColor';
 import { formatHumanDate } from '../../utils/date';
 import { renderStars } from '../../utils/renderStars';
+import { getRelevantTagFields } from '../../utils/resolveNoteTags';
 
 interface HomeNotesProps {
   notes: Note[];
@@ -120,7 +121,7 @@ export const HomeNoteCard = (props: HomeNoteCardProps) => {
           gap: '4px',
         }}
       >
-        {NOTE_TAG_FIELDS.map(({ field, icon, label }) => {
+        {getRelevantTagFields(note).map(({ field, icon, label }) => {
           if (!record[field]) return null;
           const isWin = WIN_TAGS.includes(field);
           const tagColor = isWin

@@ -11,21 +11,8 @@ const NoteHistory = () => {
   const onStarValueChange = (e: SelectChangeEvent, note: Note) => {
     const rawDraft = sessionStorage.getItem(note._id);
     const updatedNote: Note | null = rawDraft ? JSON.parse(rawDraft) : null;
-    const newNote: Partial<Note> = updatedNote
-      ? {
-          text: updatedNote.text,
-          date: updatedNote.date,
-          star: e.target.value,
-          _id: updatedNote._id,
-          edit: updatedNote.edit,
-        }
-      : {
-          text: note.text,
-          date: note.date,
-          star: e.target.value,
-          _id: note._id,
-          edit: note.edit,
-        };
+    const baseNote = updatedNote ?? note;
+    const newNote: Note = { ...baseNote, star: e.target.value };
     sessionStorage.setItem(note._id, JSON.stringify(newNote));
   };
 

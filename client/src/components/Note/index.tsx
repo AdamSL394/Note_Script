@@ -5,10 +5,12 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import NoteText from '../NoteText/noteText';
 import type { Note as NoteType } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
+import { WIN_TAGS } from '../../constants/noteFields';
 import { getTagColor } from '../../utils/tagColor';
 import { formatHumanDate } from '../../utils/date';
 import { renderStars } from '../../utils/renderStars';
+import { getRelevantTagFields } from '../../utils/resolveNoteTags';
+import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 
 interface NoteProps {
   note: NoteType;
@@ -25,6 +27,7 @@ function Note(props: NoteProps) {
         sessionStorage.setItem(`${note._id}-original`, JSON.stringify(note));
         const noteToEdit: NoteType = {
             ...note,
+            star: sanitizeStarValue(note.star),
             textLength: 200 - note.text.length,
             edit: true,
         };
@@ -108,7 +111,7 @@ function Note(props: NoteProps) {
                         gap: '4px',
                     }}
                 >
-                    {NOTE_TAG_FIELDS.map(({ field, icon, label }) => {
+                    {getRelevantTagFields(props.note).map(({ field, icon, label }) => {
                         if (!record[field]) return null;
                         const isWin = WIN_TAGS.includes(field);
                         const tagColor = isWin

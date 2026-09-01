@@ -1,6 +1,9 @@
 import Search from '../Search/search';
 import { useAuth0 } from '@auth0/auth0-react';
 import { DateRange } from '../DateRange/index';
+import IconButton from '@mui/material/IconButton/index.js';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 import type { Note } from '../../types';
 import './searchNotes.css';
 
@@ -12,6 +15,9 @@ interface SearchNotesProps {
   // need to clear the year sidebar's "currently selected" highlight
   // when they run their own query.
   setCurrentDbCall: (value: string | number) => void;
+  sortDirection: 'asc' | 'desc';
+  onToggleSortDirection: () => void;
+  showSortToggle: boolean;
 }
 
 export const SearchNotes = (props: SearchNotesProps) => {
@@ -43,7 +49,27 @@ export const SearchNotes = (props: SearchNotesProps) => {
 
   return (
     <div className="searchAndDateRow">
-      <Search searchNotes={searchNotes}></Search>
+      <div className="searchAndToggleGroup">
+        <Search searchNotes={searchNotes}></Search>
+        {props.showSortToggle && (
+          <div className="sortToggleRow">
+            <Tooltip
+              title={props.sortDirection === 'desc' ? 'Showing newest first' : 'Showing oldest first'}
+            >
+              <IconButton
+                size="small"
+                onClick={props.onToggleSortDirection}
+                aria-label="Toggle sort order"
+              >
+                <SwapVertIcon style={{ fontSize: '18px' }} />
+              </IconButton>
+            </Tooltip>
+            <span className="sortToggleLabel">
+              {props.sortDirection === 'desc' ? 'Newest first' : 'Oldest first'}
+            </span>
+          </div>
+        )}
+      </div>
       <DateRange
         runDateSearch={runDateSearch}
         setCurrentDBCall={props.setCurrentDbCall}

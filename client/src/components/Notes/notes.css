@@ -44,10 +44,14 @@
   text-transform: uppercase;
   color: var(--ns-graphite);
   margin: 1.5rem 0 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 0.5px solid var(--ns-rule);
 }
 
-.monthHeader:first-child {
+.monthHeaderFirst {
   margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 @media screen and (max-width: 900px) {
@@ -56,27 +60,8 @@
   }
 }
 
-@media screen and (max-width: 1000px) {
-  #searchStyle {
-    max-width: 80% !important;
-    text-align: center;
-    /* margin: auto; */
+@media screen and (max-width: 600px) {
+  #noNotes {
+    width: 85%;
   }
-  .stack{
-    text-align: center;
-    margin-top: 6% !important;
-
-  }
-}
-  @media screen and (max-width: 758px) {
-    #searchStyle {
-      max-width: 80% !important;
-      text-align: center;
-      margin: auto;
-    }
-    .stack{
-      text-align: center;
-      margin-top: 6% !important;
-  
-    }
 }

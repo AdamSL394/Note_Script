@@ -7,6 +7,27 @@
   gap: 1rem;
 }
 
+.searchAndToggleGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sortToggleRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sortToggleLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--ns-graphite);
+}
+
 @media screen and (max-width: 758px) {
   .searchAndDateRow {
     flex-direction: column;
