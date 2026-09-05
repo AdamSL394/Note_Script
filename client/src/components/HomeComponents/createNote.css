@@ -98,6 +98,18 @@
   .createNoteCard {
     flex-direction: column;
   }
+  .createNoteMain {
+    /* Without this, .createNoteMain has no explicit width in
+       flex-direction: column (where flex-basis/min-width govern
+       height, not width) with align-items: flex-start (which never
+       auto-stretches children to fill the container) -- so it falls
+       back to sizing itself to its own content's natural width. Since
+       .tagRow has no width constraint either, the whole chain expands
+       to fit the tag row fully unwrapped, dragging the entire card
+       wider than the viewport. Verified this exact mechanism and fix
+       directly with Playwright before applying it here. */
+    width: 100%;
+  }
   .createNoteControls {
     flex: 1 1 auto;
     width: 100%;

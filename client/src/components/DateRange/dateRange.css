@@ -1,10 +1,30 @@
 #dateInput {
   display: flex;
+  /* Keeps the date-range pair flush against the right edge even when
+     it wraps to its own row alone. This has to live HERE, not on
+     #dateRange -- #dateRange is nested inside this wrapper, not a
+     direct child of .searchAndDateRow, and auto-margin justification
+     only works on direct flex children. Putting it on #dateRange
+     (the previous attempt) had no effect at all -- confirmed by
+     reproducing the exact 0px computed value reported before fixing
+     this. */
+  margin-left: auto;
 }
 
 #dateRange {
   display: flex;
   gap: 8px;
+}
+
+@media screen and (max-width: 1100px) {
+  #dateInput {
+    /* The margin-left:auto fix above is specifically for the
+       wrapped-alone-on-desktop case -- in the centered mobile column
+       layout (searchAndDateRow, same breakpoint) it would push this
+       off-center instead of sitting centered like everything else in
+       that column. */
+    margin-left: 0;
+  }
 }
 
 .date {
