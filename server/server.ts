@@ -47,6 +47,7 @@ app.use(
         // GA4's loader script (gtag.js) is hosted here -- default
         // script-src is 'self' only, which blocks it entirely.
         'script-src': ["'self'", 'https://www.googletagmanager.com'],
+        'frame-src': [`https://${auth0Domain}`],
       },
     },
   })
@@ -87,8 +88,8 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-app.use('/notes', apiRateLimiter, checkJwt, notesRouter);
-app.use('/api/users', apiRateLimiter, checkJwt, userRouter);
+app.use('/notes', checkJwt, apiRateLimiter, notesRouter);
+app.use('/api/users', checkJwt, apiRateLimiter, userRouter);
 
 if (
   process.env.NODE_ENV === 'development' ||

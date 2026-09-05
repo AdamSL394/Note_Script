@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  width: 4.5rem;
+  width: 6rem;
   flex-shrink: 0;
   align-self: flex-start;
   max-height: calc(100vh - 7rem);
@@ -29,6 +29,18 @@
   text-align: left;
 }
 
+.noteYearsDropdown {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ns-ink);
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 20px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
 .noteYearsEllipsis {
   background: none;
   border: none;
@@ -47,15 +59,14 @@
     width: 100%;
     max-height: none;
     overflow: visible;
+    margin-bottom: 1rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .noteYearsDropdown {
+    display: block;
   }
   .noteYearsGroup {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .noteYearsDivider {
-    border-top: none;
-    border-left: 0.5px solid var(--ns-rule);
-    padding-top: 0;
-    padding-left: 0.5rem;
+    display: none;
   }
 }

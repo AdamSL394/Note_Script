@@ -3,15 +3,16 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { Container } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress/index.js';
-import Pagination from '@mui/material/Pagination/index.js';
-import Stack from '@mui/material/Stack/index.js';
 import { Box } from '@mui/system';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
+import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import Note from '../Note/index';
 import NoteYears from '../NoteYears/noteYears';
+import Snackbar from '@mui/material/Snackbar/index.js';
+import Alert from '@mui/material/Alert/index.js';
 import { SearchNotes } from '../SearchNotes/searchNotes';
 import { useNoteYears } from '../../hooks/useNoteYears';
 import type { Note as NoteType } from '../../types';
@@ -19,14 +20,46 @@ import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import './notes.css';
 
 interface NotesProps {
-  // Bound to a MUI <Select>'s onChange (see editingNote.tsx), not a
+  // Bound to a MUI <Select>'s onChange (see editNote.tsx), not a
   // plain input — SelectChangeEvent is the correct type here.
   onStarValueChange: (e: SelectChangeEvent, note: NoteType) => void;
 }
 
+interface MonthGroup {
+  label: string;
+  notes: NoteType[];
+}
+
+// Groups an already-sorted (most recent first) notes array by
+// calendar month for rendering. Uses a Map for its guaranteed
+// insertion-order iteration -- since the input is already sorted
+// descending, the groups come out in the correct order for free,
+// without needing to separately sort the group keys.
+function groupByMonth(notesList: NoteType[]): MonthGroup[] {
+  const groups = new Map<string, NoteType[]>();
+  for (const note of notesList) {
+    const [year, month] = note.date.split('-');
+    const key = `${year}-${month}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.push(note);
+    } else {
+      groups.set(key, [note]);
+    }
+  }
+  return Array.from(groups.entries()).map(([key, notesInMonth]) => {
+    const [year, month] = key.split('-').map(Number);
+    const label = new Date(year, month - 1, 1).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
+    return { label, notes: notesInMonth };
+  });
+}
+
+const NOTES_PER_BATCH = 30;
+
 function Notes(props: NotesProps) {
-  const postPerPage = 30;
-  const [currentPage, setCurrentPage] = useState(1);
   const [notes, setNotes] = useState<NoteType[]>([]);
   const { user } = useAuth0();
   // 'All' | 'Recently Changed' | 'Search' | 'Date Range' | a year (as a
@@ -34,18 +67,28 @@ function Notes(props: NotesProps) {
   // match what's actually pushed through this value, rather than
   // over-promising a strict string union that the rest of the app
   // doesn't actually honor yet.
-  const [currentCall, setCurrentCall] = useState<string | number>('All');
-  const [numberOfPages, setNumberOfPages] = useState(0);
+  // Defaults to the current year rather than 'All' -- landing on the
+  // entire all-time history immediately (with infinite scroll going
+  // back years) is a less useful first view than starting focused on
+  // this year, matching how the year sidebar is the primary navigation
+  // model anyway.
+  const currentYear = new Date().getFullYear();
+  const [currentCall, setCurrentCall] = useState<string | number>(currentYear);
   const [open, setOpen] = useState(false);
   const [modelNoteId, setModelNoteId] = useState<string | undefined>();
   const [isloading, setIsLoading] = useState(false);
-  const [searchedNotesResults, setSearchNoteResults] = useState<NoteType[]>(
-    []
-  );
-  const [dateaRangeNotesResults, setDateaRangeNoteResults] = useState<
-    NoteType[] | undefined
-  >();
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [noNotes, setNoNotes] = useState<string | undefined>();
+
+  // Only meaningful for 'All' mode -- the one mode with true
+  // server-side pagination. Every other mode fetches its complete
+  // result set in a single call, so there is never more to load for
+  // them once the initial fetch lands.
+  const [hasMore, setHasMore] = useState(true);
+  const nextPageRef = useRef(1);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [saveError, setSaveError] = useState<string | undefined>();
 
   // Auth0's `user.sub` is typed as optional by @auth0/auth0-react (it's
   // undefined until authentication resolves), so every call site that
@@ -55,26 +98,15 @@ function Notes(props: NotesProps) {
   const getUserId = (): string | undefined => user?.sub?.split('|')[1];
 
   useEffect(() => {
-    // Without this guard, allNotes() can run before `user` exists and
-    // silently no-op (via getUserId's undefined) instead of loading data.
+    // Without this guard, getNoteYears() can run before `user` exists
+    // and silently no-op (via getUserId's undefined) instead of
+    // loading data.
     if (!user) {
       return;
     }
-    allNotes(1);
+    getNoteYears(currentYear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-
-  // Every call site in this file always passes an explicit page number —
-  // there's no case that needs to "reuse whatever the current page
-  // already is." So this can always set state directly and use the
-  // parameter for the slice math, instead of the old pattern of
-  // reassigning the outer `currentPage` variable as a same-tick
-  // workaround for React's async state updates.
-  const slicePosts = (getNotes: NoteType[], page: number): NoteType[] => {
-    setCurrentPage(page);
-    const indexOfLastPost = page * postPerPage;
-    const indexOfFirstPost = indexOfLastPost - postPerPage;
-    return getNotes.slice(indexOfFirstPost, indexOfLastPost);
-  };
 
   // Saves whatever draft exists in sessionStorage for this note (or the
   // note itself if no draft was staged), without mutating either.
@@ -88,7 +120,7 @@ function Notes(props: NotesProps) {
     updateNote(noteToSave);
   };
 
-  const getNoteYears = async (year: string | number, value: number) => {
+  const getNoteYears = async (year: string | number, direction: 'asc' | 'desc' = sortDirection) => {
     setIsLoading(true);
     const userid = getUserId();
     if (!userid) {
@@ -97,52 +129,95 @@ function Notes(props: NotesProps) {
     }
     const noteYears = await NoteRoutes.getNoteRangeYear(
       year + '-12-31',
-      year + '-01-01'
+      year + '-01-01',
+      direction
     );
+    setIsLoading(false);
+    setHasMore(false);
     if (!checkNoteApiResponse(noteYears)) {
       return;
     }
-    setIsLoading(false);
-    const currentPosts = slicePosts(noteYears as NoteType[], value);
-    setNotes(currentPosts);
-    setNumberOfPages(Math.ceil((noteYears as NoteType[]).length / postPerPage));
+    setNotes(noteYears as NoteType[]);
   };
 
   const setNotesBasedOnYear = async (
     _unused: unknown,
     year: string | number
   ) => {
-    await determineApiCall(year, 1);
+    await determineApiCall(year);
   };
 
-  const allNotes = async (page: number) => {
+  // The only mode with true server-side pagination -- fetches one
+  // batch and REPLACES the list (used for the initial load and
+  // whenever switching back into 'All' mode from something else).
+  const loadAllNotes = async (direction: 'asc' | 'desc' = sortDirection) => {
     setIsLoading(true);
     const userid = getUserId();
     if (!userid) {
       setIsLoading(false);
       return;
     }
+    setCurrentCall('All');
     const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
-      page,
-      postPerPage
+      1,
+      NOTES_PER_BATCH,
+      direction
     );
-
+    setIsLoading(false);
     if (!checkNoteApiResponse(pageNotes)) {
       return;
     }
-    setIsLoading(false);
-    setCurrentPage(page);
     setNotes(pageNotes);
-    setNumberOfPages(Math.ceil(totalCount / postPerPage));
-    return;
+    nextPageRef.current = 2;
+    setHasMore(pageNotes.length < totalCount);
   };
 
-  const handleChange = async (
-    _e: React.ChangeEvent<unknown>,
-    value: number
-  ) => {
-    await determineApiCall(currentCall, value);
+  // Fetches the next batch and APPENDS it -- this is the actual
+  // infinite-scroll driver, called by the IntersectionObserver below
+  // when the sentinel at the bottom of the list comes into view.
+  // Guarded by isLoadingMore so a fast scroll can't fire this twice
+  // concurrently and append the same batch or race two requests.
+  const loadMoreAllNotes = async () => {
+    if (isLoadingMore || !hasMore) return;
+    const userid = getUserId();
+    if (!userid) return;
+    setIsLoadingMore(true);
+    const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
+      nextPageRef.current,
+      NOTES_PER_BATCH,
+      sortDirection
+    );
+    setIsLoadingMore(false);
+    if (!Array.isArray(pageNotes)) {
+      // A failed "load more" (rate limit, network issue, any other
+      // error) shouldn't wipe out notes already loaded and showing --
+      // just stop trying to load more, leaving what's already there.
+      setHasMore(false);
+      return;
+    }
+    setNotes((prev) => {
+      const combined = [...prev, ...pageNotes];
+      setHasMore(combined.length < totalCount);
+      return combined;
+    });
+    nextPageRef.current += 1;
   };
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && currentCall === 'All') {
+          loadMoreAllNotes();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCall, hasMore, isLoadingMore]);
 
   const openModal = (note: NoteType) => {
     setModelNoteId(note._id);
@@ -153,7 +228,7 @@ function Notes(props: NotesProps) {
     if (note !== 'Cancel') {
       setOpen(false);
       await NoteRoutes.deleteNote(note);
-      allNotes(currentPage);
+      setNotes((prev) => prev.filter((n) => n._id !== note));
     }
     if (note === 'Cancel') {
       setOpen(false);
@@ -165,8 +240,10 @@ function Notes(props: NotesProps) {
   const updateNote = async (note: NoteType) => {
     const updatedNoteFromServer = await NoteRoutes.updateNote(note);
     if (!updatedNoteFromServer || !updatedNoteFromServer._id) {
+      setSaveError('Something went wrong saving your changes. Please try again.');
       return;
     }
+    setSaveError(undefined);
     // Trust whatever `edit` value the server echoes back — don't force
     // it to false here. updateNote is called both to *save* a note
     // (saveNote sends edit: false) and to *open* one for editing
@@ -180,6 +257,24 @@ function Notes(props: NotesProps) {
     );
   };
 
+  // Closes edit mode WITHOUT saving whatever was typed -- discards the
+  // staged draft and restores the pristine pre-edit snapshot (see
+  // editNote in Note/index.tsx), rather than committing partial
+  // changes or leaving the note stuck in edit mode with no way out.
+  const cancelEdit = (note: NoteType) => {
+    const rawOriginal = sessionStorage.getItem(`${note._id}-original`);
+    sessionStorage.removeItem(note._id);
+    sessionStorage.removeItem(`${note._id}-original`);
+    if (rawOriginal) {
+      const original: NoteType = JSON.parse(rawOriginal);
+      updateNote({ ...original, star: sanitizeStarValue(original.star), edit: false });
+    } else {
+      // No snapshot exists for some reason -- exit edit mode on
+      // whatever is currently there rather than leaving it stuck.
+      updateNote({ ...note, star: sanitizeStarValue(note.star), edit: false });
+    }
+  };
+
   const getNoteRange = async (userId: string, start: string, end: string) => {
     if (start > end) {
       return;
@@ -188,24 +283,25 @@ function Notes(props: NotesProps) {
       return;
     }
     setIsLoading(true);
-    const noteDateRange = await NoteRoutes.getNoteRange(start, end);
+    const noteDateRange = await NoteRoutes.getNoteRange(start, end, sortDirection);
     setIsLoading(false);
-    setDateaRangeNoteResults(noteDateRange);
     setCurrentCall('Date Range');
-    const currentPosts = slicePosts(noteDateRange ?? [], 1);
-    setNumberOfPages(Math.ceil((noteDateRange ?? []).length / postPerPage));
-    setNotes(currentPosts);
+    setHasMore(false);
+    if (!checkNoteApiResponse(noteDateRange)) {
+      return;
+    }
+    setNotes(noteDateRange ?? []);
   };
 
   const checkNoteApiResponse = (
     notesResponse: NoteType[] | null | undefined
   ): boolean => {
     const noNotesElement = document.getElementById('noNotes');
-    if (!notesResponse || notesResponse.length < 1) {
+    if (!Array.isArray(notesResponse) || notesResponse.length < 1) {
       if (noNotesElement) {
         noNotesElement.style.display = 'grid';
       }
-      setNoNotes('Get started... Upload or make your first Note!');
+      setNoNotes('No notes here yet. Write one from Home, or upload your history to get started.');
       setIsLoading(false);
       setNotes([]);
       return false;
@@ -218,27 +314,10 @@ function Notes(props: NotesProps) {
     }
   };
 
-  const determineApiCall = async (
-    stringApiCall: string | number,
-    value: number
-  ) => {
+  const determineApiCall = async (stringApiCall: string | number) => {
     switch (stringApiCall) {
       case 'All': {
-        const userid = getUserId();
-        if (!userid) return;
-        setCurrentCall('All');
-        setIsLoading(true);
-        const { notes: pageNotes, totalCount } = await NoteRoutes.getAllNotes(
-          value,
-          postPerPage
-        );
-        if (!checkNoteApiResponse(pageNotes)) {
-          return;
-        }
-        setIsLoading(false);
-        setCurrentPage(value);
-        setNotes(pageNotes);
-        setNumberOfPages(Math.ceil(totalCount / postPerPage));
+        await loadAllNotes();
         break;
       }
       case 'Recently Changed': {
@@ -247,32 +326,17 @@ function Notes(props: NotesProps) {
         setCurrentCall('Recently Changed');
         setIsLoading(true);
         const getNotes = await NoteRoutes.getRecentlyUpdatedNotes();
+        setIsLoading(false);
+        setHasMore(false);
         if (!checkNoteApiResponse(getNotes)) {
           return;
         }
-        setIsLoading(false);
-        const currentPosts = slicePosts(getNotes, value);
-        setNotes(currentPosts);
-        setNumberOfPages(Math.ceil(getNotes.length / postPerPage));
-        break;
-      }
-      case 'Search': {
-        const currentPosts = slicePosts(searchedNotesResults, value);
-        setNotes(currentPosts);
-        setNumberOfPages(Math.ceil(searchedNotesResults.length / postPerPage));
-        break;
-      }
-      case 'Date Range': {
-        const currentPosts = slicePosts(dateaRangeNotesResults ?? [], value);
-        setNotes(currentPosts);
-        setNumberOfPages(
-          Math.ceil((dateaRangeNotesResults ?? []).length / postPerPage)
-        );
+        setNotes(getNotes);
         break;
       }
       default: {
         setCurrentCall(stringApiCall);
-        getNoteYears(stringApiCall, value);
+        getNoteYears(stringApiCall);
         break;
       }
     }
@@ -294,6 +358,11 @@ function Notes(props: NotesProps) {
   };
 
   const setSearchedNote = (searchedNotes: NoteType[]) => {
+    setCurrentCall('Search');
+    setHasMore(false);
+    if (!checkNoteApiResponse(searchedNotes)) {
+      return;
+    }
     setNotes(searchedNotes);
   };
 
@@ -315,13 +384,45 @@ function Notes(props: NotesProps) {
   };
 
   // Owns the year-sidebar's data and selection state. Selecting a year
-  // routes into the same determineApiCall the pagination/search flows
-  // already use.
+  // routes into the same determineApiCall the search flow already uses.
   const { noteYears, currentDbCall, setCurrentDbCall, selectYear } =
-    useNoteYears((year) => determineApiCall(year, 1));
+    useNoteYears((year) => determineApiCall(year));
+
+  const toggleSortDirection = () => {
+    const newDirection: 'asc' | 'desc' = sortDirection === 'desc' ? 'asc' : 'desc';
+    setSortDirection(newDirection);
+
+    if (currentCall === 'All') {
+      loadAllNotes(newDirection);
+      return;
+    }
+
+    // Every other mode (year browsing, date range, search, recently
+    // changed) already fetches its complete result set in a single
+    // call -- reversing the already-loaded array locally is exactly
+    // equivalent to re-fetching with the opposite sort, without the
+    // round-trip.
+    setNotes((prev) => [...prev].reverse());
+  };
+
+  const monthGroups = groupByMonth(notes);
 
   return (
     <>
+      <Snackbar
+        open={Boolean(saveError)}
+        autoHideDuration={4000}
+        onClose={() => setSaveError(undefined)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="error"
+          onClose={() => setSaveError(undefined)}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', borderRadius: '8px' }}
+        >
+          {saveError}
+        </Alert>
+      </Snackbar>
       <ModalPop
         note={notes}
         open={open}
@@ -336,29 +437,17 @@ function Notes(props: NotesProps) {
         ></NoteYears>
         <div className="notesMain">
           <Container style={{ maxWidth: '100%', marginBottom: '1rem' }}>
-            <Box id='searchStyle' style={{ maxWidth: '90%'}}>
+            <Box id='searchStyle' style={{ width: '100%' }}>
               <SearchNotes
-                setCurrentPage={setCurrentPage}
                 getNoteRange={getNoteRange}
-                setCurrentCall={setCurrentCall}
-                slicePosts={slicePosts}
-                setSearchNoteResults={setSearchNoteResults}
-                setNumberOfPages={setNumberOfPages}
                 setSearchedNote={setSearchedNote}
-                currentPage={currentPage}
                 setNotesBasedOnYear={setNotesBasedOnYear}
                 setCurrentDbCall={setCurrentDbCall}
+                sortDirection={sortDirection}
+                onToggleSortDirection={toggleSortDirection}
+                showSortToggle={!isloading && notes.length > 0}
               ></SearchNotes>
             </Box>
-            <Stack className="stack">
-              <Pagination
-                page={currentPage}
-                count={numberOfPages}
-                onChange={handleChange}
-                defaultPage={1}
-                color="primary"
-              ></Pagination>
-            </Stack>
           </Container>
           <Box id="noNotes">{noNotes}</Box>
           {isloading ? (
@@ -366,44 +455,57 @@ function Notes(props: NotesProps) {
               <CircularProgress />
             </Box>
           ) : (
-            <div className="noteGrid">
-              {notes.map((note, i) => {
-                if (!note.edit) {
-                  return (
-                    <Note
-                      key={i}
-                      note={note}
-                      openModal={openModal}
-                      updateNote={updateNote}
-                    ></Note>
-                  );
-                }
-                if (note.edit) {
-                  // Compute textLength without mutating the state object
-                  // during render — pass it through as part of a new object
-                  // instead.
-                  const textLength =
-                    note.textLength !== undefined
-                      ? note.textLength
-                      : 200 - note.text.length;
-                  return (
-                    <EditingNote
-                      key={i * 102}
-                      notes={notes}
-                      note={{ ...note, textLength }}
-                      setDateNote={setDateNote}
-                      currentPage={currentPage}
-                      setNoteValue={setNoteValue}
-                      saveNote={saveNote}
-                      openModal={openModal}
-                      updateNote={updateNote}
-                      onStarValueChange={props.onStarValueChange}
-                    ></EditingNote>
-                  );
-                }
-                return null;
-              })}
-            </div>
+            <>
+              {monthGroups.map((group, groupIndex) => (
+                <div key={group.label}>
+                  <p className={groupIndex === 0 ? 'monthHeader monthHeaderFirst' : 'monthHeader'}>
+                    {group.label}
+                  </p>
+                  <div className="noteGrid">
+                    {group.notes.map((note, i) => {
+                      if (!note.edit) {
+                        return (
+                          <Note
+                            key={note._id ?? i}
+                            note={note}
+                            openModal={openModal}
+                            updateNote={updateNote}
+                          ></Note>
+                        );
+                      }
+                      // Compute textLength without mutating the state
+                      // object during render — pass it through as
+                      // part of a new object instead.
+                      const textLength =
+                        note.textLength !== undefined
+                          ? note.textLength
+                          : 200 - note.text.length;
+                      return (
+                        <EditingNote
+                          key={note._id ?? i}
+                          notes={notes}
+                          note={{ ...note, textLength }}
+                          setDateNote={setDateNote}
+                          currentPage={1}
+                          setNoteValue={setNoteValue}
+                          saveNote={saveNote}
+                          openModal={openModal}
+                          updateNote={updateNote}
+                          cancelEdit={cancelEdit}
+                          onStarValueChange={props.onStarValueChange}
+                        ></EditingNote>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <div ref={sentinelRef} style={{ height: '1px' }}></div>
+              {isLoadingMore && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', padding: '1.5rem' }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+            </>
           )}
         </div>
       </div>

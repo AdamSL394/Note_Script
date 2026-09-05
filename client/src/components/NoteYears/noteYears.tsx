@@ -52,8 +52,36 @@ function NoteYears({ noteYears, currentSelection, onSelectYear }: NoteYearsProps
     </Link>
   );
 
+  // For narrow screens (see noteYears.css) -- a native select scales to
+  // any number of years without needing the truncate/expand logic the
+  // inline link list above uses, and reads more cleanly than a long
+  // wrapped row of year links once space is tight.
+  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    const isYear = /^\d+$/.test(value);
+    onSelectYear(isYear ? Number(value) : value);
+  };
+
   return (
     <nav className="noteYearsSidebar" aria-label="Filter notes by year">
+      <select
+        className="noteYearsDropdown"
+        value={String(currentSelection)}
+        onChange={handleDropdownChange}
+        aria-label="Filter notes by year"
+      >
+        {specials.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+        {years.map((y) => (
+          <option key={y} value={y}>
+            {y}
+          </option>
+        ))}
+      </select>
+
       <div className="noteYearsGroup">{specials.map(yearLink)}</div>
 
       {years.length > 0 && (

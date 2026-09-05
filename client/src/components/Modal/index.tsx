@@ -1,7 +1,9 @@
-import React from 'react';
-import Modal from '@mui/material/Modal';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog/index.js';
+import DialogTitle from '@mui/material/DialogTitle/index.js';
+import DialogContent from '@mui/material/DialogContent/index.js';
+import DialogContentText from '@mui/material/DialogContentText/index.js';
+import DialogActions from '@mui/material/DialogActions/index.js';
+import Button from '@mui/material/Button/index.js';
 import type { Note } from '../../types';
 
 interface ModalPopProps {
@@ -27,36 +29,28 @@ function ModalPop(props: ModalPopProps) {
   };
 
   return (
-    <Modal
+    <Dialog
       open={open}
-      aria-labelledby="parent-modal-title"
-      aria-describedby="parent-modal-description"
+      onClose={() => closeModal('Cancel')}
+      fullWidth
+      maxWidth="xs"
     >
-      <Box className="style" style={boxStyles}>
-        <div style={titleStyles}>Would you like to:</div>
-        <Button style={buttonStyles} className="closeButton" onClick={() => closeModal('Cancel')}>
-          Close
-        </Button>
-        <Button style={buttonStyles} className="closeButton" onClick={handleDelete}>
+      <DialogTitle sx={{ fontSize: '20px', paddingTop: '1.5rem' }}>
+        Delete this entry?
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ fontSize: '15px' }}>
+          This can&apos;t be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ padding: '0 1.5rem 1.5rem' }}>
+        <Button onClick={() => closeModal('Cancel')}>Cancel</Button>
+        <Button onClick={handleDelete} color="error" variant="contained">
           Delete
         </Button>
-      </Box>
-    </Modal>
+      </DialogActions>
+    </Dialog>
   );
 }
-
-const boxStyles: React.CSSProperties = {
-  fontWeight: 'bold',
-  marginTop: '4%',
-};
-
-const titleStyles: React.CSSProperties = {
-  fontWeight: 'bold',
-};
-
-const buttonStyles: React.CSSProperties = {
-  fontWeight: 'bold',
-  fontSize: '1.2em',
-};
 
 export default ModalPop;

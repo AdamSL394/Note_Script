@@ -10,6 +10,7 @@ const starValue = z.enum(['None', '1', '2', '3']);
 export const noteRangeSchema = z.object({
     start: dateString,
     end: dateString,
+    sort: z.enum(['asc', 'desc']).optional(),
 });
 
 export const updateNoteSchema = z.object({

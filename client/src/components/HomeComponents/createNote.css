@@ -21,11 +21,44 @@
   gap: 0.75rem;
 }
 
+.composeHeading {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ns-graphite);
+  margin: 0 0 0.6rem;
+}
+
+.tagRowWrap {
+  position: relative;
+}
+
+.tagFade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 4px;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--ns-paper));
+  pointer-events: none;
+}
+
 .tagRow {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 6px;
   margin-top: 1rem;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.tagRow::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tagRow::-webkit-scrollbar-thumb {
+  background: var(--ns-rule);
+  border-radius: 4px;
 }
 
 .tagChip {
@@ -42,11 +75,10 @@
   align-items: center;
   gap: 4px;
   line-height: 1.6;
+  flex-shrink: 0;
 }
 
 .tagChip.active {
-  border-color: var(--ns-blue);
-  background: var(--ns-blue-tint);
   color: var(--ns-ink);
 }
 
@@ -66,8 +98,24 @@
   .createNoteCard {
     flex-direction: column;
   }
+  .createNoteMain {
+    /* Without this, .createNoteMain has no explicit width in
+       flex-direction: column (where flex-basis/min-width govern
+       height, not width) with align-items: flex-start (which never
+       auto-stretches children to fill the container) -- so it falls
+       back to sizing itself to its own content's natural width. Since
+       .tagRow has no width constraint either, the whole chain expands
+       to fit the tag row fully unwrapped, dragging the entire card
+       wider than the viewport. Verified this exact mechanism and fix
+       directly with Playwright before applying it here. */
+    width: 100%;
+  }
   .createNoteControls {
     flex: 1 1 auto;
     width: 100%;
+  }
+  .createNoteMain textarea {
+    max-height: 130px !important;
+    overflow-y: auto !important;
   }
 }

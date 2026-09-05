@@ -12,6 +12,18 @@
   --ns-amber-tint: #fbf1de;
   --ns-amber-dark: #8a5a0f;
   --ns-rule: #d8dbe0;
+  --ns-tag-purple-bg: #eeecfb;
+  --ns-tag-purple-text: #5b4fb0;
+  --ns-tag-teal-bg: #e2f5ee;
+  --ns-tag-teal-text: #0f7a5c;
+  --ns-tag-coral-bg: #fbeae4;
+  --ns-tag-coral-text: #b3491f;
+  --ns-tag-green-bg: #eaf5e0;
+  --ns-tag-green-text: #4c7a1f;
+  --ns-tag-pink-bg: #fbe8f0;
+  --ns-tag-pink-text: #a83868;
+  --ns-tag-slate-bg: #eceef2;
+  --ns-tag-slate-text: #47515e;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-serif: 'Source Serif 4', Georgia, serif;
 }
@@ -32,6 +44,18 @@
   --ns-amber-tint: #3a2f1a;
   --ns-amber-dark: #f0c98a;
   --ns-rule: #35383e;
+  --ns-tag-purple-bg: #2a2540;
+  --ns-tag-purple-text: #b3a3ec;
+  --ns-tag-teal-bg: #16332c;
+  --ns-tag-teal-text: #6ddbb8;
+  --ns-tag-coral-bg: #3d241c;
+  --ns-tag-coral-text: #f0a578;
+  --ns-tag-green-bg: #223a1f;
+  --ns-tag-green-text: #a3db8a;
+  --ns-tag-pink-bg: #3a2030;
+  --ns-tag-pink-text: #f0a3c3;
+  --ns-tag-slate-bg: #262a30;
+  --ns-tag-slate-text: #b0bac6;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-serif: 'Source Serif 4', Georgia, serif;
 }
@@ -51,6 +75,18 @@
   --ns-amber-tint: #f7ecd3;
   --ns-amber-dark: #6b4a12;
   --ns-rule: #d9c7a8;
+  --ns-tag-purple-bg: #ece1f0;
+  --ns-tag-purple-text: #6b4f9c;
+  --ns-tag-teal-bg: #dcece4;
+  --ns-tag-teal-text: #2f7a5e;
+  --ns-tag-coral-bg: #f5ded0;
+  --ns-tag-coral-text: #a8481f;
+  --ns-tag-green-bg: #e6ecd4;
+  --ns-tag-green-text: #587a1f;
+  --ns-tag-pink-bg: #f2dde2;
+  --ns-tag-pink-text: #9c3f5c;
+  --ns-tag-slate-bg: #e6e0d6;
+  --ns-tag-slate-text: #5c5340;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-serif: 'Source Serif 4', Georgia, serif;
 }
@@ -69,6 +105,18 @@
   --ns-amber-tint: #f7ecd8;
   --ns-amber-dark: #7a4f10;
   --ns-rule: #d3ddd6;
+  --ns-tag-purple-bg: #e6e2f0;
+  --ns-tag-purple-text: #5c4a9c;
+  --ns-tag-teal-bg: #dcf0e6;
+  --ns-tag-teal-text: #16805c;
+  --ns-tag-coral-bg: #f5e0d3;
+  --ns-tag-coral-text: #a8461f;
+  --ns-tag-green-bg: #e2f0d6;
+  --ns-tag-green-text: #4a7a1f;
+  --ns-tag-pink-bg: #f0e0e6;
+  --ns-tag-pink-text: #9c3f5c;
+  --ns-tag-slate-bg: #e2e8e2;
+  --ns-tag-slate-text: #4a564e;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-serif: 'Source Serif 4', Georgia, serif;
 }

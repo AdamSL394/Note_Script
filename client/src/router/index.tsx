@@ -6,6 +6,8 @@ import AllNotes from '../views/AllNotes/allNotes';
 import UserSettings from '../views/UserSettings/userSettings'
 import Upload from '../views/Upload/upload'
 import AdminUsers from '../views/AdminUsers/adminUsers'
+import PrivacyPolicy from '../views/PrivacyPolicy/privacyPolicy'
+import TermsOfService from '../views/TermsOfService/termsOfService'
 
 
 const Router = () => {
@@ -13,6 +15,8 @@ const Router = () => {
         <>
             <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/" element={<ProtectedRoute />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/all" element={<AllNotes />} />

@@ -7,6 +7,7 @@ import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
 import Grid from '@mui/material/Grid/index.js';
 import NoteRoutes from '../../router/noteRoutes';
+import { toLocalDateString } from '../../utils/date';
 import './upload.css';
 
 interface PreviewNote {
@@ -61,7 +62,7 @@ const UploadNotes = () => {
 
       const noteDate = new Date(notes[i]);
       if (noteDate.toString() !== 'Invalid Date') {
-        note.date = noteDate.toISOString().split('T')[0];
+        note.date = toLocalDateString(noteDate);
         i++;
       }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Footer() {
   const style: React.CSSProperties = {
@@ -17,7 +18,18 @@ function Footer() {
     backgroundColor: 'var(--ns-paper)',
   };
 
-  return <div style={style}>© AdamSL394 GH</div>;
+  const linkStyle: React.CSSProperties = {
+    color: 'var(--ns-graphite)',
+    marginLeft: '0.75rem',
+  };
+
+  return (
+    <div style={style}>
+      © AdamSL394 GH
+      <Link to="/privacy" style={linkStyle}>Privacy</Link>
+      <Link to="/terms" style={linkStyle}>Terms</Link>
+    </div>
+  );
 }
 
 export default Footer;

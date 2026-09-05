@@ -1,5 +1,6 @@
 import User, { IUser, ISetting } from '../models/user';
 import mongoose from 'mongoose';
+import Note from '../models/notes';
 import { logger } from '../logger';
 
 interface UserDetails {
@@ -90,9 +91,23 @@ const getAllUsers = async (): Promise<Pick<IUser, '_id' | 'email' | 'role'>[]> =
     return users;
 };
 
+const deleteAccount = async (userId: string): Promise<void> => {
+    const mongooseId = new mongoose.Types.ObjectId(userId);
+    const session = await mongoose.startSession();
+    try {
+        await session.withTransaction(async () => {
+            await Note.deleteMany({ userId }).session(session);
+            await User.deleteOne({ _id: mongooseId }).session(session);
+        });
+    } finally {
+        await session.endSession();
+    }
+};
+
 export default {
     getSingleUser,
     saveNewUser,
     updateUserStats,
     getAllUsers,
+    deleteAccount,
 };
