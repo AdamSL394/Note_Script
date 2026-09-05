@@ -47,6 +47,7 @@ app.use(
         // GA4's loader script (gtag.js) is hosted here -- default
         // script-src is 'self' only, which blocks it entirely.
         'script-src': ["'self'", 'https://www.googletagmanager.com'],
+        'frame-src': [`https://${auth0Domain}`],
       },
     },
   })
