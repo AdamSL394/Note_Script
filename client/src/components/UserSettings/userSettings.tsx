@@ -9,6 +9,7 @@ import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../
 import { WIN_TAGS } from '../../constants/noteFields';
 import { useThemeMode } from '../../hooks/useThemeMode';
 import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
+import { UserAvatar } from '../UserAvatar/index';
 import './userSettings.css';
 
 const UserSetting = () => {
@@ -94,14 +95,7 @@ const UserSetting = () => {
         <Container id="container" className="userInformation">
             <Grid item xs={12} sm={10} md={8} lg={8} style={{ margin: '0 auto', textAlign: 'left' }}>
                 <div className="settingsHeader">
-                    <img
-                        id="userInfo"
-                        className="settingsAvatar"
-                        style={{ height: '80px', width: '80px' }}
-                        src={user.picture}
-                        referrerPolicy="no-referrer"
-                        alt="User Profile"
-                    ></img>
+                    <UserAvatar id="userInfo" className="settingsAvatar" src={user.picture} size={80} />
                     <h2 className="settingsName" onClick={() => changeName()}>
                         {user.name ? user.name : ''}
                     </h2>
