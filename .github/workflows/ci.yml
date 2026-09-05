@@ -25,6 +25,8 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: server/package-lock.json
+      - name: Pin npm version
+        run: npm install -g npm@10.9.7
       - name: Install server dependencies
         run: npm ci
         working-directory: server
@@ -70,6 +72,13 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
+      - name: Pin npm version
+        # actions/setup-node with only node-version specified installs
+        # whatever npm ships bundled with that Node image, which floats
+        # independently of Node version and isn't guaranteed to match
+        # what's been verified working locally -- pinned to the exact
+        # version this lockfile has been tested against.
+        run: npm install -g npm@10.9.7
       - name: Install client dependencies
         run: npm ci
         working-directory: client
