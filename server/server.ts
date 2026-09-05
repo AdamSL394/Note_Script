@@ -43,10 +43,18 @@ app.use(
         // these across several numbered hosts (lh1-lh6 historically),
         // not always the same one for a given user. Also allows GA4's
         // pixel-fallback tracking domain.
-        'img-src': ["'self'", 'data:', 'https://*.googleusercontent.com', 'https://www.google-analytics.com'],
+        'img-src': ["'self'", 'data:', 'https://*.googleusercontent.com', 'https://www.google-analytics.com','https://*.gravatar.com'],
         // GA4's loader script (gtag.js) is hosted here -- default
         // script-src is 'self' only, which blocks it entirely.
         'script-src': ["'self'", 'https://www.googletagmanager.com'],
+                // No frame-src set at all previously, which falls back to
+        // default-src 'self' -- this blocks the hidden iframe Auth0's
+        // SDK uses to silently check for an existing session on page
+        // load (pointing at .../authorize?...prompt=none), leaving
+        // the app stuck on its initial loading state since that
+        // request never gets a chance to complete or fail gracefully,
+        // just outright blocked by the browser. Scoped to the exact
+        // configured tenant domain, matching connect-src above.
         'frame-src': [`https://${auth0Domain}`],
       },
     },

@@ -50,6 +50,8 @@
         "start": "node dist/server.js",
         "test": "NODE_ENV=test jest --runInBand",
         "test:watch": "NODE_ENV=test jest --runInBand --watch",
-        "test:coverage": "NODE_ENV=test jest --runInBand --coverage"
+        "test:coverage": "NODE_ENV=test jest --runInBand --coverage",
+        "migrate:tags:dry-run": "ts-node scripts/migrateTagsToArray.ts --dry-run",
+        "migrate:tags": "ts-node scripts/migrateTagsToArray.ts"
     }
 }

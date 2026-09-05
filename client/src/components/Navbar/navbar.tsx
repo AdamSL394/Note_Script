@@ -12,6 +12,7 @@ import Tooltip from '@mui/material/Tooltip/index.js';
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
+import { UserAvatar } from '../UserAvatar/index';
 import './navbar.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -153,13 +154,7 @@ function Navbar() {
               👋🏼
             </span>{' '}
             {user?.name ? user.name : ''}
-            <img
-              id="userAvatar"
-              style={{ height: '25px', width: '25px' }}
-              src={user?.picture}
-              referrerPolicy="no-referrer"
-              alt="User Profile"
-            ></img>
+            <UserAvatar id="userAvatar" src={user?.picture} size={25} />
           </i>
         </span>
         <Tooltip title="Change theme">
