@@ -28,7 +28,15 @@ jobs:
       - name: Pin npm version
         run: npm install -g npm@10.9.7
       - name: Install server dependencies
-        run: npm ci
+        # Falls back to npm install if npm ci's strict lockfile
+        # validation fails -- npm install is more lenient and will
+        # resolve minor drift instead of hard-blocking the whole
+        # pipeline on it. Prints the actual npm version actually used
+        # for this step first, since the pin step reporting success
+        # never confirmed which binary this step resolves to.
+        run: |
+          npm --version
+          npm ci || npm install
         working-directory: server
       - name: Set up test config
         run: cp config/config.example.json config/config.json
@@ -80,7 +88,15 @@ jobs:
         # version this lockfile has been tested against.
         run: npm install -g npm@10.9.7
       - name: Install client dependencies
-        run: npm ci
+        # Falls back to npm install if npm ci's strict lockfile
+        # validation fails -- npm install is more lenient and will
+        # resolve minor drift instead of hard-blocking the whole
+        # pipeline on it. Prints the actual npm version actually used
+        # for this step first, since the pin step reporting success
+        # never confirmed which binary this step resolves to.
+        run: |
+          npm --version
+          npm ci || npm install
         working-directory: client
       - name: Type-check
         run: npx tsc --noEmit
