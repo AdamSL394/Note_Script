@@ -396,7 +396,7 @@ const HEATMAP_DAYS_BACK = 364;
 // The Sunday on/before N days ago -- the grid always starts on a full
 // week boundary, matching GitHub's own contribution graph layout,
 // rather than starting mid-week.
-function getHeatmapGridStart(daysBack: number, today: Date): Date {
+export function getHeatmapGridStart(daysBack: number, today: Date): Date {
     const start = new Date(today);
     start.setDate(start.getDate() - daysBack);
     start.setDate(start.getDate() - start.getDay());
@@ -411,6 +411,35 @@ function getHeatmapGridStart(daysBack: number, today: Date): Date {
 // carry that specific tag -- letting the same heatmap answer either
 // "was I journaling consistently" (no filter) or "when did I actually
 // go to the gym" (filtered).
+// Builds the day-by-day grid (week column + day-of-week row for each
+// date, matching GitHub's own contribution-graph layout) given a
+// grid start, an end date, and a lookup of known counts per date.
+// Kept fully separate from the database fetch in getActivityHeatmap
+// below, so this placement math is directly testable without needing
+// a real database connection at all.
+export function buildHeatmapGrid(
+    gridStart: Date,
+    endDate: Date,
+    countsByDate: Map<string, number>
+): HeatmapResult {
+    const days: HeatmapDay[] = [];
+    let maxCount = 0;
+    const cursor = new Date(gridStart);
+    while (cursor <= endDate) {
+        const dateStr = toDateString(cursor);
+        const count = countsByDate.get(dateStr) ?? 0;
+        maxCount = Math.max(maxCount, count);
+        days.push({
+            date: dateStr,
+            count,
+            week: Math.floor((cursor.getTime() - gridStart.getTime()) / (7 * 86400000)),
+            dayOfWeek: cursor.getDay(),
+        });
+        cursor.setDate(cursor.getDate() + 1);
+    }
+    return { days, maxCount };
+}
+
 const getActivityHeatmap = async (id: string, tagName?: string): Promise<HeatmapResult> => {
     const today = new Date();
     const gridStart = getHeatmapGridStart(HEATMAP_DAYS_BACK, today);
@@ -427,23 +456,7 @@ const getActivityHeatmap = async (id: string, tagName?: string): Promise<Heatmap
     ]);
     const countsByDate = new Map(rows.map((r) => [r._id, r.count]));
 
-    const days: HeatmapDay[] = [];
-    let maxCount = 0;
-    const cursor = new Date(gridStart);
-    while (cursor <= today) {
-        const dateStr = toDateString(cursor);
-        const count = countsByDate.get(dateStr) ?? 0;
-        maxCount = Math.max(maxCount, count);
-        days.push({
-            date: dateStr,
-            count,
-            week: Math.floor((cursor.getTime() - gridStart.getTime()) / (7 * 86400000)),
-            dayOfWeek: cursor.getDay(),
-        });
-        cursor.setDate(cursor.getDate() + 1);
-    }
-
-    return { days, maxCount };
+    return buildHeatmapGrid(gridStart, today, countsByDate);
 };
 
 export interface StreakStats {
@@ -617,7 +630,7 @@ const getRangeNotes = async (
         userId: id,
         date: {
             $gte: start,
-            $lt: end,
+            $lte: end,
         },
     }).sort({ date: sortDirection === 'asc' ? 1 : -1 });
     return notes;
