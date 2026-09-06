@@ -72,8 +72,13 @@ describe('deleteNotes — ownership scoping', () => {
 });
 
 describe('updateNote — ownership scoping', () => {
+    type TagSnapshot = { name: string; icon: string };
     const args = (id: string, userId: string) =>
-        [id, userId, true, 'edited text', '2026-02-02', '3', false, false, false, false, false, false, false] as const;
+        [
+            id,
+            userId,
+            { edit: true, text: 'edited text', date: '2026-02-02', star: '3', tags: [] as TagSnapshot[] },
+        ] as const;
 
     it("updates a user's own note", async () => {
         const note = await seedNote(userA);

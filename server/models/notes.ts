@@ -1,5 +1,10 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+export interface ITagSnapshot {
+    name: string;
+    icon: string;
+}
+
 // Deliberately NOT extending Document — see models/user.ts for why.
 export interface INote {
     _id: mongoose.Types.ObjectId;
@@ -8,18 +13,40 @@ export interface INote {
     date: string;
     star: string;
     edit: boolean;
-    look: boolean;
-    gym: boolean;
-    weed: boolean;
-    code: boolean;
-    read: boolean;
-    eatOut: boolean;
-    medal: boolean;
-    king: boolean;
-    'date/smoosh': boolean;
-    basketball: boolean;
+    // The source of truth for tags. Each entry snapshots both the name
+    // AND the icon as they were at the moment the tag was applied to
+    // this note -- not just a name that gets re-resolved against the
+    // user's current settings every time it's displayed. This means a
+    // note's tags stay visually stable even if the user later renames
+    // or deletes that tag from their own settings, matching how most
+    // real systems handle this (an order snapshots a product's price
+    // and description at purchase time rather than re-reading today's
+    // catalog every time the order is displayed).
+    tags: ITagSnapshot[];
+    // Legacy flat fields, kept (not deleted) during the migration
+    // period as a safety net -- new code reads/writes `tags`
+    // exclusively. Safe to remove once the migration has run in
+    // production and the new format is confirmed working.
+    look?: boolean;
+    gym?: boolean;
+    weed?: boolean;
+    code?: boolean;
+    read?: boolean;
+    eatOut?: boolean;
+    medal?: boolean;
+    king?: boolean;
+    'date/smoosh'?: boolean;
+    basketball?: boolean;
     updatedAt: Date;
 }
+
+const TagSnapshotSchema = new Schema<ITagSnapshot>(
+    {
+        name: { type: String, required: true },
+        icon: { type: String, required: true },
+    },
+    { _id: false }
+);
 
 const NoteSchema = new Schema<INote>({
     'userId': {type: String, required: true},
@@ -37,6 +64,14 @@ const NoteSchema = new Schema<INote>({
     // a separate, optional cleanup.
     'star': {type: String, default: 'None'},
     'edit': {type: Boolean, default: false},
+    'tags': {
+        type: [TagSnapshotSchema],
+        default: [],
+        validate: {
+            validator: (arr: ITagSnapshot[]) => arr.length <= 40,
+            message: 'A note cannot have more than 40 tags.',
+        },
+    },
     'look': {type: Boolean, default: false},
     'gym': {type: Boolean, default: false},
     'weed': {type: Boolean, default: false},

@@ -15,18 +15,9 @@ export interface NoteFieldConfig {
 }
 
 export const NOTE_TAG_FIELDS: NoteFieldConfig[] = [
-  { field: 'look', icon: '👀', label: 'Eyes' },
-  { field: 'gym', icon: '💪🏼', label: 'Arm' },
-  { field: 'weed', icon: '🍁', label: 'Leaf' },
-  { field: 'code', icon: '👨🏻\u200d💻', label: 'Computer guy' },
-  { field: 'read', icon: '📚', label: 'Books' },
-  { field: 'eatOut', icon: '🍕', label: 'Pizza' },
   { field: 'basketball', icon: '⛹🏻\u200d♂️', label: 'Basketball' },
-  { field: 'king', icon: '🤴🏻', label: 'King' },
-  { field: 'medal', icon: '🥇', label: 'Medal' },
-  { field: 'date/smoosh', icon: '👫', label: 'Date' },
-  { field: 'starred', icon: '🌟', label: 'Starred' },
-  { field: 'coffee', icon: '☕', label: 'Coffee' },
+  { field: 'read', icon: '📚', label: 'Books' },
+  { field: 'coffee', icon: '☕️', label: 'Coffee' },
 ];
 
 // Tags that count as a "win" — gets the amber accent wherever notes are

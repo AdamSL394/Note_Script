@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { toLocalDateString } from '../../utils/date';
 import { getTagColor } from '../../utils/tagColor';
 import TextField from '@mui/material/TextField/index.js';
-import FormControl from '@mui/material/FormControl/index.js';
-import MenuItem from '@mui/material/MenuItem/index.js';
-import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
-import InputLabel from '@mui/material/InputLabel/index.js';
 import Button from '@mui/material/Button/index.js';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import NoteRoutes from '../../router/noteRoutes';
 import type { TrackedStat, AuthUser } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS } from '../../constants/noteFields';
+import { NOTE_TAG_FIELDS, WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
+import { EmojiPicker } from '../EmojiPicker/index';
 import './createNote.css';
 
 interface CreateNoteProps {
@@ -22,24 +21,6 @@ interface CreateNoteProps {
   storeNewNote: (stats: TrackedStat[], date: string | undefined) => void;
 }
 
-// Built from the shared tag list instead of a separately hand-typed
-// copy — previously this list and NotesHomeView's tag table had drifted
-// out of order/sync with each other. 'star' is appended on top since
-// it's specific to this picker (a trackable "did I do something
-// 5-star-worthy" stat) rather than a Note tag field.
-//
-// Deliberately kept excluded from WIN_TAGS: 'star' collides with the
-// Note schema's existing String star-rating field (see
-// noteController/models/notes.ts), so toggling this tracked stat likely
-// already clobbers that field. Not fixed here since it's a
-// backend/schema concern, not a styling one — flagging so it doesn't
-// get lost.
-const EMOJI_LIST: TrackedStat[] = NOTE_TAG_FIELDS.map(({ field, icon }) => ({
-  icon,
-  name: field,
-  visible: 'hidden' as const,
-}));
-
 export const CreateNote = (props: CreateNoteProps) => {
   const [date, setDate] = useState<string>(
     toLocalDateString(new Date())
@@ -47,6 +28,9 @@ export const CreateNote = (props: CreateNoteProps) => {
   const CHARACTER_LIMIT = 200;
   const tagRowRef = useRef<HTMLDivElement>(null);
   const [hasMoreTags, setHasMoreTags] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagIcon, setNewTagIcon] = useState('');
+  const [tagError, setTagError] = useState('');
 
   // Only shows the fade when there is genuinely more content scrolled
   // out of view -- a fade that never disappears (even once you have
@@ -74,6 +58,14 @@ export const CreateNote = (props: CreateNoteProps) => {
   // objects/array — build a new array with a new object for the changed
   // entry, leave everything else untouched.
   const setCodeIcon = (icon: TrackedStat) => {
+    if (RESERVED_NOTE_FIELDS.has(icon.name)) {
+      // Defense in depth -- this tag is already filtered out of the
+      // rendered chip list below, so this should be unreachable, but
+      // stays as a safe no-op regardless (rather than visually
+      // toggling "active" only for storeNewNote to silently drop it
+      // on save, which is worse than doing nothing at all).
+      return;
+    }
     const updated = props.trackedStats.map((stat) =>
       stat.name === icon.name
         ? {
@@ -88,145 +80,204 @@ export const CreateNote = (props: CreateNoteProps) => {
     props.setTrackedStats(updated);
   };
 
-  const addToEmojiList = (
-    value: string,
-    emojiList: TrackedStat[],
-    user: AuthUser | undefined
-  ) => {
-    let emojiName = '';
-    let visible: TrackedStat['visible'] = 'hidden';
-    for (const item of emojiList) {
-      if (item.icon === value) {
-        emojiName = item.name;
-        visible = item.visible;
-      }
+  // Client-side mirror of the server's own reserved-name and duplicate
+  // checks (trackedStatsSchema) -- for instant feedback, with the
+  // server as the final authority regardless.
+  const validateNewTagName = (name: string): string | null => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return 'Enter a tag name.';
     }
-    const trackedStat: TrackedStat = {
-      icon: value,
-      name: emojiName,
-      visible,
-    };
-    for (const stat of props.trackedStats) {
-      if (stat.name === trackedStat.name) {
-        return;
-      }
+    if (trimmed.length > 30) {
+      return 'Tag names must be 30 characters or less.';
     }
+    if (RESERVED_NOTE_FIELDS.has(trimmed)) {
+      return 'That name is reserved -- please choose a different name.';
+    }
+    if (props.trackedStats.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())) {
+      return 'You already have a tag with that name.';
+    }
+    return null;
+  };
+
+  const addTrackedStat = (trackedStat: TrackedStat) => {
     props.setTrackedStats([...props.trackedStats, trackedStat]);
-    if (user) {
-      NoteRoutes.postUserStats(user, trackedStat);
+    if (props.user) {
+      NoteRoutes.postUserStats(props.user, trackedStat);
     }
-    return;
+  };
+
+  const handleAddNewTag = () => {
+    const trimmedName = newTagName.trim();
+    const error = validateNewTagName(trimmedName);
+    if (error) {
+      setTagError(error);
+      return;
+    }
+    // New tags start active (visible) immediately -- typing a brand
+    // new name is already an explicit signal the user wants it on
+    // this note right now, unlike picking an existing suggestion from
+    // a list, which only meant "add this as an option."
+    addTrackedStat({
+      icon: newTagIcon.trim() || '🏷️',
+      name: trimmedName,
+      visible: 'visible',
+    });
+    setNewTagName('');
+    setNewTagIcon('');
+    setTagError('');
+  };
+
+  // Quick-add for the 3 built-in suggestions, if not already in the
+  // user's own list -- skips the reserved/duplicate checks above since
+  // these are known-safe, curated names.
+  const availableSuggestions = NOTE_TAG_FIELDS.filter(
+    (f) => !props.trackedStats.some((s) => s.name === f.field)
+  );
+  const handleQuickAdd = (field: string, icon: string) => {
+    addTrackedStat({ icon, name: field, visible: 'visible' });
   };
 
   return (
     <div className="createNoteCard">
-      <div className="createNoteMain">
-        <p className="composeHeading">What&apos;s on your mind?</p>
-        <TextField
-          autoFocus={true}
-          multiline
-          rows={7}
-          fullWidth
-          label="Note"
-          placeholder={'Gym in the morning\nCoffee with friends\nFinished the report'}
-          value={props.text ?? ''}
-          onChange={(e) => {
-            const clamped = e.target.value.slice(0, CHARACTER_LIMIT);
-            props.setText(clamped);
-          }}
-          helperText={`${(props.text ?? '').length}/${CHARACTER_LIMIT}`}
-          InputProps={{ style: { fontFamily: 'var(--font-serif)', fontSize: '15px' } }}
-        />
-        <div className="tagRowWrap">
-          <div className="tagRow" ref={tagRowRef}>
-          {props.trackedStats?.map((stat, key) => {
-            if (!stat) return null;
-            const active = stat.visible === 'visible';
-            const isWin = WIN_TAGS.includes(stat.name);
-            const className = [
-              'tagChip',
-              active ? 'active' : '',
-              active && isWin ? 'win' : '',
-            ]
-              .filter(Boolean)
-              .join(' ');
-            // Win tags keep their amber treatment from the CSS class
-            // above (a meaningful signal, not decoration) -- only
-            // non-win active tags get the per-tag hash color, so it
-            // never overrides that existing meaning.
-            const tagColor = active && !isWin ? getTagColor(stat.name) : null;
-            return (
-              <button
-                key={key}
-                type="button"
-                className={className}
-                style={
-                  tagColor
-                    ? {
-                        borderColor: 'transparent',
-                        background: tagColor.background,
-                        color: tagColor.text,
-                      }
-                    : undefined
-                }
-                onClick={() => setCodeIcon(stat)}
-              >
-                <span aria-hidden="true">{stat.icon}</span>
-                <span>{stat.name}</span>
-              </button>
-            );
-          })}
-          </div>
-          {hasMoreTags && <div className="tagFade" aria-hidden="true"></div>}
-        </div>
-      </div>
-
-      <div className="createNoteControls">
-        <TextField
-          type="date"
-          label="Date"
-          size="small"
-          fullWidth
-          value={date ?? ''}
-          onChange={(e) => setDate(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <FormControl size="small" fullWidth>
-          <InputLabel id="demo-simple-select-label">Add a tag</InputLabel>
-          <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            label="Add a tag"
-            value={''}
-            onChange={(e: SelectChangeEvent) => {
-              addToEmojiList(e.target.value, EMOJI_LIST, props.user);
+      <div className="createNoteTopRow">
+        <div className="createNoteMain">
+          <p className="composeHeading">What&apos;s on your mind?</p>
+          <TextField
+            autoFocus={true}
+            multiline
+            rows={7}
+            fullWidth
+            label="Note"
+            placeholder={'Gym in the morning\nCoffee with friends\nFinished the report'}
+            value={props.text ?? ''}
+            onChange={(e) => {
+              const clamped = e.target.value.slice(0, CHARACTER_LIMIT);
+              props.setText(clamped);
             }}
-          >
-            {EMOJI_LIST.map((i, key) => (
-              <MenuItem key={key + 100} value={i.icon}>
-                <span key={key}>
-                  {i.icon} {i.name}
-                </span>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            helperText={`${(props.text ?? '').length}/${CHARACTER_LIMIT}`}
+            InputProps={{ style: { fontFamily: 'var(--font-serif)', fontSize: '15px' } }}
+          />
+        </div>
 
-        <Button
-          className="saveEntryButton"
-          disabled={props.disabled}
-          fullWidth
-          variant="contained"
-          value="save"
-          onClick={() => props.storeNewNote(props.trackedStats, date)}
-          sx={{
+        <div className="createNoteControls">
+          <TextField
+            type="date"
+            label="Date"
+            size="small"
+            fullWidth
+            value={date ?? ''}
+            onChange={(e) => setDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          {availableSuggestions.length > 0 && (
+            <div className="tagSuggestionsRow">
+              {availableSuggestions.map((s) => (
+                <button
+                  key={s.field}
+                  type="button"
+                  className="tagSuggestionChip"
+                  onClick={() => handleQuickAdd(s.field, s.icon)}
+                >
+                  <span aria-hidden="true">{s.icon}</span> {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="newTagFormRow">
+            <div className="newTagForm">
+              <EmojiPicker
+                value={newTagIcon}
+                onSelect={setNewTagIcon}
+                ariaLabel="Choose a tag icon"
+              />
+              <input
+                type="text"
+                placeholder="New tag name"
+                value={newTagName}
+                onChange={(e) => {
+                  setNewTagName(e.target.value);
+                  if (tagError) setTagError('');
+                }}
+                maxLength={30}
+                className="newTagNameInput"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddNewTag();
+                }}
+              />
+              <Button onClick={handleAddNewTag} size="small" variant="outlined">
+                Add
+              </Button>
+            </div>
+            <Tooltip
+              title="You can create your own custom tags -- pick an emoji and give it a name."
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon className="newTagInfoIcon" fontSize="small" />
+            </Tooltip>
+          </div>
+          {tagError && <p className="newTagError">{tagError}</p>}
+
+          <Button
+            className="saveEntryButton"
+            disabled={props.disabled}
+            fullWidth
+            variant="contained"
+            value="save"
+            onClick={() => props.storeNewNote(props.trackedStats, date)}
+            sx={{
             backgroundColor: 'var(--ns-blue)',
             '&:hover': { backgroundColor: 'var(--ns-blue)', opacity: 0.9 },
           }}
         >
           Add note
         </Button>
+        </div>
+      </div>
+
+      <div className="tagRowWrap">
+        <div className="tagRow" ref={tagRowRef}>
+        {props.trackedStats?.filter((stat) => stat && !RESERVED_NOTE_FIELDS.has(stat.name)).map((stat, key) => {
+          const active = stat.visible === 'visible';
+          const isWin = WIN_TAGS.includes(stat.name);
+          const className = [
+            'tagChip',
+            active ? 'active' : '',
+            active && isWin ? 'win' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+          // Win tags keep their amber treatment from the CSS class
+          // above (a meaningful signal, not decoration) -- only
+          // non-win active tags get the per-tag hash color, so it
+          // never overrides that existing meaning.
+          const tagColor = active && !isWin ? getTagColor(stat.name) : null;
+          return (
+            <button
+              key={key}
+              type="button"
+              className={className}
+              style={
+                tagColor
+                  ? {
+                      borderColor: 'transparent',
+                      background: tagColor.background,
+                      color: tagColor.text,
+                    }
+                  : undefined
+              }
+              onClick={() => setCodeIcon(stat)}
+            >
+              <span aria-hidden="true">{stat.icon}</span>
+              <span>{stat.name}</span>
+            </button>
+          );
+        })}
+        </div>
+        {hasMoreTags && <div className="tagFade" aria-hidden="true"></div>}
       </div>
     </div>
   );

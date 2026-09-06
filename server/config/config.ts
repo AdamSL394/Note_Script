@@ -7,6 +7,6 @@ import config from './config.json';
 // drift out of sync with the actual file.
 
 
-const enviroment = (process.env.NODE_ENV || 'production') as keyof typeof config;
+const enviroment = (process.env.NODE_ENV || 'development') as keyof typeof config;
 const enviromentCreds = config[enviroment] ;
 export default enviromentCreds;

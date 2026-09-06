@@ -51,12 +51,62 @@ describe('updateNote — filter shape sent to Mongoose', () => {
         mockFindOneAndUpdate.mockResolvedValue({ text: 'updated' });
         await noteController.updateNote(
             '507f1f77bcf86cd799439011', 'user-a-id',
-            true, 'text', '2026-01-01', '1',
-            false, false, false, false, false, false, false,
+            { edit: true, text: 'text', date: '2026-01-01', star: '1', tags: [] },
         );
 
         const [filter] = mockFindOneAndUpdate.mock.calls[0];
         expect(filter).toEqual({ _id: '507f1f77bcf86cd799439011', userId: 'user-a-id' });
+    });
+});
+
+describe('updateNote — backward-compat reconciliation between tags and legacy fields', () => {
+    beforeEach(() => {
+        mockFindOneAndUpdate.mockResolvedValue({ text: 'updated' });
+    });
+
+    it('new-format client: tags sent directly is used as-is', async () => {
+        await noteController.updateNote('id1', 'user-a', {
+            edit: false, text: 't', date: '2026-01-01', star: 'None',
+            tags: [{ name: 'weed', icon: '🍁' }, { name: 'coffee', icon: '☕️' }],
+        });
+        const [, update] = mockFindOneAndUpdate.mock.calls[0];
+        expect(update.$set.tags).toEqual([
+            { name: 'weed', icon: '🍁' },
+            { name: 'coffee', icon: '☕️' },
+        ]);
+    });
+
+    it('old-format client: legacy boolean fields (no tags sent) get reconciled into tag snapshots', async () => {
+        await noteController.updateNote('id1', 'user-a', {
+            edit: false, text: 't', date: '2026-01-01', star: 'None',
+            look: true, gym: false, weed: true, basketball: true,
+        });
+        const [, update] = mockFindOneAndUpdate.mock.calls[0];
+        const names = update.$set.tags.map((t: { name: string }) => t.name).sort();
+        expect(names).toEqual(['basketball', 'look', 'weed'].sort());
+        // Confirms each reconciled entry is a real snapshot with a
+        // known icon, not just a bare name -- the whole point of this
+        // migration is that the icon travels with the note.
+        expect(
+            update.$set.tags.every((t: { icon: string }) => typeof t.icon === 'string' && t.icon.length > 0)
+        ).toBe(true);
+    });
+
+    it('neither tags nor any legacy field sent: tags is left out of $set entirely, not wiped', async () => {
+        await noteController.updateNote('id1', 'user-a', {
+            edit: false, text: 'just changed the text', date: '2026-01-01', star: 'None',
+        });
+        const [, update] = mockFindOneAndUpdate.mock.calls[0];
+        expect(update.$set).not.toHaveProperty('tags');
+    });
+
+    it('old-format client with every legacy field false: tags becomes an empty array, not left untouched', async () => {
+        await noteController.updateNote('id1', 'user-a', {
+            edit: false, text: 't', date: '2026-01-01', star: 'None',
+            look: false, gym: false,
+        });
+        const [, update] = mockFindOneAndUpdate.mock.calls[0];
+        expect(update.$set.tags).toEqual([]);
     });
 });
 

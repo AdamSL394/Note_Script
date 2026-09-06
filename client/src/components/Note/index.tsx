@@ -9,7 +9,7 @@ import { WIN_TAGS } from '../../constants/noteFields';
 import { getTagColor } from '../../utils/tagColor';
 import { formatHumanDate } from '../../utils/date';
 import { renderStars } from '../../utils/renderStars';
-import { getRelevantTagFields } from '../../utils/resolveNoteTags';
+import { getActiveNoteTags } from '../../utils/resolveNoteTags';
 import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 
 interface NoteProps {
@@ -37,8 +37,7 @@ function Note(props: NoteProps) {
 
     // 'date/smoosh' isn't a valid identifier, so it has to be read via
     // bracket access — same pattern as NotesHomeView.
-    const record = props.note as unknown as Record<string, unknown>;
-    const isWinDay = WIN_TAGS.some((tag) => Boolean(record[tag]));
+    const isWinDay = WIN_TAGS.some((tag) => (props.note.tags ?? []).some((t) => t.name === tag));
     const stars = renderStars(props.note.star);
 
     return (
@@ -111,8 +110,7 @@ function Note(props: NoteProps) {
                         gap: '4px',
                     }}
                 >
-                    {getRelevantTagFields(props.note).map(({ field, icon, label }) => {
-                        if (!record[field]) return null;
+                    {getActiveNoteTags(props.note).map(({ field, icon, label }) => {
                         const isWin = WIN_TAGS.includes(field);
                         const tagColor = isWin
                             ? { background: 'var(--ns-amber-tint)', text: 'var(--ns-amber-dark)' }
