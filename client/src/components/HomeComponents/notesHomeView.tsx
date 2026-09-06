@@ -63,8 +63,8 @@ export const HomeNoteCard = (props: HomeNoteCardProps) => {
           color: 'var(--ns-graphite)',
         }}
       >
-        <span>{formatHumanDate(note.date)}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        <span style={{ whiteSpace: 'nowrap' }}>{formatHumanDate(note.date)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
           {stars && (
             <span style={{ color: 'var(--ns-amber)', fontSize: '12px', marginRight: '4px' }}>
               {stars}

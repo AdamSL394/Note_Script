@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import './emojiPicker.css';
 
 // A small, curated set spanning the themes this app's tags actually
-// use (activities, mood, food, objects) rather than a full emoji
-// database library -- keeps this lightweight, matching the rest of
-// the app's dependency footprint, at the cost of not covering every
-// possible emoji. The OS's own native emoji keyboard remains
-// available too (this is a convenience picker, not the only path).
+// use (activities, mood, food, objects) -- not a full emoji database
+// library, to keep this app's dependency footprint light. The text
+// input below covers anything not in this list.
 const CURATED_EMOJIS = [
   '🏃', '🏋️', '🧘', '🚴', '⚽', '🏀', '🎾', '🏊', '⛳', '🥊',
   '📚', '✍️', '🎨', '🎵', '🎸', '📷', '💻', '🎮', '🎬', '🧩',
@@ -23,56 +21,118 @@ interface EmojiPickerProps {
 }
 
 // A button showing the current icon (or a placeholder), opening a
-// small grid popover of curated emoji on click -- lets a user pick a
-// tag icon without leaving the app for a native emoji keyboard.
+// centered overlay on click -- fixed to the viewport rather than
+// anchored to this (small, easy-to-be-near-an-edge) trigger button,
+// so it can never run off-screen regardless of where the button
+// happens to sit.
 export const EmojiPicker = (props: EmojiPickerProps) => {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [customInput, setCustomInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Closes on an outside click -- without this, the popover would
-  // stay open until the user picks something, with no way to dismiss
-  // it by clicking elsewhere, which is the behavior anyone would
-  // expect from a small popover like this.
   useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    if (open) {
+      setCustomInput('');
+    }
   }, [open]);
 
+  const commitCustomInput = () => {
+    const trimmed = customInput.trim();
+    if (trimmed) {
+      props.onSelect(trimmed);
+    }
+    setOpen(false);
+  };
+
   return (
-    <div className="emojiPickerContainer" ref={containerRef}>
+    <>
       <button
         type="button"
         className="emojiPickerTrigger"
         aria-label={props.ariaLabel}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(true)}
       >
         {props.value || '🏷️'}
       </button>
       {open && (
-        <div className="emojiPickerPopover" role="listbox">
-          <div className="emojiPickerGrid">
-            {CURATED_EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                className="emojiPickerOption"
-                onClick={() => {
-                  props.onSelect(emoji);
-                  setOpen(false);
+        <div className="emojiPickerBackdrop" onClick={() => setOpen(false)}>
+          <div
+            className="emojiPickerModal"
+            role="dialog"
+            aria-label="Choose a tag icon"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="emojiPickerHeader">
+              <span className="emojiPickerCurrentPreview" aria-hidden="true">
+                {props.value || '🏷️'}
+              </span>
+              <span className="emojiPickerHeaderText">
+                {props.value ? 'Current icon' : 'No icon chosen yet'}
+              </span>
+              {props.value && (
+                <button
+                  type="button"
+                  className="emojiPickerClearButton"
+                  onClick={() => {
+                    props.onSelect('');
+                    setOpen(false);
+                  }}
+                >
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+
+            <div className="emojiPickerSectionLabel">Choose one:</div>
+            <div className="emojiPickerGrid" role="listbox">
+              {CURATED_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="emojiPickerOption"
+                  onClick={() => {
+                    props.onSelect(emoji);
+                    setOpen(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            <div className="emojiPickerSectionLabel">
+              Don&apos;t see it? Type or paste your own here (this box does not
+              filter the list above):
+            </div>
+            <div className="emojiPickerCustomRow">
+              <input
+                ref={inputRef}
+                type="text"
+                className="emojiPickerCustomInput"
+                placeholder="Paste an emoji"
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitCustomInput();
                 }}
+                maxLength={8}
+              />
+              <button
+                type="button"
+                className="emojiPickerUseButton"
+                disabled={!customInput.trim()}
+                onClick={commitCustomInput}
               >
-                {emoji}
+                Use
               </button>
-            ))}
+            </div>
+
+            <button type="button" className="emojiPickerClose" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
