@@ -1,4 +1,4 @@
-import Note, { INote } from '../models/notes';
+import Note, { INote, ITagSnapshot } from '../models/notes';
 import mongoose from 'mongoose';
 import { normalizeUserId } from '../utils/userId';
 import { logger } from '../logger';
@@ -120,7 +120,7 @@ const getRangeNotes = async (
         userId: id,
         date: {
             $gte: start,
-            $lt: end,
+            $lte: end,
         },
     }).sort({ date: sortDirection === 'asc' ? 1 : -1 });
     return notes;
@@ -141,50 +141,81 @@ const deleteNotes = async (id: string, userId: string): Promise<string> => {
     return result.deletedCount > 0 ? 'note deleted' : 'not found';
 };
 
-// NOTE: 12 positional string/boolean parameters is a real design smell —
-// it's easy for a future caller to accidentally transpose two same-typed
-// arguments (e.g. swap `look` and `gym`), and since they're positionally
-// interchangeable to the type checker, TypeScript wouldn't catch that
-// mistake. Left as-is to match the existing call site in routes/notes.ts
-// rather than changing the calling convention unprompted, but this is a
-// good candidate for a follow-up refactor to a single options object.
+interface UpdateNoteOptions {
+    edit: boolean;
+    text: string;
+    date: string;
+    star: string;
+    tags?: ITagSnapshot[];
+    // Legacy fields, accepted from the currently-live client during the
+    // gap before it's updated to send `tags` directly. See the
+    // reconciliation logic below for how these get merged.
+    look?: boolean;
+    gym?: boolean;
+    weed?: boolean;
+    code?: boolean;
+    read?: boolean;
+    eatOut?: boolean;
+    basketball?: boolean;
+}
+
+const LEGACY_UPDATE_FIELDS = ['look', 'gym', 'weed', 'code', 'read', 'eatOut', 'basketball'] as const;
+
+// The fixed, known icons these built-in fields have always had --
+// unlike an arbitrary custom tag (which the migration script resolves
+// dynamically per-user), these never varied, so there's nothing to
+// look up here.
+const LEGACY_FIELD_ICONS: Record<(typeof LEGACY_UPDATE_FIELDS)[number], string> = {
+    look: '👀',
+    gym: '💪🏼',
+    weed: '🍁',
+    code: '👨🏻\u200d💻',
+    read: '📚',
+    eatOut: '🍕',
+    basketball: '⛹🏻\u200d♂️',
+};
+
 const updateNote = async (
     id: string,
     userId: string,
-    switchEdit: boolean,
-    text: string,
-    date: string,
-    star: string,
-    look: boolean,
-    gym: boolean,
-    weed: boolean,
-    code: boolean,
-    read: boolean,
-    eatOut: boolean,
-    basketball: boolean,
+    options: UpdateNoteOptions,
 ): Promise<INote | null> => {
+    const setFields: Record<string, unknown> = {
+        edit: options.edit,
+        text: options.text,
+        date: options.date,
+        star: options.star,
+        updatedAt: Date.now(),
+    };
+
+    if (options.tags !== undefined) {
+        // New-format client: tags sent directly, use as-is.
+        setFields.tags = options.tags;
+    } else {
+        const record = options as unknown as Record<string, unknown>;
+        const sentAnyLegacyField = LEGACY_UPDATE_FIELDS.some((f) => record[f] !== undefined);
+        if (sentAnyLegacyField) {
+            // Old-format client: reconcile whichever legacy boolean
+            // fields it sent into real tag snapshots, so data stays
+            // consistent in the new format regardless of which client
+            // format actually made this request.
+            setFields.tags = LEGACY_UPDATE_FIELDS.filter((f) => record[f] === true).map(
+                (f): ITagSnapshot => ({ name: f, icon: LEGACY_FIELD_ICONS[f] })
+            );
+        }
+        // If neither tags nor any legacy field was sent (only
+        // text/date/star changed), tags is left out of $set entirely --
+        // deliberately NOT overwritten with an empty array, which would
+        // silently wipe out whatever tags this note already had.
+    }
+
     // Switched from findByIdAndUpdate (which only filters by _id) to
     // findOneAndUpdate with a compound filter — previously any
     // authenticated request could edit any note purely by knowing its
     // _id, with no check that it belonged to the requester.
     const updated = await Note.findOneAndUpdate(
         { _id: id, userId },
-        {
-            $set: {
-                edit: switchEdit,
-                text: text,
-                date: date,
-                star: star,
-                look: look,
-                gym: gym,
-                weed: weed,
-                code: code,
-                read: read,
-                eatOut: eatOut,
-                basketball: basketball,
-                updatedAt: Date.now(),
-            },
-        },
+        { $set: setFields },
         { new: true },
     );
     return updated;

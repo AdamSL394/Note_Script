@@ -59,6 +59,7 @@
 .streakStrip {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   max-width: 24rem;
   margin: 0 auto 1.5rem;

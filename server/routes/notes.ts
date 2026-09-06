@@ -86,8 +86,8 @@ type UpdateNoteBody = z.infer<typeof updateNoteSchema>;
 
 router.patch('/update/:id', requireAuth, validateBody(updateNoteSchema), async (req: Request<{ id: string }, unknown, UpdateNoteBody>, res: Response) => {
     const userId = getRequiredUserId(req);
-    const { edit, text, date, star, look, gym, weed, code, read, eatOut, basketball } = req.body;
-    const response = await noteController.updateNote(req.params.id, userId, edit, text, date, star, look, gym, weed, code, read, eatOut, basketball);
+    const { edit, text, date, star, tags } = req.body;
+    const response = await noteController.updateNote(req.params.id, userId, { edit, text, date, star, tags });
     res.json(response);
     return;
 });

@@ -13,7 +13,7 @@ import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import { useNoteEditing } from '../../hooks/useNoteEditing';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
+import { WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
 import { toLocalDateString } from '../../utils/date';
 import './homeView.css';
 
@@ -24,17 +24,11 @@ import './homeView.css';
 // real field name 'date/smoosh' — both were silently dead. Deriving the
 // keys from the same shared list everything else uses means this can't
 // drift out of sync with what a Note can actually have set on it.
-type PropertyCounts = Record<string, number>;
-
-const EMPTY_COUNTS: PropertyCounts = Object.fromEntries(
-  NOTE_TAG_FIELDS.map(({ field }) => [field, 0])
-);
-
-interface StreakDay {
-  date: string;
-  hasNote: boolean;
-  isWin: boolean;
+interface PropertyCount {
+  count: number;
+  icon: string;
 }
+type PropertyCounts = Record<string, PropertyCount>;
 
 const HomeView = () => {
   const { user } = useAuth0();
@@ -45,13 +39,6 @@ const HomeView = () => {
   const [disabled, setDisabled] = useState(false);
 
   const [notes, setNotes] = useState<NoteType[]>([]);
-  // Deliberately separate from `notes` -- Look Back freely mutates
-  // `notes` to show historical content (that's its entire purpose),
-  // but the streak strip needs to always reflect genuine current
-  // momentum regardless of what's being browsed. Fetched once on mount
-  // and refreshed only when a new note is saved within the current
-  // week (see storeNewNote), never touched by anything Look Back does.
-  const [streakNotes, setStreakNotes] = useState<NoteType[]>([]);
   const [noteview, setNoteView] = useState('week');
   const [timePeriod, setTimePeriod] = useState('1');
   const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
@@ -60,7 +47,7 @@ const HomeView = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [propertyCounts, setPropertyCounts] =
-    useState<PropertyCounts>(EMPTY_COUNTS);
+    useState<PropertyCounts>({});
 
   // Auth0's `user.sub` is optional (undefined until authentication
   // resolves), so every call site that needs the derived userId goes
@@ -75,7 +62,6 @@ const HomeView = () => {
     myPastDate.setDate(myPastDate.getDate() - 7);
     const lastWeeksDate = toLocalDateString(myPastDate);
     getNoteRanges(userid, todaysDate, lastWeeksDate);
-    fetchStreakData(lastWeeksDate, todaysDate);
   };
 
   const {
@@ -127,22 +113,11 @@ const HomeView = () => {
 
     async function fetchData() {
       await getNoteRanges(userid as string, todaysDate, lastWeeksDate);
-      await fetchStreakData(lastWeeksDate, todaysDate);
       getUserInformation();
     }
 
     fetchData();
   }, [user]);
-
-  // Fetches the real, current last-7-days data specifically for the
-  // streak strip -- see streakNotes above for why this is kept
-  // separate from the general notes fetch.
-  const fetchStreakData = async (start: string, end: string) => {
-    const res = await NoteRoutes.getNoteRange(start, end);
-    if (Array.isArray(res)) {
-      setStreakNotes(res);
-    }
-  };
 
   useEffect(() => {
     if (!saveError) return;
@@ -153,22 +128,13 @@ const HomeView = () => {
   }, [saveError]);
 
   useEffect(() => {
-    const counts: PropertyCounts = { ...EMPTY_COUNTS };
-
-    // Note doesn't have (and shouldn't get) a generic index signature —
-    // it's a deliberately strict, fully-named shape everywhere else in
-    // the app. This loop is the one place that genuinely needs dynamic
-    // key access, so it casts locally rather than weakening the shared
-    // type for everyone.
+    const counts: PropertyCounts = {};
     notes.forEach((note) => {
-      const noteRecord = note as unknown as Record<string, unknown>;
-      for (const property in noteRecord) {
-        if (property in counts && noteRecord[property]) {
-          counts[property]++;
-        }
-      }
+      (note.tags ?? []).forEach((tag) => {
+        const existing = counts[tag.name];
+        counts[tag.name] = { count: (existing?.count ?? 0) + 1, icon: tag.icon };
+      });
     });
-
     setPropertyCounts(counts);
   }, [notes]);
 
@@ -196,11 +162,10 @@ const HomeView = () => {
       return;
     }
 
-    for (const stat of stats) {
-      if (stat.visible === 'visible' && !RESERVED_NOTE_FIELDS.has(stat.name)) {
-        raw[stat.name] = true;
-      }
-    }
+    const tags = stats
+      .filter((stat) => stat.visible === 'visible' && !RESERVED_NOTE_FIELDS.has(stat.name))
+      .map((stat) => ({ name: stat.name, icon: stat.icon }));
+    raw.tags = tags;
 
     const res = await NoteRoutes.postNote(raw);
     const todaysDate = toLocalDateString(new Date());
@@ -247,7 +212,6 @@ const HomeView = () => {
     const isWithinLastWeek = date >= lastWeeksDate && date <= todaysDate;
     if (isWithinLastWeek) {
       getNoteRanges(userId, todaysDate, lastWeeksDate);
-      fetchStreakData(lastWeeksDate, todaysDate);
     }
 
     return;
@@ -306,53 +270,33 @@ const HomeView = () => {
     );
   };
 
-  // Builds the last 7 days for the streak strip from streakNotes --
-  // deliberately not `notes`, which Look Back mutates freely. Using
-  // `notes` here was the actual bug: once Look Back replaced it with
-  // historical data, none of those old dates could ever match this
-  // week's range, making the strip look frozen/broken rather than
-  // genuinely reflecting current momentum.
-  const getStreakDays = (): StreakDay[] => {
-    const days: StreakDay[] = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const iso = toLocalDateString(d);
-      const dayNotes = streakNotes.filter((note) => note.date === iso);
-      const hasNote = dayNotes.length > 0;
-      const isWin = dayNotes.some((note) => {
-        const record = note as unknown as Record<string, unknown>;
-        return WIN_TAGS.some((tag) => Boolean(record[tag]));
-      });
-      days.push({ date: iso, hasNote, isWin });
-    }
-    return days;
+  // Human-readable label for whatever Look Back period is currently
+  // selected -- noteview distinguishes singular ('week'/'year', only
+  // ever paired with timePeriod === '1') from plural ('weeks'/'years'),
+  // so this covers every combination Look Back can actually produce
+  // (1/2/3 weeks ago, 1/2/3 years ago) without needing its own
+  // separate state.
+  const getLookBackLabel = (): string => {
+    if (noteview === 'week') return 'the past week';
+    if (noteview === 'year') return '1 year ago';
+    if (noteview === 'weeks') return `${timePeriod} weeks ago`;
+    return `${timePeriod} years ago`;
   };
 
-  // Consecutive win-days counting backward from today. Only 7 days of
-  // notes are loaded on this page (the initial fetch scopes to "last
-  // week"), so this can only ever report up to 7 -- a real unbounded
-  // streak would need more historical data than what's fetched here,
-  // which is exactly the kind of thing the deferred calendar-heatmap
-  // view should own, not this. Deliberately never claims an exact
-  // number it can't back up: {getCurrentStreak, isStreakAtLoadedCap}
-  // together let the UI show "7+" instead of falsely implying the
-  // streak stops at exactly 7.
-  const getCurrentStreak = (): { count: number; atLoadedCap: boolean } => {
-    const days = getStreakDays();
-    let count = 0;
-    for (let i = days.length - 1; i >= 0; i--) {
-      if (days[i].isWin) {
-        count++;
-      } else {
-        break;
-      }
-    }
-    return { count, atLoadedCap: count === days.length };
+  // Counts total notes and win-tagged notes directly from whatever
+  // Look Back has currently loaded into `notes` -- this is what makes
+  // the highlight genuinely reflect the selected period (7 days, 2
+  // weeks, a year ago, whatever) rather than always showing a fixed
+  // "last real 7 days" window regardless of what's being browsed.
+  const getLookBackSummary = (): { total: number; wins: number } => {
+    const total = notes.length;
+    const wins = notes.filter((note) =>
+      WIN_TAGS.some((tag) => (note.tags ?? []).some((t) => t.name === tag))
+    ).length;
+    return { total, wins };
   };
 
-  const streak = getCurrentStreak();
+  const lookBackSummary = getLookBackSummary();
 
   return (
     <Container id="container">
@@ -375,24 +319,17 @@ const HomeView = () => {
       ></AlertMessage>
 
       <div className="streakStrip">
-        {streak.count > 0 && (
+        <span className="streakCount">
+          <span aria-hidden="true">📝</span>{' '}
+          {lookBackSummary.total} note{lookBackSummary.total === 1 ? '' : 's'}
+        </span>
+        {lookBackSummary.wins > 0 && (
           <span className="streakCount">
             <span aria-hidden="true">🔥</span>{' '}
-            {streak.count}{streak.atLoadedCap ? '+' : ''} day streak
+            {lookBackSummary.wins} win{lookBackSummary.wins === 1 ? '' : 's'}
           </span>
         )}
-        <span className="streakLabel">past 7 days</span>
-        <span className="streakRule"></span>
-        {getStreakDays().map((day) => (
-          <span
-            key={day.date}
-            className={
-              'streakDot' +
-              (day.isWin ? ' win' : day.hasNote ? ' logged' : '')
-            }
-            title={day.date}
-          ></span>
-        ))}
+        <span className="streakLabel">{getLookBackLabel()}</span>
       </div>
 
       <LookBack
@@ -409,11 +346,11 @@ const HomeView = () => {
       <h3 id="pastNoteHeader">{noNotes}</h3>
       <h3 id="pastNoteError">{noteError}</h3>
       <div>
-        {Object.values(propertyCounts).some((count) => count > 0) && (
+        {Object.values(propertyCounts).some(({ count }) => count > 0) && (
           <div id="count">
-            {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
-              renderPropertyCount(icon, label, propertyCounts[field] ?? 0)
-            )}
+            {Object.entries(propertyCounts)
+              .filter(([, { count }]) => count > 0)
+              .map(([tagName, { count, icon }]) => renderPropertyCount(icon, tagName, count))}
           </div>
         )}
         <Grid
@@ -429,6 +366,7 @@ const HomeView = () => {
                 <EditingNote
                   notes={notes}
                   note={note}
+                  trackedStats={trackedStats}
                   setDateNote={setDateNote}
                   currentPage={1}
                   setNoteValue={setNoteValue}

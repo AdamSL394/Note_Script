@@ -1,0 +1,176 @@
+.emojiPickerTrigger {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: var(--ns-paper);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.emojiPickerTrigger:hover {
+  border-color: var(--ns-blue);
+}
+
+/* Fixed to the viewport and centered with flex -- deliberately NOT
+   anchored to the trigger button's own position. The trigger is small
+   and often sits close to a screen edge (e.g. the left edge of a
+   compact "add a tag" form on mobile), so any popover anchored
+   relative to it risks running off-screen depending on where it
+   happens to be -- confirmed on a real device, not just reasoned
+   about, before rebuilding this as a centered overlay instead of
+   trying to patch the anchored version's positioning further. */
+.emojiPickerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 38, 43, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.emojiPickerModal {
+  background: var(--ns-paper);
+  border-radius: 14px;
+  padding: 1rem;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(35, 38, 43, 0.25);
+}
+
+.emojiPickerHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.emojiPickerCurrentPreview {
+  font-size: 22px;
+  width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.emojiPickerHeaderText {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ns-graphite);
+}
+
+.emojiPickerClearButton {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: #b3261e;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.emojiPickerClearButton:hover {
+  border-color: #b3261e;
+  background: rgba(179, 38, 30, 0.06);
+}
+
+.emojiPickerSectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ns-graphite);
+  margin: 0.6rem 0 0.4rem;
+  line-height: 1.4;
+}
+
+.emojiPickerCustomRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.emojiPickerCustomInput {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ns-ink);
+  padding: 0.5rem 0.6rem;
+}
+
+.emojiPickerCustomInput:focus {
+  outline: none;
+  border-color: var(--ns-blue);
+}
+
+.emojiPickerUseButton {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-blue);
+  background: var(--ns-blue);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.emojiPickerUseButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.emojiPickerGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.emojiPickerOption {
+  aspect-ratio: 1;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emojiPickerOption:hover {
+  background: var(--ns-rule);
+}
+
+.emojiPickerClose {
+  width: 100%;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
+}
+
+.emojiPickerClose:hover {
+  border-color: var(--ns-blue);
+  color: var(--ns-ink);
+}
