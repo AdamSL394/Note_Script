@@ -72,6 +72,13 @@ router.get('/analytics/heatmap', requireAuth, async (req: Request, res: Response
     return;
 });
 
+router.get('/analytics/streaks', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const response = await noteController.getTagStreaks(userId);
+    res.json(response);
+    return;
+});
+
 router.get('/note/:id', requireAuth, async (req: Request<{ id: string }>, res: Response) => {
     const userId = getRequiredUserId(req);
     const response = await noteController.getSingleNote(req.params.id, userId);

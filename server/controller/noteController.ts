@@ -446,6 +446,123 @@ const getActivityHeatmap = async (id: string, tagName?: string): Promise<Heatmap
     return { days, maxCount };
 };
 
+export interface StreakStats {
+    currentStreak: number;
+    longestStreak: number;
+    longestStreakStart: string | null;
+    longestStreakEnd: string | null;
+}
+
+export interface TagStreakResult extends StreakStats {
+    name: string;
+    icon: string;
+}
+
+function daysBetweenDateStrings(a: string, b: string): number {
+    const [ay, am, ad] = a.split('-').map(Number);
+    const [by, bm, bd] = b.split('-').map(Number);
+    const dateA = new Date(ay, am - 1, ad);
+    const dateB = new Date(by, bm - 1, bd);
+    return Math.round((dateB.getTime() - dateA.getTime()) / 86400000);
+}
+
+// Given a sorted, deduplicated list of dates a tag (or overall
+// journaling) was used on, computes the longest-ever consecutive run
+// and whether there's a currently active streak. A streak counts as
+// still "current" if its most recent date is today OR yesterday --
+// not just today -- since the day isn't over yet and requiring an
+// entry already logged today would falsely break an otherwise-intact
+// streak for anyone who simply hasn't written today's note yet.
+// Exported for direct testing of the date-walking logic itself,
+// separate from the database fetch built on top of it.
+export function computeStreak(sortedUniqueDates: string[], todayStr: string): StreakStats {
+    if (sortedUniqueDates.length === 0) {
+        return { currentStreak: 0, longestStreak: 0, longestStreakStart: null, longestStreakEnd: null };
+    }
+
+    let longest = 1;
+    let longestStart = sortedUniqueDates[0];
+    let longestEnd = sortedUniqueDates[0];
+    let runStart = sortedUniqueDates[0];
+    let runLength = 1;
+
+    for (let i = 1; i < sortedUniqueDates.length; i++) {
+        const gap = daysBetweenDateStrings(sortedUniqueDates[i - 1], sortedUniqueDates[i]);
+        if (gap === 1) {
+            runLength++;
+        } else {
+            runStart = sortedUniqueDates[i];
+            runLength = 1;
+        }
+        if (runLength > longest) {
+            longest = runLength;
+            longestStart = runStart;
+            longestEnd = sortedUniqueDates[i];
+        }
+    }
+
+    const lastDate = sortedUniqueDates[sortedUniqueDates.length - 1];
+    let currentStreak = 0;
+    if (daysBetweenDateStrings(lastDate, todayStr) <= 1) {
+        currentStreak = 1;
+        for (let i = sortedUniqueDates.length - 1; i > 0; i--) {
+            if (daysBetweenDateStrings(sortedUniqueDates[i - 1], sortedUniqueDates[i]) === 1) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return { currentStreak, longestStreak: longest, longestStreakStart: longestStart, longestStreakEnd: longestEnd };
+}
+
+const STREAK_MAX_TAGS = 6;
+
+// Streak stats for overall journaling (any note, any tag) plus the
+// top N most-used tags -- uses a user's FULL history (streaks are
+// meaningful across a user's whole timeline, not just a recent
+// window, unlike the trend/time-series features above).
+const getTagStreaks = async (id: string): Promise<TagStreakResult[]> => {
+    const notes = await Note.find({ userId: id }, { date: 1, tags: 1 }).lean();
+    const todayStr = toDateString(new Date());
+
+    const overallDates = new Set<string>();
+    const datesByTag = new Map<string, Set<string>>();
+    const iconByTag = new Map<string, string>();
+    const totalByTag = new Map<string, number>();
+
+    for (const note of notes) {
+        overallDates.add(note.date);
+        for (const tag of note.tags ?? []) {
+            if (!datesByTag.has(tag.name)) datesByTag.set(tag.name, new Set());
+            datesByTag.get(tag.name)?.add(note.date);
+            iconByTag.set(tag.name, tag.icon);
+            totalByTag.set(tag.name, (totalByTag.get(tag.name) ?? 0) + 1);
+        }
+    }
+
+    const topTagNames = Array.from(totalByTag.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, STREAK_MAX_TAGS)
+        .map(([name]) => name);
+
+    const results: TagStreakResult[] = [
+        {
+            name: 'Overall',
+            icon: '📝',
+            ...computeStreak(Array.from(overallDates).sort(), todayStr),
+        },
+        ...topTagNames.map((name) => ({
+            name,
+            icon: iconByTag.get(name) ?? '🏷️',
+            ...computeStreak(Array.from(datesByTag.get(name) ?? []).sort(), todayStr),
+        })),
+    ];
+
+    return results;
+};
+
 export interface PaginatedNotes {
     notes: INote[];
     totalCount: number;
@@ -500,7 +617,7 @@ const getRangeNotes = async (
         userId: id,
         date: {
             $gte: start,
-            $lte: end,
+            $lt: end,
         },
     }).sort({ date: sortDirection === 'asc' ? 1 : -1 });
     return notes;
@@ -677,4 +794,5 @@ export default {
     getTagTrends,
     getTagTimeSeries,
     getActivityHeatmap,
+    getTagStreaks,
 };

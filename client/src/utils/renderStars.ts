@@ -8,7 +8,7 @@
  */
 export function renderStars(star: string | undefined): string | null {
   const count = Number(star);
-  if (!star || star === 'None' || Number.isNaN(count) || count < 1) {
+  if (!star || star === 'None' || Number.isNaN(count) || count < 1 || count > 3) {
     return null;
   }
   return '★'.repeat(count) + '☆'.repeat(Math.max(0, 3 - count));
