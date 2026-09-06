@@ -64,6 +64,14 @@ router.get('/analytics/timeseries', requireAuth, async (req: Request, res: Respo
     return;
 });
 
+router.get('/analytics/heatmap', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const tagName = typeof req.query.tag === 'string' && req.query.tag.length > 0 ? req.query.tag : undefined;
+    const response = await noteController.getActivityHeatmap(userId, tagName);
+    res.json(response);
+    return;
+});
+
 router.get('/note/:id', requireAuth, async (req: Request<{ id: string }>, res: Response) => {
     const userId = getRequiredUserId(req);
     const response = await noteController.getSingleNote(req.params.id, userId);

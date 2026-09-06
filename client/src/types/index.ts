@@ -26,6 +26,18 @@ export interface TagTimeSeries {
   series: { name: string; icon: string; counts: number[] }[];
 }
 
+export interface HeatmapDay {
+  date: string;
+  count: number;
+  week: number;
+  dayOfWeek: number;
+}
+
+export interface HeatmapResponse {
+  days: HeatmapDay[];
+  maxCount: number;
+}
+
 export interface Note {
   _id: string;
   userId: string;

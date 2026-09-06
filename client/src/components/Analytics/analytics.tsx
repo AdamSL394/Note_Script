@@ -12,6 +12,7 @@ import {
 import NoteRoutes from '../../router/noteRoutes';
 import type { TagTimeSeries } from '../../types';
 import { getTagColor } from '../../utils/tagColor';
+import { Heatmap } from './heatmap';
 import './analytics.css';
 
 type Granularity = 'week' | 'month' | 'year';
@@ -145,6 +146,10 @@ export const Analytics = () => {
           </ResponsiveContainer>
         </div>
       )}
+
+      <h2 className="analyticsSectionHeading">Activity</h2>
+      <p className="analyticsSubheading">A day-by-day look at your journaling -- gaps and streaks, at a glance.</p>
+      <Heatmap />
     </div>
   );
 };

@@ -379,6 +379,73 @@ const getTagTimeSeries = async (
     return { buckets, granularity, series };
 };
 
+export interface HeatmapDay {
+    date: string;
+    count: number;
+    week: number;
+    dayOfWeek: number;
+}
+
+export interface HeatmapResult {
+    days: HeatmapDay[];
+    maxCount: number;
+}
+
+const HEATMAP_DAYS_BACK = 364;
+
+// The Sunday on/before N days ago -- the grid always starts on a full
+// week boundary, matching GitHub's own contribution graph layout,
+// rather than starting mid-week.
+function getHeatmapGridStart(daysBack: number, today: Date): Date {
+    const start = new Date(today);
+    start.setDate(start.getDate() - daysBack);
+    start.setDate(start.getDate() - start.getDay());
+    return start;
+}
+
+// Daily note counts over the trailing year, reshaped into a GitHub-
+// style grid: each day knows its own week column (0-indexed from the
+// grid's Sunday start) and day-of-week row (0=Sun..6=Sat), so the
+// client can render a grid directly without redoing this placement
+// logic itself. When `tagName` is provided, only counts notes that
+// carry that specific tag -- letting the same heatmap answer either
+// "was I journaling consistently" (no filter) or "when did I actually
+// go to the gym" (filtered).
+const getActivityHeatmap = async (id: string, tagName?: string): Promise<HeatmapResult> => {
+    const today = new Date();
+    const gridStart = getHeatmapGridStart(HEATMAP_DAYS_BACK, today);
+    const gridStartStr = toDateString(gridStart);
+
+    const match: Record<string, unknown> = { userId: id, date: { $gte: gridStartStr } };
+    if (tagName) {
+        match['tags.name'] = tagName;
+    }
+
+    const rows = await Note.aggregate<{ _id: string; count: number }>([
+        { $match: match },
+        { $group: { _id: '$date', count: { $sum: 1 } } },
+    ]);
+    const countsByDate = new Map(rows.map((r) => [r._id, r.count]));
+
+    const days: HeatmapDay[] = [];
+    let maxCount = 0;
+    const cursor = new Date(gridStart);
+    while (cursor <= today) {
+        const dateStr = toDateString(cursor);
+        const count = countsByDate.get(dateStr) ?? 0;
+        maxCount = Math.max(maxCount, count);
+        days.push({
+            date: dateStr,
+            count,
+            week: Math.floor((cursor.getTime() - gridStart.getTime()) / (7 * 86400000)),
+            dayOfWeek: cursor.getDay(),
+        });
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return { days, maxCount };
+};
+
 export interface PaginatedNotes {
     notes: INote[];
     totalCount: number;
@@ -433,7 +500,7 @@ const getRangeNotes = async (
         userId: id,
         date: {
             $gte: start,
-            $lt: end,
+            $lte: end,
         },
     }).sort({ date: sortDirection === 'asc' ? 1 : -1 });
     return notes;
@@ -609,4 +676,5 @@ export default {
     getTagAnalytics,
     getTagTrends,
     getTagTimeSeries,
+    getActivityHeatmap,
 };

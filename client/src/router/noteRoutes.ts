@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, TagSnapshot, TagAnalytics, TagTrend, TagTimeSeries, AuthUser, UserRecord } from '../types';
+import type { Note, TagSnapshot, TagAnalytics, TagTrend, TagTimeSeries, HeatmapResponse, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -60,6 +60,12 @@ const NoteRoutes = {
       `/notes/analytics/timeseries?granularity=${granularity}&count=${count}`
     );
     return result ?? { buckets: [], granularity, series: [] };
+  },
+
+  getActivityHeatmap: async (tag?: string): Promise<HeatmapResponse> => {
+    const query = tag ? `?tag=${encodeURIComponent(tag)}` : '';
+    const result = await requestJson<HeatmapResponse>(`/notes/analytics/heatmap${query}`);
+    return result ?? { days: [], maxCount: 0 };
   },
 
   getRecentlyUpdatedNotes: async (): Promise<Note[]> => {
