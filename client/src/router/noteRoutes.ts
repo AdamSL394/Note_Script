@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, AuthUser, UserRecord } from '../types';
+import type { Note, TagSnapshot, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -12,6 +12,7 @@ interface UpdateNotePayload {
   date: string;
   star: string;
   edit: boolean;
+  tags: TagSnapshot[];
   look?: boolean;
   gym?: boolean;
   weed?: boolean;
@@ -54,13 +55,7 @@ const NoteRoutes = {
         date: note.date,
         star: note.star,
         edit: note.edit,
-        look: note.look || false,
-        gym: note.gym || false,
-        weed: note.weed || false,
-        code: note.code || false,
-        read: note.read || false,
-        eatOut: note.eatOut || false,
-        basketball: note.basketball || false,
+        tags: note.tags ?? [],
       } as UpdateNotePayload,
     }),
 

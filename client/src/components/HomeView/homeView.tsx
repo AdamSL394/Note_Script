@@ -13,7 +13,7 @@ import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import { useNoteEditing } from '../../hooks/useNoteEditing';
 import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
-import { NOTE_TAG_FIELDS, WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
+import { WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
 import { toLocalDateString } from '../../utils/date';
 import './homeView.css';
 
@@ -24,11 +24,11 @@ import './homeView.css';
 // real field name 'date/smoosh' — both were silently dead. Deriving the
 // keys from the same shared list everything else uses means this can't
 // drift out of sync with what a Note can actually have set on it.
-type PropertyCounts = Record<string, number>;
-
-const EMPTY_COUNTS: PropertyCounts = Object.fromEntries(
-  NOTE_TAG_FIELDS.map(({ field }) => [field, 0])
-);
+interface PropertyCount {
+  count: number;
+  icon: string;
+}
+type PropertyCounts = Record<string, PropertyCount>;
 
 interface StreakDay {
   date: string;
@@ -60,7 +60,7 @@ const HomeView = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [propertyCounts, setPropertyCounts] =
-    useState<PropertyCounts>(EMPTY_COUNTS);
+    useState<PropertyCounts>({});
 
   // Auth0's `user.sub` is optional (undefined until authentication
   // resolves), so every call site that needs the derived userId goes
@@ -153,22 +153,13 @@ const HomeView = () => {
   }, [saveError]);
 
   useEffect(() => {
-    const counts: PropertyCounts = { ...EMPTY_COUNTS };
-
-    // Note doesn't have (and shouldn't get) a generic index signature —
-    // it's a deliberately strict, fully-named shape everywhere else in
-    // the app. This loop is the one place that genuinely needs dynamic
-    // key access, so it casts locally rather than weakening the shared
-    // type for everyone.
+    const counts: PropertyCounts = {};
     notes.forEach((note) => {
-      const noteRecord = note as unknown as Record<string, unknown>;
-      for (const property in noteRecord) {
-        if (property in counts && noteRecord[property]) {
-          counts[property]++;
-        }
-      }
+      (note.tags ?? []).forEach((tag) => {
+        const existing = counts[tag.name];
+        counts[tag.name] = { count: (existing?.count ?? 0) + 1, icon: tag.icon };
+      });
     });
-
     setPropertyCounts(counts);
   }, [notes]);
 
@@ -196,11 +187,10 @@ const HomeView = () => {
       return;
     }
 
-    for (const stat of stats) {
-      if (stat.visible === 'visible' && !RESERVED_NOTE_FIELDS.has(stat.name)) {
-        raw[stat.name] = true;
-      }
-    }
+    const tags = stats
+      .filter((stat) => stat.visible === 'visible' && !RESERVED_NOTE_FIELDS.has(stat.name))
+      .map((stat) => ({ name: stat.name, icon: stat.icon }));
+    raw.tags = tags;
 
     const res = await NoteRoutes.postNote(raw);
     const todaysDate = toLocalDateString(new Date());
@@ -321,10 +311,9 @@ const HomeView = () => {
       const iso = toLocalDateString(d);
       const dayNotes = streakNotes.filter((note) => note.date === iso);
       const hasNote = dayNotes.length > 0;
-      const isWin = dayNotes.some((note) => {
-        const record = note as unknown as Record<string, unknown>;
-        return WIN_TAGS.some((tag) => Boolean(record[tag]));
-      });
+      const isWin = dayNotes.some((note) =>
+        WIN_TAGS.some((tag) => (note.tags ?? []).some((t) => t.name === tag))
+      );
       days.push({ date: iso, hasNote, isWin });
     }
     return days;
@@ -409,11 +398,11 @@ const HomeView = () => {
       <h3 id="pastNoteHeader">{noNotes}</h3>
       <h3 id="pastNoteError">{noteError}</h3>
       <div>
-        {Object.values(propertyCounts).some((count) => count > 0) && (
+        {Object.values(propertyCounts).some(({ count }) => count > 0) && (
           <div id="count">
-            {NOTE_TAG_FIELDS.map(({ field, icon, label }) =>
-              renderPropertyCount(icon, label, propertyCounts[field] ?? 0)
-            )}
+            {Object.entries(propertyCounts)
+              .filter(([, { count }]) => count > 0)
+              .map(([tagName, { count, icon }]) => renderPropertyCount(icon, tagName, count))}
           </div>
         )}
         <Grid
@@ -429,6 +418,7 @@ const HomeView = () => {
                 <EditingNote
                   notes={notes}
                   note={note}
+                  trackedStats={trackedStats}
                   setDateNote={setDateNote}
                   currentPage={1}
                   setNoteValue={setNoteValue}

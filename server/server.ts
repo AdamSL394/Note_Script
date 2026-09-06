@@ -12,7 +12,7 @@ import bodyParser from 'body-parser';
 import connectToDB from './database/db';
 import checkJwt, { auth0Domain } from './middleware/checkJwt';
 import { apiRateLimiter, rateLimitStore } from './middleware/apiRateLimiter';
-import { resolveMongoUri } from './validateEnv';
+import { resolveMongoUri } from './validateEnv'
 import { logger } from './logger';
 
 const app = express();

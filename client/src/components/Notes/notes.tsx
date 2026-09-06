@@ -15,7 +15,7 @@ import Snackbar from '@mui/material/Snackbar/index.js';
 import Alert from '@mui/material/Alert/index.js';
 import { SearchNotes } from '../SearchNotes/searchNotes';
 import { useNoteYears } from '../../hooks/useNoteYears';
-import type { Note as NoteType } from '../../types';
+import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
 import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import './notes.css';
 
@@ -89,6 +89,7 @@ function Notes(props: NotesProps) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [saveError, setSaveError] = useState<string | undefined>();
+  const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
 
   // Auth0's `user.sub` is typed as optional by @auth0/auth0-react (it's
   // undefined until authentication resolves), so every call site that
@@ -106,6 +107,18 @@ function Notes(props: NotesProps) {
     }
     getNoteYears(currentYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  useEffect(() => {
+    const getUserInformation = async () => {
+      if (!user) return;
+      const res = await NoteRoutes.getUserInfomation(user);
+      if (res) {
+        const userInfo = JSON.parse(res) as UserInfoResponse;
+        setTrackedStats(userInfo?.searchedUser?.settings ?? []);
+      }
+    };
+    getUserInformation();
   }, [user]);
 
   // Saves whatever draft exists in sessionStorage for this note (or the
@@ -485,6 +498,7 @@ function Notes(props: NotesProps) {
                           key={note._id ?? i}
                           notes={notes}
                           note={{ ...note, textLength }}
+                          trackedStats={trackedStats}
                           setDateNote={setDateNote}
                           currentPage={1}
                           setNoteValue={setNoteValue}

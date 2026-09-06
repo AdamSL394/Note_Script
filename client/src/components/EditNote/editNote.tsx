@@ -11,13 +11,14 @@ import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import Textarea from '../TextArea/index';
 import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
-import type { Note } from '../../types';
+import type { Note, TrackedStat } from '../../types';
 import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import './editNote.css';
 
 interface EditingNoteProps {
   note: Note;
   notes: Note[];
+  trackedStats: TrackedStat[];
   setDateNote: (e: React.ChangeEvent<HTMLInputElement>, note: Note) => void;
   currentPage: number;
   setNoteValue: (note?: Note) => void;
@@ -114,6 +115,7 @@ function EditingNote(props: EditingNoteProps) {
 
         <EditingTrackedEmojis
           note={props.note}
+          trackedStats={props.trackedStats}
           setNoteValue={props.setNoteValue}
         ></EditingTrackedEmojis>
 

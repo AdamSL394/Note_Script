@@ -9,7 +9,7 @@ import { WIN_TAGS } from '../../constants/noteFields';
 import { getTagColor } from '../../utils/tagColor';
 import { formatHumanDate } from '../../utils/date';
 import { renderStars } from '../../utils/renderStars';
-import { getRelevantTagFields } from '../../utils/resolveNoteTags';
+import { getActiveNoteTags } from '../../utils/resolveNoteTags';
 
 interface HomeNotesProps {
   notes: Note[];
@@ -31,12 +31,7 @@ interface HomeNoteCardProps {
 // its natural grid position to the very front, every time.
 export const HomeNoteCard = (props: HomeNoteCardProps) => {
   const { note, onEdit, onDelete } = props;
-  // 'date/smoosh' isn't a valid identifier, so the schema's own field
-  // name has to be read via bracket access - Note is otherwise a
-  // strict, fully-named type everywhere else, so this stays a local
-  // cast rather than loosening the shared type for one odd field.
-  const record = note as unknown as Record<string, unknown>;
-  const isWinDay = WIN_TAGS.some((tag) => Boolean(record[tag]));
+  const isWinDay = WIN_TAGS.some((tag) => (note.tags ?? []).some((t) => t.name === tag));
   const stars = renderStars(note.star);
 
   return (
@@ -121,8 +116,7 @@ export const HomeNoteCard = (props: HomeNoteCardProps) => {
           gap: '4px',
         }}
       >
-        {getRelevantTagFields(note).map(({ field, icon, label }) => {
-          if (!record[field]) return null;
+        {getActiveNoteTags(note).map(({ field, icon, label }) => {
           const isWin = WIN_TAGS.includes(field);
           const tagColor = isWin
             ? { background: 'var(--ns-amber-tint)', text: 'var(--ns-amber-dark)' }
