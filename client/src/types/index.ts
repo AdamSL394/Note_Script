@@ -4,6 +4,40 @@ export interface TagSnapshot {
   icon: string;
 }
 
+export interface TagAnalytics {
+  name: string;
+  icon: string;
+  count: number;
+  avgStar: number | null;
+}
+
+export interface TagTrend {
+  name: string;
+  icon: string;
+  currentCount: number;
+  previousCount: number;
+  percentChange: number | null;
+  direction: 'up' | 'down' | 'flat' | 'new' | 'dropped';
+}
+
+export interface TagTimeSeries {
+  buckets: string[];
+  granularity: 'week' | 'month' | 'year';
+  series: { name: string; icon: string; counts: number[] }[];
+}
+
+export interface HeatmapDay {
+  date: string;
+  count: number;
+  week: number;
+  dayOfWeek: number;
+}
+
+export interface HeatmapResponse {
+  days: HeatmapDay[];
+  maxCount: number;
+}
+
 export interface Note {
   _id: string;
   userId: string;

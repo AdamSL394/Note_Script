@@ -29,8 +29,8 @@ function Navbar() {
   const { mode, setMode } = useThemeMode();
 
   const pages = isAdmin
-    ? ['Home', 'All Notes', 'User', 'Admin']
-    : ['Home', 'All Notes', 'User'];
+    ? ['Home', 'All Notes', 'Analytics', 'User', 'Admin']
+    : ['Home', 'All Notes', 'Analytics', 'User'];
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -58,6 +58,9 @@ function Navbar() {
       }
       if (value.target.innerHTML === 'All Notes') {
         navigate('/all');
+      }
+      if (value.target.innerHTML === 'Analytics') {
+        navigate('/analytics');
       }
       if (value.target.innerHTML === 'User') {
         navigate('/userSettings');
@@ -142,6 +145,9 @@ function Navbar() {
           </span>
           <span className="tabs" id="all" onClick={routeChanges}>
             All Notes
+          </span>
+          <span className="tabs" id="analytics" onClick={() => navigate('/analytics')}>
+            Analytics
           </span>
           {isAdmin && (
             <span className="tabs" id="admin" onClick={adminUsers}>
