@@ -38,6 +38,15 @@ export interface HeatmapResponse {
   maxCount: number;
 }
 
+export interface TagStreak {
+  name: string;
+  icon: string;
+  currentStreak: number;
+  longestStreak: number;
+  longestStreakStart: string | null;
+  longestStreakEnd: string | null;
+}
+
 export interface Note {
   _id: string;
   userId: string;

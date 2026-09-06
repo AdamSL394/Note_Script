@@ -81,8 +81,7 @@ const TermsOfService = () => {
         <h2>Contact</h2>
         <p>
           Questions about these terms can be sent to{' '}
-          <a href="mailto:contact@example.com">contact@example.com</a>{' '}
-          <em>(replace with a real contact address)</em>.
+          <a href="mailto:lehreradam@yahoo.com">lehreradam@yahoo.com</a>.
         </p>
       </div>
     </div>
