@@ -31,6 +31,47 @@ router.get('/count', requireAuth, async (req: Request, res: Response) => {
     return;
 });
 
+router.get('/analytics/tags', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const response = await noteController.getTagAnalytics(userId);
+    res.json(response);
+    return;
+});
+
+router.get('/analytics/trends', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const period = req.query.period === 'month' || req.query.period === 'year' ? req.query.period : 'week';
+    const response = await noteController.getTagTrends(userId, period);
+    res.json(response);
+    return;
+});
+
+router.get('/analytics/timeseries', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const granularity =
+        req.query.granularity === 'week' || req.query.granularity === 'year'
+            ? req.query.granularity
+            : 'month';
+    const maxByGranularity = { week: 52, month: 36, year: 10 } as const;
+    const requestedCount = Number(req.query.count);
+    const defaultByGranularity = { week: 12, month: 12, year: 5 } as const;
+    const count =
+        Number.isFinite(requestedCount) && requestedCount > 0
+            ? Math.min(requestedCount, maxByGranularity[granularity])
+            : defaultByGranularity[granularity];
+    const response = await noteController.getTagTimeSeries(userId, granularity, count);
+    res.json(response);
+    return;
+});
+
+router.get('/analytics/heatmap', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const tagName = typeof req.query.tag === 'string' && req.query.tag.length > 0 ? req.query.tag : undefined;
+    const response = await noteController.getActivityHeatmap(userId, tagName);
+    res.json(response);
+    return;
+});
+
 router.get('/note/:id', requireAuth, async (req: Request<{ id: string }>, res: Response) => {
     const userId = getRequiredUserId(req);
     const response = await noteController.getSingleNote(req.params.id, userId);
@@ -86,8 +127,10 @@ type UpdateNoteBody = z.infer<typeof updateNoteSchema>;
 
 router.patch('/update/:id', requireAuth, validateBody(updateNoteSchema), async (req: Request<{ id: string }, unknown, UpdateNoteBody>, res: Response) => {
     const userId = getRequiredUserId(req);
-    const { edit, text, date, star, tags } = req.body;
-    const response = await noteController.updateNote(req.params.id, userId, { edit, text, date, star, tags });
+    const { edit, text, date, star, tags, look, gym, weed, code, read, eatOut, basketball } = req.body;
+    const response = await noteController.updateNote(req.params.id, userId, {
+        edit, text, date, star, tags, look, gym, weed, code, read, eatOut, basketball,
+    });
     res.json(response);
     return;
 });

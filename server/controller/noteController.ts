@@ -66,6 +66,386 @@ const getallNoteYearsAggregate = async (
     return noteYears;
 };
 
+export interface TagAnalyticsResult {
+    name: string;
+    icon: string;
+    count: number;
+    // null when no note using this tag has ever had a numeric star
+    // rating (i.e. every use was 'None') -- distinct from 0, which
+    // would incorrectly imply a real, low average.
+    avgStar: number | null;
+}
+
+// Per-tag note count and average star rating, across every note a user
+// has ever written (not scoped to any particular date range -- this is
+// meant to answer "over time, what does this tag correlate with",
+// which needs the full history, not just whatever Look Back window
+// happens to be selected on Home).
+const getTagAnalytics = async (id: string): Promise<TagAnalyticsResult[]> => {
+    const results = await Note.aggregate<TagAnalyticsResult & { _id: string }>([
+        { $match: { userId: id } },
+        // Descending by date so $first below (in the $group stage)
+        // captures each tag's most recently-used icon, not an
+        // arbitrary one.
+        { $sort: { date: -1 } },
+        { $unwind: '$tags' },
+        {
+            $addFields: {
+                // Only '1'/'2'/'3' represent a real numeric rating;
+                // 'None' (and any other non-numeric value) becomes
+                // null here so $avg excludes it automatically instead
+                // of $toInt throwing or silently coercing it to 0.
+                starNumeric: {
+                    $cond: [
+                        { $in: ['$star', ['1', '2', '3']] },
+                        { $toInt: '$star' },
+                        null,
+                    ],
+                },
+            },
+        },
+        {
+            $group: {
+                _id: '$tags.name',
+                icon: { $first: '$tags.icon' },
+                count: { $sum: 1 },
+                avgStar: { $avg: '$starNumeric' },
+            },
+        },
+        { $sort: { count: -1 } },
+    ]);
+    return results.map(({ _id, icon, count, avgStar }) => ({ name: _id, icon, count, avgStar }));
+};
+
+const TREND_PERIOD_LENGTHS = { week: 7, month: 30, year: 365 } as const;
+export type TrendPeriod = keyof typeof TREND_PERIOD_LENGTHS;
+
+function toDateString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Trailing, equal-length periods (e.g. "last 7 days" vs "the 7 days
+// before that") rather than calendar boundaries (e.g. "this month" vs
+// "last month") -- calendar boundaries would compare a partial current
+// month against a full previous one, which isn't a fair comparison.
+// Exported for direct testing of the date arithmetic itself, separate
+// from the database aggregation built on top of it.
+export function computeTrendPeriodBoundaries(
+    period: TrendPeriod,
+    today: Date = new Date()
+): { currentStart: string; previousStart: string } {
+    const days = TREND_PERIOD_LENGTHS[period];
+    const currentStart = new Date(today);
+    currentStart.setDate(currentStart.getDate() - (days - 1));
+    const previousStart = new Date(today);
+    previousStart.setDate(previousStart.getDate() - (2 * days - 1));
+    return {
+        currentStart: toDateString(currentStart),
+        previousStart: toDateString(previousStart),
+    };
+}
+
+export interface TagTrendResult {
+    name: string;
+    icon: string;
+    currentCount: number;
+    previousCount: number;
+    // null when previousCount is 0 -- a percentage change from zero is
+    // undefined, not infinite or 0, so this is surfaced as 'new'
+    // usage rather than a misleading number.
+    percentChange: number | null;
+    direction: 'up' | 'down' | 'flat' | 'new' | 'dropped';
+}
+
+// Compares each tag's usage between two adjacent trailing periods of
+// the requested length. A single aggregation pass covers both periods
+// at once (bucketed via $cond on date), then reshaped in JS to merge
+// each tag's current/previous side -- a tag present in only one period
+// needs the other side defaulted to 0, which is easier to express
+// here than inside the pipeline itself.
+const getTagTrends = async (id: string, period: TrendPeriod): Promise<TagTrendResult[]> => {
+    const { currentStart, previousStart } = computeTrendPeriodBoundaries(period);
+
+    const rows = await Note.aggregate<{
+        _id: { name: string; bucket: 'current' | 'previous' };
+        icon: string;
+        count: number;
+    }>([
+        { $match: { userId: id, date: { $gte: previousStart } } },
+        {
+            $addFields: {
+                bucket: {
+                    $cond: [{ $gte: ['$date', currentStart] }, 'current', 'previous'],
+                },
+            },
+        },
+        { $sort: { date: -1 } },
+        { $unwind: '$tags' },
+        {
+            $group: {
+                _id: { name: '$tags.name', bucket: '$bucket' },
+                icon: { $first: '$tags.icon' },
+                count: { $sum: 1 },
+            },
+        },
+    ]);
+
+    const byName = new Map<string, { icon: string; currentCount: number; previousCount: number }>();
+    for (const row of rows) {
+        const name = row._id.name;
+        const existing = byName.get(name) ?? { icon: row.icon, currentCount: 0, previousCount: 0 };
+        if (row._id.bucket === 'current') {
+            existing.currentCount = row.count;
+            existing.icon = row.icon;
+        } else {
+            existing.previousCount = row.count;
+        }
+        byName.set(name, existing);
+    }
+
+    const results: TagTrendResult[] = Array.from(byName.entries()).map(([name, v]) => {
+        let direction: TagTrendResult['direction'];
+        let percentChange: number | null;
+        if (v.previousCount === 0 && v.currentCount === 0) {
+            direction = 'flat';
+            percentChange = 0;
+        } else if (v.previousCount === 0) {
+            direction = 'new';
+            percentChange = null;
+        } else if (v.currentCount === 0) {
+            direction = 'dropped';
+            percentChange = -100;
+        } else {
+            percentChange = ((v.currentCount - v.previousCount) / v.previousCount) * 100;
+            direction = v.currentCount > v.previousCount ? 'up' : v.currentCount < v.previousCount ? 'down' : 'flat';
+        }
+        return {
+            name,
+            icon: v.icon,
+            currentCount: v.currentCount,
+            previousCount: v.previousCount,
+            percentChange,
+            direction,
+        };
+    });
+
+    // Most active (by current period count) first -- a tag that only
+    // existed in the previous period (now fully dropped) still matters
+    // enough to show, just lower priority than anything still active.
+    results.sort((a, b) => b.currentCount - a.currentCount || b.previousCount - a.previousCount);
+    return results;
+};
+
+export type TimeSeriesGranularity = 'week' | 'month' | 'year';
+
+export interface TagTimeSeriesResult {
+    buckets: string[];
+    granularity: TimeSeriesGranularity;
+    // One entry per tag (top N most active over the window), each
+    // holding a count aligned index-for-index with `buckets` above --
+    // 0 for any bucket that tag simply had no notes in, not omitted.
+    series: { name: string; icon: string; counts: number[] }[];
+}
+
+const TIME_SERIES_MAX_TAGS = 6;
+
+// The Monday (as a Date) of the week containing the given date --
+// Sunday belongs to the PRIOR Monday's week, not its own, matching
+// the standard ISO-ish "week starts Monday" convention.
+function getMondayOf(date: Date): Date {
+    const d = new Date(date);
+    const dayOfWeek = d.getDay(); // 0=Sun..6=Sat
+    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    d.setDate(d.getDate() - diff);
+    return d;
+}
+
+// Trailing N buckets ending with the bucket containing `today`, for
+// whichever granularity is requested. Computed explicitly here
+// (verified separately against week/month/year boundary crossings)
+// rather than trusting whatever buckets happen to appear in the
+// aggregation's raw output, since a bucket with zero matching notes
+// for a given tag won't produce a row at all.
+export function getTrailingBuckets(
+    granularity: TimeSeriesGranularity,
+    count: number,
+    today: Date = new Date()
+): string[] {
+    if (granularity === 'week') {
+        const currentMonday = getMondayOf(today);
+        const weeks: string[] = [];
+        for (let i = count - 1; i >= 0; i--) {
+            const d = new Date(currentMonday);
+            d.setDate(d.getDate() - i * 7);
+            weeks.push(toDateString(d));
+        }
+        return weeks;
+    }
+    if (granularity === 'year') {
+        const years: string[] = [];
+        for (let i = count - 1; i >= 0; i--) {
+            years.push(String(today.getFullYear() - i));
+        }
+        return years;
+    }
+    const months: string[] = [];
+    for (let i = count - 1; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+    return months;
+}
+
+// The earliest real calendar date covered by the window -- used to
+// scope the initial $match so the aggregation doesn't scan a user's
+// entire history when only a recent slice is actually needed.
+function getEarliestDateForWindow(granularity: TimeSeriesGranularity, buckets: string[]): string {
+    const earliest = buckets[0];
+    if (granularity === 'year') return `${earliest}-01-01`;
+    if (granularity === 'month') return `${earliest}-01`;
+    return earliest; // week buckets are already full 'YYYY-MM-DD' Monday dates
+}
+
+// Given a note's raw date string, returns which bucket it belongs to
+// for the requested granularity. Week bucketing needs real date math
+// (finding that date's Monday); month and year are simple string
+// prefixes of the existing 'YYYY-MM-DD' field, needing no date math
+// at all.
+function bucketKeyForDate(granularity: TimeSeriesGranularity, dateStr: string): string {
+    if (granularity === 'year') return dateStr.slice(0, 4);
+    if (granularity === 'month') return dateStr.slice(0, 7);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return toDateString(getMondayOf(new Date(y, m - 1, d)));
+}
+
+// Note counts per tag, bucketed by the requested granularity over a
+// trailing window of `bucketCount` buckets, for the top N most-active
+// tags -- meant to answer "what does this tag's trend actually look
+// like over time", not just a single before/after comparison.
+// Bucketing itself happens in JS (via bucketKeyForDate) rather than in
+// the aggregation pipeline, since week bucketing needs real date math
+// that's much simpler and more directly testable as a plain function
+// than as Mongo aggregation expressions.
+const getTagTimeSeries = async (
+    id: string,
+    granularity: TimeSeriesGranularity,
+    bucketCount: number
+): Promise<TagTimeSeriesResult> => {
+    const buckets = getTrailingBuckets(granularity, bucketCount);
+    const earliestDate = getEarliestDateForWindow(granularity, buckets);
+
+    const notes = await Note.find(
+        { userId: id, date: { $gte: earliestDate } },
+        { date: 1, tags: 1 }
+    ).lean();
+
+    const totalsByTag = new Map<string, { icon: string; total: number }>();
+    const countsByTagAndBucket = new Map<string, Map<string, number>>();
+
+    for (const note of notes) {
+        const bucket = bucketKeyForDate(granularity, note.date);
+        for (const tag of note.tags ?? []) {
+            const totals = totalsByTag.get(tag.name) ?? { icon: tag.icon, total: 0 };
+            totals.total += 1;
+            totals.icon = tag.icon;
+            totalsByTag.set(tag.name, totals);
+
+            if (!countsByTagAndBucket.has(tag.name)) {
+                countsByTagAndBucket.set(tag.name, new Map());
+            }
+            const bucketMap = countsByTagAndBucket.get(tag.name) as Map<string, number>;
+            bucketMap.set(bucket, (bucketMap.get(bucket) ?? 0) + 1);
+        }
+    }
+
+    // Top N by total activity across the whole window -- a chart with
+    // every tag ever used would be unreadable well before enough
+    // history accumulates to fill out a long window.
+    const topTagNames = Array.from(totalsByTag.entries())
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, TIME_SERIES_MAX_TAGS)
+        .map(([name]) => name);
+
+    const series = topTagNames.map((name) => {
+        const bucketMap = countsByTagAndBucket.get(name);
+        const icon = totalsByTag.get(name)?.icon ?? '🏷️';
+        const counts = buckets.map((bucket) => bucketMap?.get(bucket) ?? 0);
+        return { name, icon, counts };
+    });
+
+    return { buckets, granularity, series };
+};
+
+export interface HeatmapDay {
+    date: string;
+    count: number;
+    week: number;
+    dayOfWeek: number;
+}
+
+export interface HeatmapResult {
+    days: HeatmapDay[];
+    maxCount: number;
+}
+
+const HEATMAP_DAYS_BACK = 364;
+
+// The Sunday on/before N days ago -- the grid always starts on a full
+// week boundary, matching GitHub's own contribution graph layout,
+// rather than starting mid-week.
+function getHeatmapGridStart(daysBack: number, today: Date): Date {
+    const start = new Date(today);
+    start.setDate(start.getDate() - daysBack);
+    start.setDate(start.getDate() - start.getDay());
+    return start;
+}
+
+// Daily note counts over the trailing year, reshaped into a GitHub-
+// style grid: each day knows its own week column (0-indexed from the
+// grid's Sunday start) and day-of-week row (0=Sun..6=Sat), so the
+// client can render a grid directly without redoing this placement
+// logic itself. When `tagName` is provided, only counts notes that
+// carry that specific tag -- letting the same heatmap answer either
+// "was I journaling consistently" (no filter) or "when did I actually
+// go to the gym" (filtered).
+const getActivityHeatmap = async (id: string, tagName?: string): Promise<HeatmapResult> => {
+    const today = new Date();
+    const gridStart = getHeatmapGridStart(HEATMAP_DAYS_BACK, today);
+    const gridStartStr = toDateString(gridStart);
+
+    const match: Record<string, unknown> = { userId: id, date: { $gte: gridStartStr } };
+    if (tagName) {
+        match['tags.name'] = tagName;
+    }
+
+    const rows = await Note.aggregate<{ _id: string; count: number }>([
+        { $match: match },
+        { $group: { _id: '$date', count: { $sum: 1 } } },
+    ]);
+    const countsByDate = new Map(rows.map((r) => [r._id, r.count]));
+
+    const days: HeatmapDay[] = [];
+    let maxCount = 0;
+    const cursor = new Date(gridStart);
+    while (cursor <= today) {
+        const dateStr = toDateString(cursor);
+        const count = countsByDate.get(dateStr) ?? 0;
+        maxCount = Math.max(maxCount, count);
+        days.push({
+            date: dateStr,
+            count,
+            week: Math.floor((cursor.getTime() - gridStart.getTime()) / (7 * 86400000)),
+            dayOfWeek: cursor.getDay(),
+        });
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return { days, maxCount };
+};
+
 export interface PaginatedNotes {
     notes: INote[];
     totalCount: number;
@@ -293,4 +673,8 @@ export default {
     uploadNotes,
     getallNoteYearsAggregate,
     getMostRecentlyUpdatedNotes,
+    getTagAnalytics,
+    getTagTrends,
+    getTagTimeSeries,
+    getActivityHeatmap,
 };

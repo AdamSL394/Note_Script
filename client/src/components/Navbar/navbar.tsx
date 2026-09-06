@@ -7,14 +7,11 @@ import IconButton from '@mui/material/IconButton/IconButton.js';
 import Menu from '@mui/material/Menu/Menu.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import Box from '@mui/material/Box/Box.js';
+import Typography from '@mui/material/Typography/Typography.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import { UserAvatar } from '../UserAvatar/index';
 import './navbar.css';
 import { useNavigate } from 'react-router-dom';
@@ -31,20 +28,9 @@ function Navbar() {
   const [anchorElTheme, setAnchorElTheme] = useState<HTMLElement | null>(null);
   const { mode, setMode } = useThemeMode();
 
-  interface NavPage {
-    label: string;
-    path: string;
-    icon: React.ReactNode;
-  }
-
-  const pages: NavPage[] = [
-    { label: 'Home', path: '/', icon: <HomeOutlinedIcon fontSize="small" /> },
-    { label: 'All Notes', path: '/all', icon: <ArticleOutlinedIcon fontSize="small" /> },
-    { label: 'User', path: '/userSettings', icon: <PersonOutlineOutlinedIcon fontSize="small" /> },
-    ...(isAdmin
-      ? [{ label: 'Admin', path: '/admin/users', icon: <AdminPanelSettingsOutlinedIcon fontSize="small" /> }]
-      : []),
-  ];
+  const pages = isAdmin
+    ? ['Home', 'All Notes', 'Analytics', 'User', 'Admin']
+    : ['Home', 'All Notes', 'Analytics', 'User'];
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -59,8 +45,30 @@ function Navbar() {
     setAnchorElTheme(null);
   };
 
-  const handleNavSelect = (path: string) => {
-    navigate(path);
+  // Wired to two call sites with genuinely different event shapes: the
+  // mobile menu's <span onClick> passes a real click event, but this is
+  // also passed directly as <Menu onClose>, which MUI calls with `{}`
+  // (no `.target` at all) when the menu is dismissed via backdrop click
+  // or Escape. Reading `.target.innerHTML` unconditionally previously
+  // meant dismissing the menu without clicking a link would throw.
+  const handleCloseNavMenu = (value: React.MouseEvent<HTMLElement> | {}) => {
+    if ('target' in value && value.target instanceof HTMLElement) {
+      if (value.target.innerHTML === 'Home') {
+        navigate('/');
+      }
+      if (value.target.innerHTML === 'All Notes') {
+        navigate('/all');
+      }
+      if (value.target.innerHTML === 'Analytics') {
+        navigate('/analytics');
+      }
+      if (value.target.innerHTML === 'User') {
+        navigate('/userSettings');
+      }
+      if (value.target.innerHTML === 'Admin') {
+        navigate('/admin/users');
+      }
+    }
     setAnchorElNav(null);
   };
 
@@ -106,23 +114,28 @@ function Navbar() {
               horizontal: 'left',
             }}
             open={Boolean(anchorElNav)}
-            onClose={() => setAnchorElNav(null)}
+            onClose={handleCloseNavMenu}
             sx={{
               display: { xs: 'block', md: 'none' },
             }}
-            PaperProps={{
-              className: 'navDropdownPaper',
-            }}
           >
             {pages.map((page) => (
-              <MenuItem
-                key={page.label}
-                onClick={() => handleNavSelect(page.path)}
-                className="navDropdownItem"
+              <span
+                key={page}
+                onClick={(e) => handleCloseNavMenu(e)}
+                style={{ width: '100% !important' }}
               >
-                <span className="navDropdownIcon">{page.icon}</span>
-                {page.label}
-              </MenuItem>
+                <Typography
+                  textAlign="center"
+                  style={{
+                    cursor: 'pointer',
+                    padding: '10%',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  {page}
+                </Typography>
+              </span>
             ))}
           </Menu>
         </Box>
@@ -132,6 +145,9 @@ function Navbar() {
           </span>
           <span className="tabs" id="all" onClick={routeChanges}>
             All Notes
+          </span>
+          <span className="tabs" id="analytics" onClick={() => navigate('/analytics')}>
+            Analytics
           </span>
           {isAdmin && (
             <span className="tabs" id="admin" onClick={adminUsers}>
