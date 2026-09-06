@@ -14,7 +14,8 @@
     "react-dom": "^18.3.1",
     "react-ga4": "^3.0.1",
     "react-router-dom": "^6.30.6",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@types/node": "^18.19.0",

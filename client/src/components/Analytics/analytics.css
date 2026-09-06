@@ -1,0 +1,59 @@
+.analyticsContainer {
+  max-width: 52rem;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.analyticsHeading {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  color: var(--ns-ink);
+  margin-bottom: 0.25rem;
+}
+
+.analyticsSubheading {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ns-graphite);
+  margin-bottom: 1.25rem;
+}
+
+.analyticsStatus {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ns-graphite);
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.granularityToggleRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.granularityToggleButton {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
+}
+
+.granularityToggleButton.active {
+  border-color: var(--ns-blue);
+  background: var(--ns-blue-tint);
+  color: var(--ns-blue);
+}
+
+.analyticsChartCard {
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 10px;
+  padding: 1.25rem 0.5rem 0.5rem;
+  margin-bottom: 1rem;
+}

@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, TagSnapshot, AuthUser, UserRecord } from '../types';
+import type { Note, TagSnapshot, TagAnalytics, TagTrend, TagTimeSeries, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -40,6 +40,26 @@ const NoteRoutes = {
   getNoteCount: async (): Promise<number> => {
     const result = await requestJson<{ count: number }>('/notes/count');
     return result?.count ?? 0;
+  },
+
+  getTagAnalytics: async (): Promise<TagAnalytics[]> => {
+    const result = await requestJson<TagAnalytics[]>('/notes/analytics/tags');
+    return result ?? [];
+  },
+
+  getTagTrends: async (period: 'week' | 'month' | 'year'): Promise<TagTrend[]> => {
+    const result = await requestJson<TagTrend[]>(`/notes/analytics/trends?period=${period}`);
+    return result ?? [];
+  },
+
+  getTagTimeSeries: async (
+    granularity: 'week' | 'month' | 'year',
+    count: number
+  ): Promise<TagTimeSeries> => {
+    const result = await requestJson<TagTimeSeries>(
+      `/notes/analytics/timeseries?granularity=${granularity}&count=${count}`
+    );
+    return result ?? { buckets: [], granularity, series: [] };
   },
 
   getRecentlyUpdatedNotes: async (): Promise<Note[]> => {
