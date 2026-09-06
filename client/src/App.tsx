@@ -6,6 +6,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter } from 'react-router-dom';
 import Router from './router/index';
 import AnalyticsTracker from './components/AnalyticsTracker';
+import { CookieConsentBanner } from './components/CookieConsentBanner/index';
 import { useAuthTokenSync } from './hooks/useAuthTokenSync';
 import { ThemeModeProvider, useThemeMode } from './hooks/useThemeMode';
 import { NS_TOKENS } from './theme/nsTokens';
@@ -13,7 +14,11 @@ import { initAnalytics } from './analytics';
 
 // Runs once at module load, not per-render -- initialize() itself is a
 // one-time setup call, not something that needs to re-run on every
-// mount/re-render of the component tree.
+// mount/re-render of the component tree. No-ops here unless the user
+// already accepted cookies on a previous visit -- see analytics.ts.
+// The CookieConsentBanner calls this again directly the moment someone
+// accepts for the first time, since this module-load call already ran
+// (and no-op'd) before any consent choice could exist yet.
 initAnalytics();
 
 // Builds MUI's theme from the current mode's real hex values (nsTokens),
@@ -69,6 +74,7 @@ function ThemedApp() {
                     <AnalyticsTracker />
                     <Router />
                 </BrowserRouter>
+                <CookieConsentBanner />
             </div>
         </ThemeProvider>
     );
