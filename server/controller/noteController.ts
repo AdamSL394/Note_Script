@@ -120,7 +120,7 @@ const getRangeNotes = async (
         userId: id,
         date: {
             $gte: start,
-            $lt: end,
+            $lte: end,
         },
     }).sort({ date: sortDirection === 'asc' ? 1 : -1 });
     return notes;

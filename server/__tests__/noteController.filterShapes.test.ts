@@ -137,12 +137,18 @@ describe('getAllNotes / getAllNotesOrdered / getRangeNotes / getMostRecentlyUpda
         expect(filter).toHaveProperty('userId');
     });
 
-    it('getRangeNotes filters by userId in addition to the date range', async () => {
+    it('getRangeNotes filters by userId in addition to the date range, inclusive of the end date', async () => {
         mockFind.mockReturnValue({ sort: jest.fn().mockResolvedValue([]) });
         await noteController.getRangeNotes('507f1f77bcf86cd799439011', '2026-01-01', '2026-02-01');
         const [filter] = mockFind.mock.calls[0];
+        // $lte, not $lt -- a note dated exactly on the end boundary
+        // (e.g. today, when Home's "last week" fetch passes today's
+        // date as the end) must be included, not excluded. The
+        // previous version of this test asserted $lt, which meant it
+        // was encoding the actual bug as expected, passing behavior
+        // rather than catching it.
         expect(filter).toMatchObject({
-            date: { $gte: '2026-01-01', $lt: '2026-02-01' },
+            date: { $gte: '2026-01-01', $lte: '2026-02-01' },
         });
         expect(filter).toHaveProperty('userId');
     });
