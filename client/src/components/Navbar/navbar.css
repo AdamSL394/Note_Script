@@ -65,6 +65,39 @@
   color: var(--ns-blue) !important;
 }
 
+.navDropdownPaper {
+  background: var(--ns-paper) !important;
+  border: 0.5px solid var(--ns-rule) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(35, 38, 43, 0.12) !important;
+  min-width: 180px !important;
+  margin-top: 4px;
+}
+
+.navDropdownItem {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.03em;
+  color: var(--ns-ink) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.navDropdownItem:hover {
+  color: var(--ns-blue) !important;
+  background-color: var(--ns-blue-tint) !important;
+}
+
+.navDropdownIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ns-graphite);
+  margin-right: 0.75rem;
+}
+
+.navDropdownItem:hover .navDropdownIcon {
+  color: var(--ns-blue);
+}
+
 @media screen and (max-width: 899px) {
   #navItems {
     visibility: hidden;
