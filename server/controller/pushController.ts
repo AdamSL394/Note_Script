@@ -123,13 +123,52 @@ export async function sendDueReminders(now: Date = new Date()): Promise<{ sent: 
     return { sent, failed };
 }
 
-async function sendPushToSubscription(sub: IPushSubscription): Promise<void> {
-    const payload = JSON.stringify({
-        title: 'Note Script',
-        body: "You haven't logged today yet -- take a minute to write it down.",
-    });
+async function sendPushToSubscription(
+    sub: IPushSubscription,
+    body: string = "You haven't logged today yet -- take a minute to write it down."
+): Promise<void> {
+    const payload = JSON.stringify({ title: 'Note Script', body });
     await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: sub.keys },
         payload
     );
+}
+
+/**
+ * Sends an immediate test push to every one of a user's subscriptions,
+ * bypassing the hour/already-logged checks entirely -- this is what
+ * actually lets someone verify the full delivery pipeline (server ->
+ * push service -> service worker -> notification display) works right
+ * now, without waiting for their chosen reminder hour to arrive or
+ * needing to leave a note unwritten to trigger the real check.
+ */
+export async function sendTestNotification(userId: string): Promise<{ sent: number; failed: number }> {
+    let sent = 0;
+    let failed = 0;
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+        throw new Error('VAPID keys are not configured on this server.');
+    }
+
+    const subscriptions = await PushSubscription.find({ userId }).lean();
+    if (subscriptions.length === 0) {
+        throw new Error('No push subscription found -- enable notifications first.');
+    }
+
+    for (const sub of subscriptions) {
+        try {
+            await sendPushToSubscription(sub, 'Test notification -- if you see this, push is working!');
+            sent++;
+        } catch (err) {
+            failed++;
+            const statusCode = (err as { statusCode?: number }).statusCode;
+            if (statusCode === 404 || statusCode === 410) {
+                await PushSubscription.deleteOne({ endpoint: sub.endpoint });
+            } else {
+                logger.warn({ err, userId }, 'Failed to send test push');
+            }
+        }
+    }
+
+    return { sent, failed };
 }

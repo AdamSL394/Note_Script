@@ -25,6 +25,14 @@ const NotificationRoutes = {
 
   setPreferences: (preferences: NotificationPreferences) =>
     request('/notifications/preferences', { method: 'POST', body: preferences }),
+
+  sendTest: async (): Promise<{ sent: number; failed: number } | { error: string }> => {
+    const result = await requestJson<{ sent: number; failed: number } | { error: string }>(
+      '/notifications/test',
+      { method: 'POST' }
+    );
+    return result ?? { error: 'No response from server.' };
+  },
 };
 
 export default NotificationRoutes;
