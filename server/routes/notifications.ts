@@ -45,7 +45,8 @@ router.post(
     requireAuth,
     validateBody(unsubscribeSchema),
     async (req: Request<Record<string, never>, unknown, UnsubscribeBody>, res: Response) => {
-        await pushController.removeSubscription(req.body.endpoint);
+        const userId = getRequiredUserId(req);
+        await pushController.removeSubscription(userId, req.body.endpoint);
         res.json({ success: true });
         return;
     }

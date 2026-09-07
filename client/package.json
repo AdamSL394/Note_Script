@@ -2,7 +2,7 @@
   "name": "note_script",
   "version": "0.1.0",
   "private": true,
-    "overrides": {
+  "overrides": {
     "@babel/core": "^7.22.0"
   },
   "dependencies": {
@@ -27,11 +27,13 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "cross-env": "^10.1.0",
+    "source-map-explorer": "^2.5.2",
     "typescript": "^4.9.5"
   },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "analyze": "source-map-explorer 'build/static/js/*.js' --html bundle-analysis.html",
     "test": "react-scripts test",
     "lint": "eslint src --ext .ts,.tsx",
     "eject": "react-scripts eject"

@@ -30,8 +30,8 @@ export async function saveSubscription(
     );
 }
 
-export async function removeSubscription(endpoint: string): Promise<void> {
-    await PushSubscription.deleteOne({ endpoint });
+export async function removeSubscription(userId: string, endpoint: string, ): Promise<void> {
+    await PushSubscription.deleteOne({ endpoint, userId });
 }
 
 export async function updateNotificationPreferences(

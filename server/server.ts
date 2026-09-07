@@ -17,6 +17,7 @@ import { resolveMongoUri } from './validateEnv'
 import { logger } from './logger';
 import cron from 'node-cron';
 import { sendDueReminders } from './controller/pushController';
+import { shutdownCache } from './cache';
 
 const app = express();
 
@@ -156,5 +157,6 @@ main();
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
   await rateLimitStore.shutdown();
+  await shutdownCache();
   process.exit(0);
 });
