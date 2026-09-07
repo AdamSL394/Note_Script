@@ -10,6 +10,7 @@ import { WIN_TAGS } from '../../constants/noteFields';
 import { useThemeMode } from '../../hooks/useThemeMode';
 import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 import { UserAvatar } from '../UserAvatar/index';
+import { NotificationSettings } from '../NotificationSettings/index';
 import './userSettings.css';
 
 const UserSetting = () => {
@@ -168,6 +169,8 @@ const UserSetting = () => {
                         })}
                     </div>
                 </div>
+
+                <NotificationSettings />
 
                 <div className="Form">
                     <h4 className="settingsLabel">Danger Zone</h4>

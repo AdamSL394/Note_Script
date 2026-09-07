@@ -60,3 +60,46 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Displays the actual notification when a push arrives from the
+// server. event.waitUntil keeps the service worker alive until
+// showNotification's promise resolves -- without it, the worker could
+// be terminated mid-display on some browsers.
+self.addEventListener('push', (event) => {
+  let payload = { title: 'Note Script', body: "You haven't logged today yet." };
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch {
+      // Falls back to the default payload above if the push data
+      // isn't valid JSON for any reason, rather than throwing and
+      // showing no notification at all.
+    }
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+    })
+  );
+});
+
+// Focuses an already-open tab of the app if one exists, rather than
+// always opening a fresh one -- most users clicking a reminder notification
+// already have the app open in some tab or window.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/');
+      }
+    })
+  );
+});
