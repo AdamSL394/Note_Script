@@ -28,15 +28,9 @@ jobs:
       - name: Pin npm version
         run: npm install -g npm@10.9.7
       - name: Install server dependencies
-        # Falls back to npm install if npm ci's strict lockfile
-        # validation fails -- npm install is more lenient and will
-        # resolve minor drift instead of hard-blocking the whole
-        # pipeline on it. Prints the actual npm version actually used
-        # for this step first, since the pin step reporting success
-        # never confirmed which binary this step resolves to.
         run: |
           npm --version
-          npm ci || npm install
+          npm ci
         working-directory: server
       - name: Set up test config
         run: cp config/config.example.json config/config.json
@@ -60,13 +54,15 @@ jobs:
           name: server-coverage
           path: server/coverage
           retention-days: 14
-      - name: Security audit (informational)
-        # Non-blocking for now -- there are real pre-existing
-        # vulnerabilities (including a critical one in mongoose) that
-        # haven't been addressed yet. Reports findings without failing
-        # the job; revisit making this blocking once dependencies are
-        # brought up to date.
-        run: npm audit --audit-level=high || true
+      - name: Security audit
+        # Blocking -- verified directly before making this change that
+        # the server is genuinely at 0 vulnerabilities across every
+        # severity (the previous "critical in mongoose" this comment
+        # used to reference is resolved). This now actually guards
+        # against a future dependency reintroducing a real
+        # vulnerability, rather than just reporting one that's already
+        # known and accepted.
+        run: npm audit --audit-level=high
         working-directory: server
 
   client-checks:
@@ -88,15 +84,9 @@ jobs:
         # version this lockfile has been tested against.
         run: npm install -g npm@10.9.7
       - name: Install client dependencies
-        # Falls back to npm install if npm ci's strict lockfile
-        # validation fails -- npm install is more lenient and will
-        # resolve minor drift instead of hard-blocking the whole
-        # pipeline on it. Prints the actual npm version actually used
-        # for this step first, since the pin step reporting success
-        # never confirmed which binary this step resolves to.
         run: |
           npm --version
-          npm ci || npm install
+          npm ci
         working-directory: client
       - name: Type-check
         run: npx tsc --noEmit
@@ -105,9 +95,26 @@ jobs:
         run: npm run lint
         working-directory: client
       - name: Run client test suite
-        run: CI=true npm test -- --watchAll=false
+        run: CI=true npm test -- --coverage --watchAll=false
         working-directory: client
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-coverage
+          path: client/coverage
+          retention-days: 14
       - name: Security audit (informational)
+        # Non-blocking, deliberately -- reviewed every client-side
+        # finding directly (not just the count): the vast majority are
+        # build-time/test-time-only tooling (Jest, webpack loaders,
+        # SVG/CSS processors) that never ships to a real user's
+        # browser, and the couple of genuine runtime-code findings
+        # (react-router) aren't actually reachable given how routing
+        # is used in this app (no user-input-driven navigation). Making
+        # this blocking would fail CI on findings that carry no real
+        # risk here; revisit if react-router's major-version upgrade
+        # (a deliberate, separate migration) ever happens.
         run: npm audit --audit-level=high || true
         working-directory: client
       - name: Build
@@ -127,12 +134,78 @@ jobs:
     needs: [server-checks, client-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      # A real, ephemeral MongoDB -- server.ts's own startup sequence
+      # requires a successful DB connection before it ever calls
+      # app.listen(), so a genuine "did the container actually boot"
+      # smoke test needs a real, reachable database, not just an image
+      # that assembles successfully.
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
     steps:
       - uses: actions/checkout@v5
-      - name: Build Docker image
-        run: docker compose -f "docker-compose.yml" build
-        env:
-          PORT: 5002
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        # Builds the SAME Dockerfile/path deploy-dev and deploy-prod
+        # actually use (previously this job used `docker compose build`
+        # instead, a separate build definition that could silently
+        # drift from what actually ships -- passing this smoke test
+        # never actually proved the deployed artifact itself was
+        # sound). GitHub Actions cache (type=gha) persists layers
+        # between runs, so unchanged layers (base image, npm install
+        # when package.json hasn't changed) are reused instead of
+        # rebuilt from scratch every single run. load:true makes the
+        # built image available to `docker run` below on this same
+        # runner, rather than pushing it anywhere.
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          platforms: linux/amd64
+          build-args: |
+            REACT_APP_HOST=development
+          tags: note-script-smoketest:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Boot the container and verify it actually serves a request
+        # --network=host: shares the runner's own network namespace
+        # directly, so the container can reach the mongodb service
+        # container at localhost:27017 with no extra DNS setup --
+        # simplest, most reliable option on a Linux runner.
+        # AUTH0_DOMAIN/AUTH0_AUDIENCE just need to be non-empty strings
+        # for the server to start at all (checkJwt.ts only validates
+        # they're present at startup -- real JWKS verification only
+        # happens against an actual authenticated request, which this
+        # smoke test deliberately doesn't attempt).
+        run: |
+          docker run -d --name smoketest --network=host \
+            -e NODE_ENV=production \
+            -e MONGODB_URI=mongodb://localhost:27017/smoketest \
+            -e AUTH0_DOMAIN=smoketest.invalid \
+            -e AUTH0_AUDIENCE=https://smoketest.invalid \
+            note-script-smoketest:latest
+
+          echo "Waiting for the server to come up..."
+          for i in $(seq 1 15); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/notes/ping || echo "000")
+            if [ "$status" = "401" ]; then
+              echo "Server is up and routing correctly (got the expected 401 from an unauthenticated request)."
+              exit 0
+            fi
+            echo "Attempt $i: got status $status, retrying..."
+            sleep 2
+          done
+
+          echo "Server never came up correctly -- dumping container logs for debugging:"
+          docker logs smoketest
+          exit 1
+      - name: Clean up
+        if: always()
+        run: docker rm -f smoketest || true
 
   # Deploys develop -> the dev Heroku app on every push, no approval
   # gate -- fast feedback, matches a typical "staging auto-deploys"
@@ -163,16 +236,20 @@ jobs:
         # --password-stdin keeps the key out of the process list/shell
         # history.
         run: echo "$HEROKU_API_KEY" | docker login --username="${{ secrets.HEROKU_EMAIL }}" --password-stdin registry.heroku.com
-      - name: Build Docker image
-        run: |
-          docker build \
-            --platform linux/amd64 \
-            -f server/Dockerfile \
-            --build-arg REACT_APP_HOST=development \
-            -t registry.heroku.com/$HEROKU_APP_NAME/web \
-            .
-      - name: Push image to Heroku Container Registry
-        run: docker push registry.heroku.com/$HEROKU_APP_NAME/web
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          platforms: linux/amd64
+          build-args: |
+            REACT_APP_HOST=development
+          tags: registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Release
         run: heroku container:release web --app $HEROKU_APP_NAME
 
@@ -203,16 +280,20 @@ jobs:
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Log in to Heroku Container Registry
         run: echo "$HEROKU_API_KEY" | docker login --username="${{ secrets.HEROKU_EMAIL }}" --password-stdin registry.heroku.com
-      - name: Build Docker image
-        run: |
-          docker build \
-            --platform linux/amd64 \
-            -f server/Dockerfile \
-            --build-arg REACT_APP_HOST=production \
-            --build-arg REACT_APP_GA_MEASUREMENT_ID=G-Y08MF6RWVK \
-            -t registry.heroku.com/$HEROKU_APP_NAME/web \
-            .
-      - name: Push image to Heroku Container Registry
-        run: docker push registry.heroku.com/$HEROKU_APP_NAME/web
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          platforms: linux/amd64
+          build-args: |
+            REACT_APP_HOST=production
+            REACT_APP_GA_MEASUREMENT_ID=G-Y08MF6RWVK
+          tags: registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Release
         run: heroku container:release web --app $HEROKU_APP_NAME
