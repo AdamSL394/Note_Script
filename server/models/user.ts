@@ -9,6 +9,12 @@ export interface ISetting {
     visible: 'visible' | 'hidden';
 }
 
+export interface INotificationPreferences {
+    enabled: boolean;
+    reminderHour: number;
+    timezoneOffsetMinutes: number;
+}
+
 // Deliberately NOT extending Document — per Mongoose's own TypeScript
 // guidance, doing so makes it hard for Mongoose to correctly infer
 // document shapes for query filters, lean documents, etc. This is a
@@ -20,6 +26,7 @@ export interface IUser {
     settings: ISetting[];
     email: string;
     role: 'user' | 'admin';
+    notificationPreferences?: INotificationPreferences;
 }
 
 const SettingSchema = new Schema<ISetting>(
@@ -27,6 +34,15 @@ const SettingSchema = new Schema<ISetting>(
         icon: { type: String, required: true },
         name: { type: String, required: true },
         visible: { type: String, enum: ['visible', 'hidden'], required: true },
+    },
+    { _id: false }
+);
+
+const NotificationPreferencesSchema = new Schema<INotificationPreferences>(
+    {
+        enabled: { type: Boolean, default: false },
+        reminderHour: { type: Number, min: 0, max: 23, default: 20 },
+        timezoneOffsetMinutes: { type: Number, default: 0 },
     },
     { _id: false }
 );
@@ -40,6 +56,7 @@ const UserSchema = new Schema<IUser>({
     settings: { type: [SettingSchema], default: [] },
     email: String,
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    notificationPreferences: { type: NotificationPreferencesSchema, default: () => ({}) },
 });
 
 const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
