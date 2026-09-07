@@ -1,20 +1,56 @@
 #!/bin/sh
 # Catches package-lock.json drift locally, before it ever reaches a
-# commit -- npm install --package-lock-only regenerates the lockfile
-# from package.json (fast, doesn't touch node_modules), then checks
-# whether that produced any actual change. If it did, the lockfile was
-# out of sync and the commit is blocked with a clear next step.
+# commit -- regenerates the lockfile from package.json inside a
+# container pinned to the exact node/npm versions CI actually uses,
+# then checks whether that produced any change. If it did, the
+# lockfile was out of sync and the commit is blocked with a clear next
+# step.
+#
+# Deliberately regenerates inside Docker (node:22 + npm@10.9.7, both
+# pinned to match .github/workflows/ci.yml exactly) rather than using
+# whatever npm is installed locally. A lockfile regenerated with a
+# different npm version -- even a newer one -- can still fail `npm ci`
+# in CI despite passing this check locally, since npm's own dependency
+# resolution can differ subtly between versions. This is the actual
+# root cause of repeated "npm ci" failures in CI despite the lockfile
+# looking correct locally: this hook was silently reintroducing drift
+# on every commit by checking against the wrong environment.
 
 set -e
 
+CI_NODE_IMAGE="node:22"
+CI_NPM_VERSION="10.9.7"
+
 check_lockfile() {
   dir=$1
-  echo "Checking $dir/package-lock.json..."
-  (cd "$dir" && npm install --package-lock-only --silent)
+
+  # Skip entirely if package.json isn't part of this commit -- the
+  # lockfile can't have drifted from something that isn't changing,
+  # and most commits never touch dependencies at all. Keeps everyday
+  # commits fast, with no Docker involved unless it's actually needed.
+  if ! git diff --cached --name-only | grep -q "^$dir/package\.json$"; then
+    return 0
+  fi
+
+  echo "Checking $dir/package-lock.json against CI's environment ($CI_NODE_IMAGE, npm@$CI_NPM_VERSION)..."
+
+  if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    echo ""
+    echo "BLOCKED: package.json changed in $dir, but Docker isn't available to verify"
+    echo "the lockfile against CI's actual environment. Start Docker and try again --"
+    echo "regenerating with whatever npm happens to be installed locally can produce a"
+    echo "lockfile that looks fine here but still fails 'npm ci' in CI."
+    exit 1
+  fi
+
+  docker run --rm -v "$(pwd)/$dir":/app -w /app "$CI_NODE_IMAGE" \
+    sh -c "npm install -g npm@$CI_NPM_VERSION --silent >/dev/null 2>&1 && npm install --package-lock-only --silent"
+
   if ! git diff --quiet -- "$dir/package-lock.json"; then
     echo ""
     echo "BLOCKED: $dir/package-lock.json was out of sync with $dir/package.json"
-    echo "It has just been regenerated to match. Review the diff, then:"
+    echo "It has just been regenerated (against CI's actual node/npm versions) to match."
+    echo "Review the diff, then:"
     echo "  git add $dir/package-lock.json"
     echo "  git commit"
     exit 1
