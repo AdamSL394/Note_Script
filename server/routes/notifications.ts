@@ -77,4 +77,15 @@ router.get('/preferences', requireAuth, async (req: Request, res: Response) => {
     return;
 });
 
+router.post('/test', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    try {
+        const result = await pushController.sendTestNotification(userId);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ error: err instanceof Error ? err.message : 'Could not send test notification.' });
+    }
+    return;
+});
+
 export default router;
