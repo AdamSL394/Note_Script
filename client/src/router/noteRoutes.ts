@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, TagSnapshot, TagAnalytics, TagTrend, TagTimeSeries, HeatmapResponse, TagStreak, AuthUser, UserRecord } from '../types';
+import type { Note, TagSnapshot, TagAnalytics, TagTrend, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -71,6 +71,16 @@ const NoteRoutes = {
   getTagStreaks: async (): Promise<TagStreak[]> => {
     const result = await requestJson<TagStreak[]>('/notes/analytics/streaks');
     return result ?? [];
+  },
+
+  getTagDayOfWeekPattern: async (): Promise<DayOfWeekPattern> => {
+    const result = await requestJson<DayOfWeekPattern>('/notes/analytics/dayofweek');
+    return result ?? { dayLabels: [], series: [] };
+  },
+
+  getTagSeasonality: async (): Promise<Seasonality> => {
+    const result = await requestJson<Seasonality>('/notes/analytics/seasonality');
+    return result ?? { monthLabels: [], series: [] };
   },
 
   getRecentlyUpdatedNotes: async (): Promise<Note[]> => {

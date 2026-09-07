@@ -47,6 +47,16 @@ export interface TagStreak {
   longestStreakEnd: string | null;
 }
 
+export interface DayOfWeekPattern {
+  dayLabels: string[];
+  series: { name: string; icon: string; counts: number[] }[];
+}
+
+export interface Seasonality {
+  monthLabels: string[];
+  series: { name: string; icon: string; counts: number[] }[];
+}
+
 export interface Note {
   _id: string;
   userId: string;

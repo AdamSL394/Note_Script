@@ -79,6 +79,20 @@ router.get('/analytics/streaks', requireAuth, async (req: Request, res: Response
     return;
 });
 
+router.get('/analytics/dayofweek', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const response = await noteController.getTagDayOfWeekPattern(userId);
+    res.json(response);
+    return;
+});
+
+router.get('/analytics/seasonality', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    const response = await noteController.getTagSeasonality(userId);
+    res.json(response);
+    return;
+});
+
 router.get('/note/:id', requireAuth, async (req: Request<{ id: string }>, res: Response) => {
     const userId = getRequiredUserId(req);
     const response = await noteController.getSingleNote(req.params.id, userId);

@@ -10,10 +10,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import NoteRoutes from '../../router/noteRoutes';
-import type { TagTimeSeries } from '../../types';
+import type { TagTimeSeries, DayOfWeekPattern, Seasonality } from '../../types';
 import { getTagColor } from '../../utils/tagColor';
 import { Heatmap } from './heatmap';
 import { Streaks } from './streaks';
+import { TagBarChart } from './tagBarChart';
 import './analytics.css';
 
 type Granularity = 'week' | 'month' | 'year';
@@ -49,8 +50,19 @@ function formatBucketLabel(bucket: string, granularity: Granularity): string {
 export const Analytics = () => {
   const [granularity, setGranularity] = useState<Granularity>('month');
   const [timeSeries, setTimeSeries] = useState<TagTimeSeries>({ buckets: [], granularity: 'month', series: [] });
+  const [dayOfWeek, setDayOfWeek] = useState<DayOfWeekPattern>({ dayLabels: [], series: [] });
+  const [seasonality, setSeasonality] = useState<Seasonality>({ monthLabels: [], series: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    Promise.all([NoteRoutes.getTagDayOfWeekPattern(), NoteRoutes.getTagSeasonality()]).then(
+      ([dowResult, seasonResult]) => {
+        setDayOfWeek(dowResult);
+        setSeasonality(seasonResult);
+      }
+    );
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -155,6 +167,25 @@ export const Analytics = () => {
       <h2 className="analyticsSectionHeading">Activity</h2>
       <p className="analyticsSubheading">A day-by-day look at your journaling -- gaps and streaks, at a glance.</p>
       <Heatmap />
+
+      <h2 className="analyticsSectionHeading">Day of week</h2>
+      <p className="analyticsSubheading">Do your tags cluster on certain days of the week?</p>
+      {dayOfWeek.series.length === 0 ? (
+        <p className="analyticsStatus">Not enough tagged history yet.</p>
+      ) : (
+        <TagBarChart labels={dayOfWeek.dayLabels} series={dayOfWeek.series} />
+      )}
+
+      <h2 className="analyticsSectionHeading">Seasonality</h2>
+      <p className="analyticsSubheading">
+        Month-of-year, combined across every year in your history -- reveals seasonal patterns a
+        single year's timeline can't.
+      </p>
+      {seasonality.series.length === 0 ? (
+        <p className="analyticsStatus">Not enough tagged history yet.</p>
+      ) : (
+        <TagBarChart labels={seasonality.monthLabels} series={seasonality.series} />
+      )}
     </div>
   );
 };

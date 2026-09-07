@@ -4,7 +4,38 @@ import {
     computeStreak,
     getHeatmapGridStart,
     buildHeatmapGrid,
+    dayOfWeekFromDateString,
 } from '../controller/noteController';
+
+describe('dayOfWeekFromDateString', () => {
+    it('correctly identifies a known Sunday', () => {
+        expect(dayOfWeekFromDateString('2026-09-06')).toBe(0);
+    });
+
+    it('correctly identifies a known Thursday', () => {
+        expect(dayOfWeekFromDateString('2026-01-01')).toBe(4);
+    });
+
+    it('correctly identifies a known Saturday', () => {
+        expect(dayOfWeekFromDateString('2026-01-03')).toBe(6);
+    });
+
+    it('stays correct even on a non-UTC server timezone', () => {
+        // The actual bug this function exists to prevent: new
+        // Date(dateString) parses as UTC midnight per spec, and
+        // .getDay() reads local/server time -- on a server west of
+        // UTC, that combination can report the WRONG day entirely
+        // (confirmed directly during development: a PST server
+        // reported Saturday for a date that's actually a Sunday).
+        const originalTZ = process.env.TZ;
+        process.env.TZ = 'America/Los_Angeles';
+        try {
+            expect(dayOfWeekFromDateString('2026-09-06')).toBe(0);
+        } finally {
+            process.env.TZ = originalTZ;
+        }
+    });
+});
 
 describe('computeTrendPeriodBoundaries', () => {
     it('computes exact 7-day current and previous periods for "week", with no gap or overlap', () => {
