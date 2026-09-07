@@ -8,12 +8,15 @@ import { errorHandler } from './middleware/errorHandler';
 import path from 'path';
 import notesRouter from './routes/notes';
 import userRouter from './routes/userSettings';
+import notificationsRouter from './routes/notifications';
 import bodyParser from 'body-parser';
 import connectToDB from './database/db';
 import checkJwt, { auth0Domain } from './middleware/checkJwt';
 import { apiRateLimiter, rateLimitStore } from './middleware/apiRateLimiter';
 import { resolveMongoUri } from './validateEnv'
 import { logger } from './logger';
+import cron from 'node-cron';
+import { sendDueReminders } from './controller/pushController';
 
 const app = express();
 
@@ -98,6 +101,7 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use('/notes', checkJwt, apiRateLimiter, notesRouter);
 app.use('/api/users', checkJwt, apiRateLimiter, userRouter);
+app.use('/notifications', checkJwt, apiRateLimiter, notificationsRouter);
 
 if (
   process.env.NODE_ENV === 'development' ||
@@ -133,6 +137,17 @@ async function main() {
 
   app.listen(PORT, () => {
     logger.info(`App listening on port ${PORT}`);
+  });
+
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const result = await sendDueReminders();
+      if (result.sent > 0 || result.failed > 0) {
+        logger.info(result, 'Hourly reminder check complete');
+      }
+    } catch (err) {
+      logger.error({ err }, 'Hourly reminder check failed');
+    }
   });
 }
 
