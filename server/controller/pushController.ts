@@ -30,8 +30,8 @@ export async function saveSubscription(
     );
 }
 
-export async function removeSubscription(userId: string, endpoint: string, ): Promise<void> {
-    await PushSubscription.deleteOne({ endpoint, userId });
+export async function removeSubscription(userId: string, endpoint: string): Promise<void> {
+    await PushSubscription.deleteOne({endpoint, userId});
 }
 
 export async function updateNotificationPreferences(
@@ -123,11 +123,18 @@ export async function sendDueReminders(now: Date = new Date()): Promise<{ sent: 
     return { sent, failed };
 }
 
+const REMINDER_TITLES = ['Time to journal', 'Daily reminder', "Don't break your streak!"];
+
+function pickRandomReminderTitle(): string {
+    return REMINDER_TITLES[Math.floor(Math.random() * REMINDER_TITLES.length)];
+}
+
 async function sendPushToSubscription(
     sub: IPushSubscription,
-    body: string = "You haven't logged today yet -- take a minute to write it down."
+    body: string = "You haven't logged today yet -- take a minute to write it down.",
+    title: string = pickRandomReminderTitle()
 ): Promise<void> {
-    const payload = JSON.stringify({ title: 'Note Script', body });
+    const payload = JSON.stringify({ title, body });
     await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: sub.keys },
         payload
@@ -157,7 +164,7 @@ export async function sendTestNotification(userId: string): Promise<{ sent: numb
 
     for (const sub of subscriptions) {
         try {
-            await sendPushToSubscription(sub, 'Test notification -- if you see this, push is working!');
+            await sendPushToSubscription(sub, 'Test notification -- if you see this, push is working!', 'Note Script');
             sent++;
         } catch (err) {
             failed++;
