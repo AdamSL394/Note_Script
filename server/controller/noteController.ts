@@ -576,6 +576,122 @@ const getTagStreaks = async (id: string): Promise<TagStreakResult[]> => {
     return results;
 };
 
+const DOW_SEASONALITY_MAX_TAGS = 6;
+
+// Returns the day of week (0=Sun..6=Sat) for a 'YYYY-MM-DD' string,
+// via manual component parsing and the local Date constructor --
+// deliberately NOT new Date(dateStr) directly, which parses as UTC
+// midnight per spec and can report the wrong day depending on the
+// server's own timezone (verified this exact failure mode: a
+// non-UTC server reporting Saturday for a date that's actually a
+// Sunday).
+export function dayOfWeekFromDateString(dateStr: string): number {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).getDay();
+}
+
+export interface DayOfWeekPatternResult {
+    // Sun..Sat, matching JS's own Date.getDay() convention.
+    dayLabels: string[];
+    series: { name: string; icon: string; counts: number[] }[];
+}
+
+// Per-tag note counts bucketed by day of week, across a user's full
+// history -- meant to answer "does this tag cluster on certain
+// weekdays" (e.g. eatOut on Fridays), which needs as much history as
+// possible to be a meaningful pattern rather than a fluke from a
+// handful of notes.
+const getTagDayOfWeekPattern = async (id: string): Promise<DayOfWeekPatternResult> => {
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const notes = await Note.find({ userId: id }, { date: 1, tags: 1 }).lean();
+
+    const totalsByTag = new Map<string, { icon: string; total: number }>();
+    const countsByTagAndDay = new Map<string, number[]>();
+
+    for (const note of notes) {
+        const dow = dayOfWeekFromDateString(note.date);
+        for (const tag of note.tags ?? []) {
+            const totals = totalsByTag.get(tag.name) ?? { icon: tag.icon, total: 0 };
+            totals.total += 1;
+            totals.icon = tag.icon;
+            totalsByTag.set(tag.name, totals);
+
+            if (!countsByTagAndDay.has(tag.name)) {
+                countsByTagAndDay.set(tag.name, [0, 0, 0, 0, 0, 0, 0]);
+            }
+            const counts = countsByTagAndDay.get(tag.name) as number[];
+            counts[dow] += 1;
+        }
+    }
+
+    const topTagNames = Array.from(totalsByTag.entries())
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, DOW_SEASONALITY_MAX_TAGS)
+        .map(([name]) => name);
+
+    const series = topTagNames.map((name) => ({
+        name,
+        icon: totalsByTag.get(name)?.icon ?? '🏷️',
+        counts: countsByTagAndDay.get(name) ?? [0, 0, 0, 0, 0, 0, 0],
+    }));
+
+    return { dayLabels, series };
+};
+
+export interface SeasonalityResult {
+    // Jan..Dec, summed across every year in the user's history.
+    monthLabels: string[];
+    series: { name: string; icon: string; counts: number[] }[];
+}
+
+// Per-tag note counts bucketed by month-of-year (not by specific
+// calendar month -- every January across every year is combined into
+// one bucket), across a user's full history. This is what actually
+// reveals a seasonal pattern ("gym is a summer thing") rather than
+// just showing one year's particular shape. Month extraction here is
+// a simple string prefix of the existing 'YYYY-MM-DD' field, not date
+// math -- there's no timezone risk to a substring, unlike day-of-week
+// above, which genuinely needs a real Date object.
+const getTagSeasonality = async (id: string): Promise<SeasonalityResult> => {
+    const monthLabels = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    const notes = await Note.find({ userId: id }, { date: 1, tags: 1 }).lean();
+
+    const totalsByTag = new Map<string, { icon: string; total: number }>();
+    const countsByTagAndMonth = new Map<string, number[]>();
+
+    for (const note of notes) {
+        const monthIndex = Number(note.date.slice(5, 7)) - 1;
+        for (const tag of note.tags ?? []) {
+            const totals = totalsByTag.get(tag.name) ?? { icon: tag.icon, total: 0 };
+            totals.total += 1;
+            totals.icon = tag.icon;
+            totalsByTag.set(tag.name, totals);
+
+            if (!countsByTagAndMonth.has(tag.name)) {
+                countsByTagAndMonth.set(tag.name, new Array(12).fill(0));
+            }
+            const counts = countsByTagAndMonth.get(tag.name) as number[];
+            counts[monthIndex] += 1;
+        }
+    }
+
+    const topTagNames = Array.from(totalsByTag.entries())
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, DOW_SEASONALITY_MAX_TAGS)
+        .map(([name]) => name);
+
+    const series = topTagNames.map((name) => ({
+        name,
+        icon: totalsByTag.get(name)?.icon ?? '🏷️',
+        counts: countsByTagAndMonth.get(name) ?? new Array(12).fill(0),
+    }));
+
+    return { monthLabels, series };
+};
+
 export interface PaginatedNotes {
     notes: INote[];
     totalCount: number;
@@ -808,4 +924,6 @@ export default {
     getTagTimeSeries,
     getActivityHeatmap,
     getTagStreaks,
+    getTagDayOfWeekPattern,
+    getTagSeasonality,
 };
