@@ -9,6 +9,16 @@ services:
     container_name: note_script-app
     environment:
       NODE_ENV: production
+      REDIS_URL: redis://redis:6379
     ports:
       - "5002:${PORT}"
+    restart: always
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: note_script-redis
+    ports:
+      - "6379:6379"
     restart: always

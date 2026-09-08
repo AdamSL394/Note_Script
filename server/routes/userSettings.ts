@@ -9,9 +9,9 @@ import { logger } from '../logger';
 
 const router = express.Router();
 
-// Deliberately no requireAuth here — see notes.ts's /ping for the same
-// reasoning. Only needs a valid JWT (enforced by router-level checkJwt),
-// not a resolved userId.
+// Deliberately no requireAuth here -- Auth0's callback just needs a
+// valid JWT (enforced by router-level checkJwt) to confirm the login
+// succeeded, not a resolved userId for any actual user-scoped lookup.
 router.get('/callback', async (req: Request, res: Response) => {
     return res.sendStatus(200);
 });

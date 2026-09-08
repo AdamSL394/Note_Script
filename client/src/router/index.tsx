@@ -5,10 +5,6 @@ import Home from '../views/Home/home';
 import { ProtectedRoute } from '../hooks/protectedRoute';
 import AllNotes from '../views/AllNotes/allNotes';
 import UserSettings from '../views/UserSettings/userSettings'
-import Upload from '../views/Upload/upload'
-import AdminUsers from '../views/AdminUsers/adminUsers'
-import PrivacyPolicy from '../views/PrivacyPolicy/privacyPolicy'
-import TermsOfService from '../views/TermsOfService/termsOfService'
 
 // Lazy-loaded specifically because this page pulls in recharts, which
 // adds ~100KB gzipped to whatever bundle it's part of -- splitting it
@@ -17,14 +13,32 @@ import TermsOfService from '../views/TermsOfService/termsOfService'
 // whether they ever visit it.
 const Analytics = lazy(() => import('../views/Analytics/analytics'));
 
+// These four don't pull in anything as heavy as recharts individually,
+// so this isn't the same ~100KB-per-route win Analytics was -- but
+// each is genuinely infrequently visited (AdminUsers especially: most
+// users never see it at all, it's admin-only), so splitting them out
+// still means Home/AllNotes/Login -- the pages every user hits on
+// every visit -- carry less weight, for a real if more modest gain.
+const Upload = lazy(() => import('../views/Upload/upload'));
+const AdminUsers = lazy(() => import('../views/AdminUsers/adminUsers'));
+const PrivacyPolicy = lazy(() => import('../views/PrivacyPolicy/privacyPolicy'));
+const TermsOfService = lazy(() => import('../views/TermsOfService/termsOfService'));
+
+const LoadingFallback = <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
 
 const Router = () => {
     return (
         <>
             <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
+                <Route
+                    path="/privacy"
+                    element={<Suspense fallback={LoadingFallback}><PrivacyPolicy /></Suspense>}
+                />
+                <Route
+                    path="/terms"
+                    element={<Suspense fallback={LoadingFallback}><TermsOfService /></Suspense>}
+                />
                 <Route path="/" element={<ProtectedRoute />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/all" element={<AllNotes />} />
@@ -32,13 +46,19 @@ const Router = () => {
                     <Route
                         path="/analytics"
                         element={
-                            <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+                            <Suspense fallback={LoadingFallback}>
                                 <Analytics />
                             </Suspense>
                         }
                     />
-                    <Route path="/upload" element={<Upload />} />
-                    <Route path="/admin/users" element={<AdminUsers />} />
+                    <Route
+                        path="/upload"
+                        element={<Suspense fallback={LoadingFallback}><Upload /></Suspense>}
+                    />
+                    <Route
+                        path="/admin/users"
+                        element={<Suspense fallback={LoadingFallback}><AdminUsers /></Suspense>}
+                    />
                 </Route>
             </Routes>
         </>

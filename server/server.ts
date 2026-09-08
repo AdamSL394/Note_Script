@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import { errorHandler } from './middleware/errorHandler';
@@ -17,6 +18,7 @@ import { resolveMongoUri } from './validateEnv'
 import { logger } from './logger';
 import cron from 'node-cron';
 import { sendDueReminders } from './controller/pushController';
+import { shutdownCache } from './cache';
 
 const app = express();
 
@@ -99,6 +101,28 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
+
+// Deliberately public -- no checkJwt, no apiRateLimiter. A health/
+// keep-alive endpoint's whole job is to be hit by external monitoring
+// or an uptime pinger (e.g. to keep a Heroku Eco dyno awake), which
+// shouldn't need to manage an Auth0 bearer token just to check "is
+// this still up", and shouldn't risk being rate-limited by frequent
+// pings either. Checks mongoose's actual connection state (an
+// in-memory flag, no real DB round-trip needed) rather than just
+// confirming Express itself is responding -- a process that's
+// technically alive but has lost its database connection isn't
+// actually healthy for any real purpose, and this reports that
+// honestly (503) instead of a false-positive 200.
+app.get('/health', (req: Request, res: Response) => {
+  const dbConnected = mongoose.connection.readyState === mongoose.STATES.connected;
+  if (!dbConnected) {
+    res.status(503).json({ status: 'unhealthy', database: 'disconnected' });
+    return;
+  }
+  res.status(200).json({ status: 'ok', database: 'connected' });
+});
+
+
 app.use('/notes', checkJwt, apiRateLimiter, notesRouter);
 app.use('/api/users', checkJwt, apiRateLimiter, userRouter);
 app.use('/notifications', checkJwt, apiRateLimiter, notificationsRouter);
@@ -156,5 +180,6 @@ main();
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
   await rateLimitStore.shutdown();
+  await shutdownCache();
   process.exit(0);
 });

@@ -7,6 +7,7 @@ import { requireAuth, getRequiredUserId } from '../middleware/requireAuth';
 import { validateBody } from '../middleware/validate';
 import { noteRangeSchema, updateNoteSchema, createNoteSchema, uploadNotesSchema } from '../validation/schemas';
 import { logger } from '../logger';
+import { withCache, invalidateUserAnalyticsCache } from '../cache';
 
 const router = express.Router();
 
@@ -33,7 +34,7 @@ router.get('/count', requireAuth, async (req: Request, res: Response) => {
 
 router.get('/analytics/tags', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
-    const response = await noteController.getTagAnalytics(userId);
+    const response = await withCache(`analytics:${userId}:tags`, 600, () => noteController.getTagAnalytics(userId));
     res.json(response);
     return;
 });
@@ -74,21 +75,27 @@ router.get('/analytics/heatmap', requireAuth, async (req: Request, res: Response
 
 router.get('/analytics/streaks', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
-    const response = await noteController.getTagStreaks(userId);
+    const response = await withCache(`analytics:${userId}:streaks`, 600, () =>
+        noteController.getTagStreaks(userId)
+    );
     res.json(response);
     return;
 });
 
 router.get('/analytics/dayofweek', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
-    const response = await noteController.getTagDayOfWeekPattern(userId);
+    const response = await withCache(`analytics:${userId}:dayofweek`, 600, () =>
+        noteController.getTagDayOfWeekPattern(userId)
+    );
     res.json(response);
     return;
 });
 
 router.get('/analytics/seasonality', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
-    const response = await noteController.getTagSeasonality(userId);
+    const response = await withCache(`analytics:${userId}:seasonality`, 600, () =>
+        noteController.getTagSeasonality(userId)
+    );
     res.json(response);
     return;
 });
@@ -140,6 +147,10 @@ router.post('/noterange', requireAuth, validateBody(noteRangeSchema), async (req
 router.delete('/delete/:id', requireAuth, async (req: Request<{ id: string }>, res: Response) => {
     const userId = getRequiredUserId(req);
     await noteController.deleteNotes(req.params.id, userId);
+    // Fire-and-forget -- the user's delete confirmation shouldn't wait
+    // on cache cleanup, and withCache's own TTL is the backstop if this
+    // particular invalidation is ever lost (Redis blip, etc.).
+    invalidateUserAnalyticsCache(userId);
     res.json('Delete Notes');
     return;
 });
@@ -152,6 +163,7 @@ router.patch('/update/:id', requireAuth, validateBody(updateNoteSchema), async (
     const response = await noteController.updateNote(req.params.id, userId, {
         edit, text, date, star, tags, look, gym, weed, code, read, eatOut, basketball,
     });
+    invalidateUserAnalyticsCache(userId);
     res.json(response);
     return;
 });
@@ -164,6 +176,7 @@ router.post('/note', requireAuth, validateBody(createNoteSchema), async (req: Re
     // not raw client input.
     const userId = getRequiredUserId(req);
     const response = await noteController.postNotes({ ...req.body, userId });
+    invalidateUserAnalyticsCache(userId);
     res.send(response);
     return;
 });
@@ -174,14 +187,14 @@ router.post('/upload', requireAuth, validateBody(uploadNotesSchema), async (req:
     const userId = getRequiredUserId(req);
     const arrayOfNotes = await parseNotes(userId, { note: req.body.note });
 
-    const results: string[] = [];
-    for (const note of arrayOfNotes) {
-        const result = await noteController.uploadNotes(note);
-        results.push(result);
-    }
+    const results = await Promise.allSettled(arrayOfNotes.map((note) => noteController.uploadNotes(note)));
+    const outcomes = results.map((r) => (r.status === 'fulfilled' ? r.value : 'incorrect'));
 
-    const successCount = results.filter((r) => r === 'correct').length;
-    const failureCount = results.length - successCount;
+    const successCount = outcomes.filter((r) => r === 'correct').length;
+    const failureCount = outcomes.length - successCount;
+    if (successCount > 0) {
+        invalidateUserAnalyticsCache(userId);
+    }
     if (failureCount > 0) {
         res.status(207).json({
             message: `${successCount} of ${results.length} notes uploaded successfully`,
@@ -206,10 +219,6 @@ router.get('/lastyear/:tdYearAgo/:lwYearAgo', requireAuth, async (req: Request<{
 // resolved userId. Kept exactly as before so this stays reachable by
 // any authenticated caller regardless of whether their token carries a
 // usable `sub` claim.
-router.get('/ping', (req: Request, res: Response) => {
-    res.send('Pong');
-});
-
 router.post('/aggregateNoteyears', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
     const response = await noteController.getallNoteYearsAggregate(userId);
