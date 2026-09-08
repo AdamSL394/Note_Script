@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
@@ -145,7 +145,7 @@ jobs:
         ports:
           - 27017:27017
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build image
@@ -226,7 +226,7 @@ jobs:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       HEROKU_APP_NAME: note-script-dev
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Log in to Heroku Container Registry
@@ -286,7 +286,7 @@ jobs:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       HEROKU_APP_NAME: note-script
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Log in to Heroku Container Registry
