@@ -219,10 +219,6 @@ router.get('/lastyear/:tdYearAgo/:lwYearAgo', requireAuth, async (req: Request<{
 // resolved userId. Kept exactly as before so this stays reachable by
 // any authenticated caller regardless of whether their token carries a
 // usable `sub` claim.
-router.get('/ping', (req: Request, res: Response) => {
-    res.send('Pong');
-});
-
 router.post('/aggregateNoteyears', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
     const response = await noteController.getallNoteYearsAggregate(userId);
