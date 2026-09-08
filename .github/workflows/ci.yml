@@ -178,9 +178,10 @@ jobs:
         # simplest, most reliable option on a Linux runner.
         # AUTH0_DOMAIN/AUTH0_AUDIENCE just need to be non-empty strings
         # for the server to start at all (checkJwt.ts only validates
-        # they're present at startup -- real JWKS verification only
-        # happens against an actual authenticated request, which this
-        # smoke test deliberately doesn't attempt).
+        # they're present at startup) -- /health itself needs no auth
+        # at all, so these never actually get exercised by this
+        # specific check, just needed for the app to boot without
+        # throwing on missing config.
         run: |
           docker run -d --name smoketest --network=host \
             -e NODE_ENV=production \
@@ -191,9 +192,9 @@ jobs:
 
           echo "Waiting for the server to come up..."
           for i in $(seq 1 15); do
-            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/notes/ping || echo "000")
-            if [ "$status" = "401" ]; then
-              echo "Server is up and routing correctly (got the expected 401 from an unauthenticated request)."
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/health || echo "000")
+            if [ "$status" = "200" ]; then
+              echo "Server is up, and reports a healthy database connection."
               exit 0
             fi
             echo "Attempt $i: got status $status, retrying..."
