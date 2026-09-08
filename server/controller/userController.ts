@@ -104,10 +104,63 @@ const deleteAccount = async (userId: string): Promise<void> => {
     }
 };
 
+export interface ExportedNote {
+    text: string;
+    date: string;
+    star: string;
+    tags: { name: string; icon: string }[];
+    edit: boolean;
+    updatedAt?: Date;
+}
+
+export interface ExportedAccountData {
+    exportedAt: string;
+    account: {
+        email: string;
+        settings: ISetting[];
+        notificationPreferences?: IUser['notificationPreferences'];
+    };
+    notes: ExportedNote[];
+}
+
+// Bundles everything a user would reasonably consider "their data" into
+// one downloadable file -- the export counterpart to deleteAccount
+// above, for the same reason: users should always be able to get their
+// data OUT, not just have it deleted. Deliberately excludes push
+// subscription keys (technical browser artifacts, not meaningful user
+// data, and including raw subscription credentials in a downloadable
+// file would be a minor exposure) and internal fields like the
+// Mongo _id, userId, or role (database internals a user exporting
+// their own data neither needs nor expects to see).
+const exportUserData = async (userId: string): Promise<ExportedAccountData> => {
+    const [user, notes] = await Promise.all([
+        User.findOne({ _id: userId }).lean(),
+        Note.find({ userId }).sort({ date: -1 }).lean(),
+    ]);
+
+    return {
+        exportedAt: new Date().toISOString(),
+        account: {
+            email: user?.email ?? '',
+            settings: user?.settings ?? [],
+            notificationPreferences: user?.notificationPreferences,
+        },
+        notes: notes.map((note) => ({
+            text: note.text,
+            date: note.date,
+            star: note.star,
+            tags: note.tags ?? [],
+            edit: note.edit,
+            updatedAt: note.updatedAt,
+        })),
+    };
+};
+
 export default {
     getSingleUser,
     saveNewUser,
     updateUserStats,
     getAllUsers,
     deleteAccount,
+    exportUserData,
 };

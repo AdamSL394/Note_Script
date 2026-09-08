@@ -20,6 +20,8 @@ const UserSetting = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | undefined>();
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportError, setExportError] = useState<string | undefined>();
     const { user, logout } = useAuth0();
     const { mode, setMode } = useThemeMode();
 
@@ -84,6 +86,16 @@ const UserSetting = () => {
         }
         setIsDeleting(false);
         setDeleteError('Something went wrong deleting your account. Please try again.');
+    };
+
+    const handleExportData = async () => {
+        setIsExporting(true);
+        setExportError(undefined);
+        const success = await NoteRoutes.exportUserData();
+        setIsExporting(false);
+        if (!success) {
+            setExportError('Something went wrong exporting your data. Please try again.');
+        }
     };
 
     const changeName = () => {};
@@ -171,6 +183,18 @@ const UserSetting = () => {
                 </div>
 
                 <NotificationSettings />
+
+                <div className="Form">
+                    <h4 className="settingsLabel">Your data</h4>
+                    <p className="settingsDescription">
+                        Download everything you&apos;ve written here -- every note, tag, and setting -- as a
+                        single file you can keep.
+                    </p>
+                    <Button variant="outlined" onClick={handleExportData} disabled={isExporting}>
+                        {isExporting ? 'Preparing your export...' : 'Export my data'}
+                    </Button>
+                    {exportError && <p className="settingsErrorText">{exportError}</p>}
+                </div>
 
                 <div className="Form">
                     <h4 className="settingsLabel">Danger Zone</h4>

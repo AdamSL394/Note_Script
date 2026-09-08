@@ -174,6 +174,21 @@ const NoteRoutes = {
     return ok;
   },
 
+  exportUserData: async (): Promise<boolean> => {
+    const data = await requestJson<Record<string, unknown>>('/api/users/user/export');
+    if (!data) return false;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `note-script-export-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return true;
+  },
+
   postNote: (raw: Record<string, unknown>): Promise<string> =>
     request('/notes/note', { method: 'POST', body: raw }),
 
