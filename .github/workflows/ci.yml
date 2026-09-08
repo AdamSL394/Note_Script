@@ -169,6 +169,8 @@ jobs:
             REACT_APP_HOST=development
           tags: note-script-smoketest:latest
           load: true
+          provenance: false
+          sbom: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Boot the container and verify it actually serves a request
@@ -249,6 +251,14 @@ jobs:
             REACT_APP_HOST=development
           tags: registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
           push: true
+          # Heroku's Container Registry doesn't support the OCI image-
+          # index/attestation-manifest format buildx attaches by
+          # default since a recent BuildKit version -- a known
+          # incompatibility with several registries (Azure Container
+          # Registry hits the identical issue), not specific to this
+          # app. Without these, the push fails with "unsupported".
+          provenance: false
+          sbom: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Release
@@ -294,6 +304,11 @@ jobs:
             REACT_APP_GA_MEASUREMENT_ID=G-Y08MF6RWVK
           tags: registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
           push: true
+          # See deploy-dev's identical comment above -- Heroku's
+          # Container Registry doesn't support buildx's default
+          # attestation-manifest format.
+          provenance: false
+          sbom: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Release
