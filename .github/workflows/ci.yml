@@ -250,13 +250,23 @@ jobs:
           build-args: |
             REACT_APP_HOST=development
           tags: registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
-          push: true
+          # provenance/sbom alone (see below) only remove the
+          # attestation SIDECAR manifests -- the underlying image
+          # manifest itself still defaults to OCI media types
+          # independently of that, which Heroku's registry (an older,
+          # simpler implementation) doesn't understand at all, even
+          # for a plain image with zero attestations. Replacing
+          # push:true (which uses buildx's default output settings)
+          # with an explicit outputs: string is what actually lets
+          # oci-mediatypes=false take effect -- it isn't a top-level
+          # input this action exposes on its own.
+          outputs: type=registry,oci-mediatypes=false
           # Heroku's Container Registry doesn't support the OCI image-
           # index/attestation-manifest format buildx attaches by
           # default since a recent BuildKit version -- a known
           # incompatibility with several registries (Azure Container
           # Registry hits the identical issue), not specific to this
-          # app. Without these, the push fails with "unsupported".
+          # app.
           provenance: false
           sbom: false
           cache-from: type=gha
@@ -303,10 +313,10 @@ jobs:
             REACT_APP_HOST=production
             REACT_APP_GA_MEASUREMENT_ID=G-Y08MF6RWVK
           tags: registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
-          push: true
-          # See deploy-dev's identical comment above -- Heroku's
-          # Container Registry doesn't support buildx's default
-          # attestation-manifest format.
+          # See deploy-dev's identical comment above -- provenance/
+          # sbom alone weren't sufficient; outputs: is what actually
+          # lets oci-mediatypes=false take effect.
+          outputs: type=registry,oci-mediatypes=false
           provenance: false
           sbom: false
           cache-from: type=gha
