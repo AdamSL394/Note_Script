@@ -1,5 +1,4 @@
 import Note, { INote, ITagSnapshot } from '../models/notes';
-import mongoose from 'mongoose';
 import { normalizeUserId } from '../utils/userId';
 import { logger } from '../logger';
 
@@ -42,7 +41,7 @@ const postNotes = async (
 };
 
 const getAllNotesOrdered = async (ids: string): Promise<INote[]> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
+    const id = ids.trim();
     const notes = await Note.find({ userId: id }).sort({ date: -1 }).limit(MAX_NOTES_RETURNED).exec();
     if (notes.length < 1) {
         return [];
@@ -710,7 +709,7 @@ const getAllNotes = async (
     pageSize: number,
     sortDirection: 'asc' | 'desc' = 'desc'
 ): Promise<PaginatedNotes> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
+    const id = ids.trim();
     const clampedPageSize = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
     const clampedPage = Math.max(1, page);
     const skip = (clampedPage - 1) * clampedPageSize;
@@ -730,7 +729,7 @@ const getAllNotes = async (
 // note document over the wire just to count them, which matters once a
 // user has hundreds/thousands of notes.
 const getNoteCount = async (ids: string): Promise<number> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
+    const id = ids.trim();
     const count = await Note.countDocuments({ userId: id });
     return count;
 };
@@ -741,7 +740,7 @@ const getRangeNotes = async (
     end: string,
     sortDirection: 'asc' | 'desc' = 'desc'
 ): Promise<INote[]> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
+    const id = ids.trim();
     const notes = await Note.find({
         userId: id,
         date: {
@@ -753,7 +752,7 @@ const getRangeNotes = async (
 };
 
 const getMostRecentlyUpdatedNotes = async (ids: string): Promise<INote[]> => {
-    const id = new mongoose.Types.ObjectId(ids.trim());
+    const id = ids.trim();
     const updatedNotes = await Note.find({ userId: id })
         .sort({ updatedAt: -1 })
         .limit(30);

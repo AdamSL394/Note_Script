@@ -22,7 +22,7 @@ const mockUserDeleteOne = User.deleteOne as jest.Mock;
 const mockNoteDeleteMany = Note.deleteMany as jest.Mock;
 
 describe('deleteAccount', () => {
-    const userId = '507f1f77bcf86cd799439011';
+    const userId = 'a-non-numeric-auth0-id-000';
     let mockSession: { withTransaction: jest.Mock; endSession: jest.Mock };
     let startSessionSpy: jest.SpyInstance;
 
@@ -54,14 +54,12 @@ describe('deleteAccount', () => {
         await userController.deleteAccount(userId);
 
         expect(mockNoteDeleteMany).toHaveBeenCalledWith({ userId });
-        expect(mockUserDeleteOne).toHaveBeenCalledWith({
-            _id: expect.any(mongoose.Types.ObjectId),
-        });
-        // The exact ObjectId matches the userId passed in, not just any
-        // ObjectId -- a copy-paste bug scoping the delete to the wrong
-        // id would still pass the looser check above.
-        const calledWith = mockUserDeleteOne.mock.calls[0][0]._id as mongoose.Types.ObjectId;
-        expect(calledWith.toString()).toBe(userId);
+        // Previously wrapped in new mongoose.Types.ObjectId(userId) --
+        // User._id is a plain String field, and that wrapping genuinely
+        // throws for any real Auth0 ID that isn't purely numeric (like
+        // this one). This assertion is what actually would have caught
+        // that bug, rather than encoding it as expected behavior.
+        expect(mockUserDeleteOne).toHaveBeenCalledWith({ _id: userId });
     });
 
     it('always ends the session, even when the transaction throws', async () => {
