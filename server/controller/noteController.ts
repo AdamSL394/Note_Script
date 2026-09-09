@@ -147,97 +147,6 @@ export function computeTrendPeriodBoundaries(
     };
 }
 
-export interface TagTrendResult {
-    name: string;
-    icon: string;
-    currentCount: number;
-    previousCount: number;
-    // null when previousCount is 0 -- a percentage change from zero is
-    // undefined, not infinite or 0, so this is surfaced as 'new'
-    // usage rather than a misleading number.
-    percentChange: number | null;
-    direction: 'up' | 'down' | 'flat' | 'new' | 'dropped';
-}
-
-// Compares each tag's usage between two adjacent trailing periods of
-// the requested length. A single aggregation pass covers both periods
-// at once (bucketed via $cond on date), then reshaped in JS to merge
-// each tag's current/previous side -- a tag present in only one period
-// needs the other side defaulted to 0, which is easier to express
-// here than inside the pipeline itself.
-const getTagTrends = async (id: string, period: TrendPeriod): Promise<TagTrendResult[]> => {
-    const { currentStart, previousStart } = computeTrendPeriodBoundaries(period);
-
-    const rows = await Note.aggregate<{
-        _id: { name: string; bucket: 'current' | 'previous' };
-        icon: string;
-        count: number;
-    }>([
-        { $match: { userId: id, date: { $gte: previousStart } } },
-        {
-            $addFields: {
-                bucket: {
-                    $cond: [{ $gte: ['$date', currentStart] }, 'current', 'previous'],
-                },
-            },
-        },
-        { $sort: { date: -1 } },
-        { $unwind: '$tags' },
-        {
-            $group: {
-                _id: { name: '$tags.name', bucket: '$bucket' },
-                icon: { $first: '$tags.icon' },
-                count: { $sum: 1 },
-            },
-        },
-    ]);
-
-    const byName = new Map<string, { icon: string; currentCount: number; previousCount: number }>();
-    for (const row of rows) {
-        const name = row._id.name;
-        const existing = byName.get(name) ?? { icon: row.icon, currentCount: 0, previousCount: 0 };
-        if (row._id.bucket === 'current') {
-            existing.currentCount = row.count;
-            existing.icon = row.icon;
-        } else {
-            existing.previousCount = row.count;
-        }
-        byName.set(name, existing);
-    }
-
-    const results: TagTrendResult[] = Array.from(byName.entries()).map(([name, v]) => {
-        let direction: TagTrendResult['direction'];
-        let percentChange: number | null;
-        if (v.previousCount === 0 && v.currentCount === 0) {
-            direction = 'flat';
-            percentChange = 0;
-        } else if (v.previousCount === 0) {
-            direction = 'new';
-            percentChange = null;
-        } else if (v.currentCount === 0) {
-            direction = 'dropped';
-            percentChange = -100;
-        } else {
-            percentChange = ((v.currentCount - v.previousCount) / v.previousCount) * 100;
-            direction = v.currentCount > v.previousCount ? 'up' : v.currentCount < v.previousCount ? 'down' : 'flat';
-        }
-        return {
-            name,
-            icon: v.icon,
-            currentCount: v.currentCount,
-            previousCount: v.previousCount,
-            percentChange,
-            direction,
-        };
-    });
-
-    // Most active (by current period count) first -- a tag that only
-    // existed in the previous period (now fully dropped) still matters
-    // enough to show, just lower priority than anything still active.
-    results.sort((a, b) => b.currentCount - a.currentCount || b.previousCount - a.previousCount);
-    return results;
-};
-
 export type TimeSeriesGranularity = 'week' | 'month' | 'year';
 
 export interface TagTimeSeriesResult {
@@ -919,7 +828,6 @@ export default {
     getallNoteYearsAggregate,
     getMostRecentlyUpdatedNotes,
     getTagAnalytics,
-    getTagTrends,
     getTagTimeSeries,
     getActivityHeatmap,
     getTagStreaks,

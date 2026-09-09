@@ -98,8 +98,6 @@ const UserSetting = () => {
         }
     };
 
-    const changeName = () => {};
-
     if (!user) {
         return null;
     }
@@ -109,94 +107,95 @@ const UserSetting = () => {
             <Grid item xs={12} sm={10} md={8} lg={8} style={{ margin: '0 auto', textAlign: 'left' }}>
                 <div className="settingsHeader">
                     <UserAvatar id="userInfo" className="settingsAvatar" src={user.picture} size={80} />
-                    <h2 className="settingsName" onClick={() => changeName()}>
-                        {user.name ? user.name : ''}
-                    </h2>
-                </div>
-
-                <div className="Form">
-                    <h4 className="settingsLabel">Email</h4>
-                    <div className="settingsValue">
-                        {currentUser ? currentUser.email : user.email}
+                    <div className="settingsIdentity">
+                        <h2 className="settingsName">{user.name ? user.name : ''}</h2>
+                        <div className="settingsEmail">{currentUser ? currentUser.email : user.email}</div>
                     </div>
                 </div>
 
-                <div className="Form">
-                    <h4 className="settingsLabel">Tracked Stats</h4>
-                    <div className="statChipRow">
-                        {withoutDups.map((icon, i) => {
-                            const active = icon.visible === 'visible';
-                            const isWin = WIN_TAGS.includes(icon.name);
-                            const className = [
-                                'tagChip',
-                                active ? 'active' : '',
-                                active && isWin ? 'win' : '',
-                            ]
-                                .filter(Boolean)
-                                .join(' ');
-                            return (
-                                <button
-                                    key={i}
-                                    type="button"
-                                    className={className}
-                                    title="Double-click to stop tracking this stat"
-                                    onDoubleClick={() => {
-                                        deleteStat(user as AuthUser, icon);
-                                    }}
-                                >
-                                    <span aria-hidden="true">{icon.icon}</span>
-                                    <span>{icon.name}</span>
-                                </button>
-                            );
-                        })}
+                <div className="settingsGroup">
+                    <div className="Form">
+                        <h4 className="settingsLabel">Tracked Stats</h4>
+                        <div className="statChipRow">
+                            {withoutDups.map((icon, i) => {
+                                const active = icon.visible === 'visible';
+                                const isWin = WIN_TAGS.includes(icon.name);
+                                const className = [
+                                    'tagChip',
+                                    active ? 'active' : '',
+                                    active && isWin ? 'win' : '',
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ');
+                                return (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        className={className}
+                                        title="Double-click to stop tracking this stat"
+                                        onDoubleClick={() => {
+                                            deleteStat(user as AuthUser, icon);
+                                        }}
+                                    >
+                                        <span aria-hidden="true">{icon.icon}</span>
+                                        <span>{icon.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="Form">
+                        <h4 className="settingsLabel">Total Notes</h4>
+                        <div className="settingsValue">
+                            {noteCount !== undefined ? noteCount : '—'}
+                        </div>
                     </div>
                 </div>
 
-                <div className="Form">
-                    <h4 className="settingsLabel">Total Notes</h4>
-                    <div className="settingsValue">
-                        {noteCount !== undefined ? noteCount : '—'}
+                <div className="settingsGroup">
+                    <div className="Form">
+                        <h4 className="settingsLabel">Theme</h4>
+                        <div className="statChipRow">
+                            {THEME_MODES.map((themeMode) => {
+                                const tokens = NS_TOKENS[themeMode];
+                                const active = themeMode === mode;
+                                return (
+                                    <button
+                                        key={themeMode}
+                                        type="button"
+                                        className={active ? 'themeChip active' : 'themeChip'}
+                                        onClick={() => setMode(themeMode)}
+                                    >
+                                        <span
+                                            className="themeChipSwatch"
+                                            style={{ backgroundColor: tokens.blue }}
+                                        ></span>
+                                        <span>{tokens.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <NotificationSettings />
+                </div>
+
+                <div className="settingsGroup">
+                    <div className="Form">
+                        <h4 className="settingsLabel">Your data</h4>
+                        <p className="settingsDescription">
+                            Download everything you&apos;ve written here -- every note, tag, and setting -- as a
+                            single file you can keep.
+                        </p>
+                        <Button variant="outlined" onClick={handleExportData} disabled={isExporting}>
+                            {isExporting ? 'Preparing your export...' : 'Export my data'}
+                        </Button>
+                        {exportError && <p className="settingsErrorText">{exportError}</p>}
                     </div>
                 </div>
-                <div className="Form">
-                    <h4 className="settingsLabel">Theme</h4>
-                    <div className="statChipRow">
-                        {THEME_MODES.map((themeMode) => {
-                            const tokens = NS_TOKENS[themeMode];
-                            const active = themeMode === mode;
-                            return (
-                                <button
-                                    key={themeMode}
-                                    type="button"
-                                    className={active ? 'themeChip active' : 'themeChip'}
-                                    onClick={() => setMode(themeMode)}
-                                >
-                                    <span
-                                        className="themeChipSwatch"
-                                        style={{ backgroundColor: tokens.blue }}
-                                    ></span>
-                                    <span>{tokens.label}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
 
-                <NotificationSettings />
-
-                <div className="Form">
-                    <h4 className="settingsLabel">Your data</h4>
-                    <p className="settingsDescription">
-                        Download everything you&apos;ve written here -- every note, tag, and setting -- as a
-                        single file you can keep.
-                    </p>
-                    <Button variant="outlined" onClick={handleExportData} disabled={isExporting}>
-                        {isExporting ? 'Preparing your export...' : 'Export my data'}
-                    </Button>
-                    {exportError && <p className="settingsErrorText">{exportError}</p>}
-                </div>
-
-                <div className="Form">
+                <div className="settingsDangerZone">
                     <h4 className="settingsLabel">Danger Zone</h4>
                     <Button
                         variant="outlined"

@@ -8,7 +8,6 @@ import TableRow from '@mui/material/TableRow/index.js';
 import Chip from '@mui/material/Chip/index.js';
 import CircularProgress from '@mui/material/CircularProgress/index.js';
 import Box from '@mui/material/Box/index.js';
-import Navbar from '../../components/Navbar/navbar';
 import NoteRoutes from '../../router/noteRoutes';
 import type { UserRecord } from '../../types';
 import './adminUsers.css';
@@ -43,7 +42,6 @@ const AdminUsers = () => {
 
     return (
         <div>
-            <Navbar></Navbar>
             <div className="adminPage">
                 {state === 'loading' && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
