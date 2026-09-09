@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
 import User from '../models/user';
 import { getRequiredUserId } from './requireAuth';
 import { logger } from '../logger';
@@ -17,7 +16,7 @@ import { logger } from '../logger';
 export const requireAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = getRequiredUserId(req);
     try {
-        const user = await User.findOne({ _id: new mongoose.Types.ObjectId(userId) }).exec();
+        const user = await User.findOne({ _id: userId }).exec();
         if (!user || user.role !== 'admin') {
             // Same 403 regardless of whether the user doesn't exist at
             // all vs exists but isn't admin -- doesn't leak which case
