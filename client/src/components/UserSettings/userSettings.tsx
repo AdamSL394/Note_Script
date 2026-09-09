@@ -11,6 +11,7 @@ import { useThemeMode } from '../../hooks/useThemeMode';
 import { NS_TOKENS, THEME_MODES } from '../../theme/nsTokens';
 import { UserAvatar } from '../UserAvatar/index';
 import { NotificationSettings } from '../NotificationSettings/index';
+import { ConfirmCheckmark } from '../ConfirmCheckmark';
 import './userSettings.css';
 
 const UserSetting = () => {
@@ -22,6 +23,7 @@ const UserSetting = () => {
     const [deleteError, setDeleteError] = useState<string | undefined>();
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState<string | undefined>();
+    const [exportSignal, setExportSignal] = useState(0);
     const { user, logout } = useAuth0();
     const { mode, setMode } = useThemeMode();
 
@@ -95,6 +97,8 @@ const UserSetting = () => {
         setIsExporting(false);
         if (!success) {
             setExportError('Something went wrong exporting your data. Please try again.');
+        } else {
+            setExportSignal((s) => s + 1);
         }
     };
 
@@ -191,6 +195,7 @@ const UserSetting = () => {
                         <Button variant="outlined" onClick={handleExportData} disabled={isExporting}>
                             {isExporting ? 'Preparing your export...' : 'Export my data'}
                         </Button>
+                        <ConfirmCheckmark trigger={exportSignal} label="Downloaded" />
                         {exportError && <p className="settingsErrorText">{exportError}</p>}
                     </div>
                 </div>

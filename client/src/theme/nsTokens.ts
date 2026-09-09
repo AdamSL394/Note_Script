@@ -4,9 +4,9 @@
 // one entry per theme. If you change a color in tokens.css, change it
 // here too, or MUI's own components (Select, Menu, etc.) will drift
 // from the rest of the app's palette.
-export type ThemeMode = 'light' | 'dark' | 'sepia' | 'forest';
+export type ThemeMode = 'light' | 'dark' | 'sepia' | 'forest' | 'pulse' | 'signal';
 
-export const THEME_MODES: ThemeMode[] = ['light', 'dark', 'sepia', 'forest'];
+export const THEME_MODES: ThemeMode[] = ['light', 'dark', 'sepia', 'forest', 'pulse', 'signal'];
 
 export interface NsTokenSet {
   // MUI's palette.mode only understands 'light' | 'dark' — it drives
@@ -87,5 +87,35 @@ export const NS_TOKENS: Record<ThemeMode, NsTokenSet> = {
     amberTint: '#f7ecd8',
     amberDark: '#7a4f10',
     rule: '#d3ddd6',
+  },
+  // Dark ground, one loud saturated accent -- the "streak game" mode.
+  pulse: {
+    base: 'dark',
+    label: 'Pulse',
+    fog: '#17151f',
+    paper: '#211f2c',
+    ink: '#f4f2f8',
+    graphite: '#9089a8',
+    blue: '#ff3d6b',
+    blueTint: '#3a1626',
+    amber: '#ffb020',
+    amberTint: '#3d2a08',
+    amberDark: '#ffd280',
+    rule: '#332f42',
+  },
+  // Bright, stark, high-contrast -- the "poster/editorial" mode.
+  signal: {
+    base: 'light',
+    label: 'Signal',
+    fog: '#f5f5f4',
+    paper: '#ffffff',
+    ink: '#0a0a0a',
+    graphite: '#66655f',
+    blue: '#ff3300',
+    blueTint: '#ffe4da',
+    amber: '#d97706',
+    amberTint: '#fdf0dc',
+    amberDark: '#8a4a06',
+    rule: '#d4d2ce',
   },
 };

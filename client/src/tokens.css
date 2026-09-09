@@ -119,6 +119,76 @@
   --font-serif: 'Source Serif 4', Georgia, serif;
 }
 
+/* Dark ground, one loud saturated accent, sharper personality than the
+   neutral dark theme -- the "streak game" mode, for when tracking a
+   habit should feel energetic rather than quiet. Keep in sync with
+   theme/nsTokens.ts's 'pulse' entry. Amber stays genuinely amber/gold
+   here (not shifted toward the pink accent) since it carries a
+   separate semantic meaning (win-day signals) that needs to stay
+   visually distinct from the theme's primary accent, not blend with
+   it just because both are warm-toned. */
+[data-theme="pulse"] {
+  --ns-fog: #17151f;
+  --ns-paper: #211f2c;
+  --ns-ink: #f4f2f8;
+  --ns-graphite: #9089a8;
+  --ns-blue: #ff3d6b;
+  --ns-blue-tint: #3a1626;
+  --ns-amber: #ffb020;
+  --ns-amber-tint: #3d2a08;
+  --ns-amber-dark: #ffd280;
+  --ns-rule: #332f42;
+  --ns-tag-purple-bg: #3a2a52;
+  --ns-tag-purple-text: #c9a8f0;
+  --ns-tag-teal-bg: #0f3d38;
+  --ns-tag-teal-text: #5ce0c9;
+  --ns-tag-coral-bg: #42201a;
+  --ns-tag-coral-text: #ff9270;
+  --ns-tag-green-bg: #22380f;
+  --ns-tag-green-text: #a8e068;
+  --ns-tag-pink-bg: #421f38;
+  --ns-tag-pink-text: #e08fc9;
+  --ns-tag-slate-bg: #282534;
+  --ns-tag-slate-text: #b5aec9;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+}
+
+/* Bright, stark, high-contrast -- the "poster/editorial" mode. Near-
+   white ground, near-black text, one loud red-orange accent doing all
+   the work color-wise elsewhere the other themes spread across
+   several muted tones. Keep in sync with theme/nsTokens.ts's 'signal'
+   entry. --ns-rule stays a light neutral gray rather than pure black
+   -- it's used for many subtle hairlines throughout the whole app, and
+   pure black there would make everything feel heavy rather than just
+   accenting the moments that are meant to stand out. */
+[data-theme="signal"] {
+  --ns-fog: #f5f5f4;
+  --ns-paper: #ffffff;
+  --ns-ink: #0a0a0a;
+  --ns-graphite: #66655f;
+  --ns-blue: #ff3300;
+  --ns-blue-tint: #ffe4da;
+  --ns-amber: #d97706;
+  --ns-amber-tint: #fdf0dc;
+  --ns-amber-dark: #8a4a06;
+  --ns-rule: #d4d2ce;
+  --ns-tag-purple-bg: #ece5f7;
+  --ns-tag-purple-text: #5b3d9c;
+  --ns-tag-teal-bg: #dcf2ec;
+  --ns-tag-teal-text: #0a7a5c;
+  --ns-tag-coral-bg: #ffe8de;
+  --ns-tag-coral-text: #c23a10;
+  --ns-tag-green-bg: #e4f2d4;
+  --ns-tag-green-text: #4a7a10;
+  --ns-tag-pink-bg: #fce4ee;
+  --ns-tag-pink-text: #a8265c;
+  --ns-tag-slate-bg: #eeeeec;
+  --ns-tag-slate-text: #42413c;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+}
+
 * {
   font-family: var(--font-mono);
 }
