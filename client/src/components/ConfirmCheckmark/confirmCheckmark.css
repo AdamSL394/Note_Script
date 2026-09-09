@@ -1,0 +1,56 @@
+.confirmCheckmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ns-graphite);
+  animation: confirmCheckmarkFadeIn 0.15s ease;
+}
+
+.confirmCheckmarkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1a9e5c;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  animation: confirmCheckmarkBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes confirmCheckmarkBounce {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes confirmCheckmarkFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmCheckmark,
+  .confirmCheckmarkIcon {
+    animation: none;
+  }
+}

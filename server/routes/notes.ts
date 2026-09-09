@@ -39,14 +39,6 @@ router.get('/analytics/tags', requireAuth, async (req: Request, res: Response) =
     return;
 });
 
-router.get('/analytics/trends', requireAuth, async (req: Request, res: Response) => {
-    const userId = getRequiredUserId(req);
-    const period = req.query.period === 'month' || req.query.period === 'year' ? req.query.period : 'week';
-    const response = await noteController.getTagTrends(userId, period);
-    res.json(response);
-    return;
-});
-
 router.get('/analytics/timeseries', requireAuth, async (req: Request, res: Response) => {
     const userId = getRequiredUserId(req);
     const granularity =

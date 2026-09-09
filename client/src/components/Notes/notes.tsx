@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 import { useAuth0 } from '@auth0/auth0-react';
-import { Container } from '@mui/material';
+import Container from '@mui/material/Container/index.js';
 import CircularProgress from '@mui/material/CircularProgress/index.js';
 import { Box } from '@mui/system';
 import React, { useEffect, useRef, useState } from 'react';

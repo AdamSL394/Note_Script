@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 0.5px solid var(--ns-rule);
 }
@@ -22,11 +22,48 @@
   flex-shrink: 0;
 }
 
+.settingsIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
 .settingsName {
   font-family: var(--font-serif);
   font-size: 1.5rem;
   color: var(--ns-ink);
   margin: 0;
+}
+
+.settingsEmail {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ns-graphite);
+}
+
+/* A group is a set of related fields (e.g. usage stats, or
+   appearance/notification preferences). Fields within a group sit
+   close together; groups themselves get more breathing room and a
+   thin rule between them -- rhythm and spacing carry the grouping,
+   not new labels stacked on top of fields that are already labeled. */
+.settingsGroup {
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+  border-top: 0.5px solid var(--ns-rule);
+}
+
+.settingsGroup:first-of-type {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+.settingsGroup .Form {
+  margin-bottom: 1.1rem;
+}
+
+.settingsGroup .Form:last-child {
+  margin-bottom: 0;
 }
 
 .Form {
@@ -84,6 +121,7 @@
   border-radius: 50%;
   border: 0.5px solid var(--ns-rule);
 }
+
 .settingsDescription {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -96,4 +134,20 @@
   font-size: 11px;
   color: #b3261e;
   margin-top: 0.5rem;
+}
+
+/* The one deliberate visual escalation on this page -- a destructive
+   action shouldn't carry the same quiet weight as a theme toggle.
+   Reuses the same #b3261e already used for error text on this page,
+   rather than introducing a new color for the same idea. */
+.settingsDangerZone {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  border-left: 2px solid #b3261e;
+  background: rgba(179, 38, 30, 0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+.settingsDangerZone .settingsLabel {
+  color: #b3261e;
 }

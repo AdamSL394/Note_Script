@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, TagSnapshot, TagAnalytics, TagTrend, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord } from '../types';
+import type { Note, TagSnapshot, TagAnalytics, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -44,11 +44,6 @@ const NoteRoutes = {
 
   getTagAnalytics: async (): Promise<TagAnalytics[]> => {
     const result = await requestJson<TagAnalytics[]>('/notes/analytics/tags');
-    return result ?? [];
-  },
-
-  getTagTrends: async (period: 'week' | 'month' | 'year'): Promise<TagTrend[]> => {
-    const result = await requestJson<TagTrend[]>(`/notes/analytics/trends?period=${period}`);
     return result ?? [];
   },
 
@@ -143,19 +138,6 @@ const NoteRoutes = {
     sortDirection: 'asc' | 'desc' = 'desc'
   ): Promise<Note[] | null> =>
     requestJson<Note[]>(`/notes/lastyear/${tdYearAgo}/${lwYearAgo}?sort=${sortDirection}`),
-
-  Leetcode_stats: async (): Promise<unknown> => {
-    try {
-      const response = await fetch(
-        'https://leetcode-stats-api.herokuapp.com/adamsl394'
-      );
-      const text = await response.text();
-      return JSON.parse(text);
-    } catch (error) {
-      console.log(error);
-      return null;
-    }
-  },
 
   getUserInfomation: (user: AuthUser): Promise<string> => {
     if (!user.sub) return Promise.resolve('');

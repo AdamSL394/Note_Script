@@ -34,7 +34,7 @@ export const useAuthTokenSync = (): void => {
                     setAuthToken(token);
                 }
             } catch (error) {
-                console.log('Failed to get access token', error);
+                console.error('Failed to get access token', error);
                 if (!cancelled) {
                     setAuthToken(null);
                 }

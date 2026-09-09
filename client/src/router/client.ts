@@ -89,7 +89,7 @@ async function request(
       return await response.text();
     } catch (error) {
       const isLastAttempt = attempt === attempts;
-      console.log(`request error (attempt ${attempt}/${attempts})`, error);
+      console.error(`request error (attempt ${attempt}/${attempts})`, error);
       if (isLastAttempt) {
         return '';
       }
@@ -110,7 +110,7 @@ async function requestJson<T>(
   try {
     return JSON.parse(text) as T;
   } catch (error) {
-    console.log('error parsing response', error);
+    console.error('error parsing response', error);
     return null;
   }
 }
@@ -146,7 +146,7 @@ async function requestWithStatus(
     const response = await fetch(`${BASE_URL}${path}`, requestOptions);
     return { ok: response.ok, status: response.status };
   } catch (error) {
-    console.log('request error', error);
+    console.error('request error', error);
     return { ok: false, status: 0 };
   }
 }

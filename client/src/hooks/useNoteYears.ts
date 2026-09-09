@@ -44,7 +44,7 @@ export const useNoteYears = (onSelectYear: (year: string | number) => void) => {
     try {
       parsed = JSON.parse(fullListOfNoteYears);
     } catch (error) {
-      console.log('error parsing note years', error);
+      console.error('error parsing note years', error);
       return;
     }
 

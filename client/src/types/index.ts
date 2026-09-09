@@ -11,15 +11,6 @@ export interface TagAnalytics {
   avgStar: number | null;
 }
 
-export interface TagTrend {
-  name: string;
-  icon: string;
-  currentCount: number;
-  previousCount: number;
-  percentChange: number | null;
-  direction: 'up' | 'down' | 'flat' | 'new' | 'dropped';
-}
-
 export interface TagTimeSeries {
   buckets: string[];
   granularity: 'week' | 'month' | 'year';
