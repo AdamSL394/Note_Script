@@ -1,5 +1,5 @@
 # PROD CONFIG
-FROM node:18 as prod
+FROM node:22 as prod
 
 WORKDIR /app
 
