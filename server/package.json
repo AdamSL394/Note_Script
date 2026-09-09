@@ -45,7 +45,7 @@
         "typescript-eslint": "^8.68.0"
     },
     "engines": {
-        "node": ">=14.13.0"
+        "node": ">=22.0.0"
     },
     "scripts": {
         "dev-client": "cd ../client && npm start",
