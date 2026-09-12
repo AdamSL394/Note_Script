@@ -103,7 +103,12 @@ export const CreateNote = (props: CreateNoteProps) => {
   const addTrackedStat = (trackedStat: TrackedStat) => {
     props.setTrackedStats([...props.trackedStats, trackedStat]);
     if (props.user) {
-      NoteRoutes.postUserStats(props.user, trackedStat);
+      // Persist the stat as a defined option (hidden), never as
+      // "selected for this note" -- that's ephemeral, per-compose-
+      // session state, and persisting it as visible here is what
+      // made a tag reappear pre-selected on a future note even after
+      // this note's own save had already reset it locally.
+      NoteRoutes.postUserStats(props.user, { ...trackedStat, visible: 'hidden' });
     }
   };
 
@@ -263,7 +268,7 @@ export const CreateNote = (props: CreateNoteProps) => {
               style={
                 tagColor
                   ? {
-                      borderColor: 'transparent',
+                      borderColor: tagColor.text,
                       background: tagColor.background,
                       color: tagColor.text,
                     }

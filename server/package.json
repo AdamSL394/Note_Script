@@ -59,6 +59,8 @@
         "test:watch": "NODE_ENV=test jest --runInBand --watch",
         "test:coverage": "NODE_ENV=test jest --runInBand --coverage",
         "migrate:tags:dry-run": "ts-node scripts/migrateTagsToSnapshot.ts --dry-run",
-        "migrate:tags": "ts-node scripts/migrateTagsToSnapshot.ts"
+        "migrate:tags": "ts-node scripts/migrateTagsToSnapshot.ts",
+        "cleanup:stat-selection:dry-run": "ts-node scripts/resetStaleTrackedStatSelection.ts --dry-run",
+        "cleanup:stat-selection": "ts-node scripts/resetStaleTrackedStatSelection.ts"
     }
 }
