@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toLocalDateString } from '../../utils/date';
 import './termsOfService.css';
 
@@ -80,8 +80,8 @@ const TermsOfService = () => {
 
         <h2>Contact</h2>
         <p>
-          Questions about these terms can be sent to{' '}
-          <a href="mailto:lehreradam@yahoo.com">lehreradam@yahoo.com</a>.
+          Questions about these terms can be sent through{' '}
+          <Link to="/contact">the contact form</Link>.
         </p>
       </div>
     </div>

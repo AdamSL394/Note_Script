@@ -5,28 +5,26 @@ import TableCell from '@mui/material/TableCell/index.js';
 import TableContainer from '@mui/material/TableContainer/index.js';
 import TableHead from '@mui/material/TableHead/index.js';
 import TableRow from '@mui/material/TableRow/index.js';
-import Chip from '@mui/material/Chip/index.js';
 import CircularProgress from '@mui/material/CircularProgress/index.js';
 import Box from '@mui/material/Box/index.js';
 import NoteRoutes from '../../router/noteRoutes';
-import type { UserRecord } from '../../types';
+import type { ContactSubmissionRecord } from '../../types';
 import { AdminTabs } from '../../components/AdminTabs';
-import './adminUsers.css';
+import '../AdminUsers/adminUsers.css';
 
 type LoadState = 'loading' | 'forbidden' | 'error' | 'ready';
 
-const AdminUsers = () => {
-    const [users, setUsers] = useState<UserRecord[]>([]);
+const AdminContact = () => {
+    const [submissions, setSubmissions] = useState<ContactSubmissionRecord[]>([]);
     const [state, setState] = useState<LoadState>('loading');
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            const result = await NoteRoutes.getAllUsers();
-            // requestJson doesn't check HTTP status -- a 403's
-            // {"error": "Forbidden"} body parses as valid JSON just
-            // fine, but isn't actually an array. Checking this
-            // explicitly rather than trusting the type is what stops
-            // that from crashing the page on .map() below.
+        const fetchSubmissions = async () => {
+            const result = await NoteRoutes.getContactSubmissions();
+            // Same reasoning as AdminUsers: a 403's {"error": "Forbidden"}
+            // body parses as valid JSON just fine, but isn't actually an
+            // array -- checked explicitly rather than trusted, so it
+            // doesn't crash the page on .map() below.
             if (!result) {
                 setState('error');
                 return;
@@ -35,10 +33,10 @@ const AdminUsers = () => {
                 setState('forbidden');
                 return;
             }
-            setUsers(result);
+            setSubmissions(result);
             setState('ready');
         };
-        fetchUsers();
+        fetchSubmissions();
     }, []);
 
     return (
@@ -57,40 +55,30 @@ const AdminUsers = () => {
                 )}
 
                 {state === 'error' && (
-                    <p className="adminMessage">Something went wrong loading users. Try again shortly.</p>
+                    <p className="adminMessage">Something went wrong loading submissions. Try again shortly.</p>
                 )}
 
                 {state === 'ready' && (
                     <>
                         <p className="adminEyebrow">Admin</p>
-                        <h1 className="adminHeading">All users ({users.length})</h1>
+                        <h1 className="adminHeading">Contact submissions ({submissions.length})</h1>
                         <TableContainer className="adminTableContainer">
                             <Table>
                                 <TableHead>
                                     <TableRow>
+                                        <TableCell className="adminTableHeadCell">Date</TableCell>
                                         <TableCell className="adminTableHeadCell">Email</TableCell>
-                                        <TableCell className="adminTableHeadCell">Role</TableCell>
-                                        <TableCell className="adminTableHeadCell">User ID</TableCell>
+                                        <TableCell className="adminTableHeadCell">Message</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {users.map((u) => (
-                                        <TableRow key={u._id}>
-                                            <TableCell className="adminTableCell">{u.email}</TableCell>
-                                            <TableCell className="adminTableCell">
-                                                <Chip
-                                                    label={u.role}
-                                                    size="small"
-                                                    className={
-                                                        u.role === 'admin'
-                                                            ? 'adminRoleChip admin'
-                                                            : 'adminRoleChip'
-                                                    }
-                                                />
-                                            </TableCell>
+                                    {submissions.map((s) => (
+                                        <TableRow key={s._id}>
                                             <TableCell className="adminTableCell adminIdCell">
-                                                {u._id}
+                                                {new Date(s.createdAt).toLocaleString()}
                                             </TableCell>
+                                            <TableCell className="adminTableCell">{s.email}</TableCell>
+                                            <TableCell className="adminTableCell">{s.message}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -103,4 +91,4 @@ const AdminUsers = () => {
     );
 };
 
-export default AdminUsers;
+export default AdminContact;

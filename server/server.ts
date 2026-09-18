@@ -10,6 +10,7 @@ import path from 'path';
 import notesRouter from './routes/notes';
 import userRouter from './routes/userSettings';
 import notificationsRouter from './routes/notifications';
+import contactRouter from './routes/contact';
 import bodyParser from 'body-parser';
 import connectToDB from './database/db';
 import checkJwt, { auth0Domain } from './middleware/checkJwt';
@@ -126,6 +127,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/notes', checkJwt, apiRateLimiter, notesRouter);
 app.use('/api/users', checkJwt, apiRateLimiter, userRouter);
 app.use('/notifications', checkJwt, apiRateLimiter, notificationsRouter);
+app.use('/contact', contactRouter);
 
 if (
   process.env.NODE_ENV === 'development' ||

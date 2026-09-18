@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, TagSnapshot, TagAnalytics, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord } from '../types';
+import type { Note, TagSnapshot, TagAnalytics, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord, ContactSubmissionRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -184,6 +184,18 @@ const NoteRoutes = {
 
   getNoteYears: (): Promise<string> =>
     request('/notes/aggregateNoteyears', { method: 'POST' }),
+
+  submitContactForm: async (email: string, message: string): Promise<boolean> => {
+    const { ok } = await requestWithStatus('/contact/submit', {
+      method: 'POST',
+      body: { email, message },
+    });
+    return ok;
+  },
+
+  getContactSubmissions: async (): Promise<ContactSubmissionRecord[] | null> => {
+    return requestJson<ContactSubmissionRecord[]>('/contact/submissions');
+  },
 };
 
 export default NoteRoutes;

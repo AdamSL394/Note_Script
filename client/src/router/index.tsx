@@ -23,6 +23,9 @@ const Upload = lazy(() => import('../views/Upload/upload'));
 const AdminUsers = lazy(() => import('../views/AdminUsers/adminUsers'));
 const PrivacyPolicy = lazy(() => import('../views/PrivacyPolicy/privacyPolicy'));
 const TermsOfService = lazy(() => import('../views/TermsOfService/termsOfService'));
+const Contact = lazy(() => import('../views/Contact/contact'));
+const AdminContact = lazy(() => import('../views/AdminContact/adminContact'));
+const NotFound = lazy(() => import('../views/NotFound/notFound'));
 
 const LoadingFallback = <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
 
@@ -38,6 +41,10 @@ const Router = () => {
                 <Route
                     path="/terms"
                     element={<Suspense fallback={LoadingFallback}><TermsOfService /></Suspense>}
+                />
+                <Route
+                    path="/contact"
+                    element={<Suspense fallback={LoadingFallback}><Contact /></Suspense>}
                 />
                 <Route path="/" element={<ProtectedRoute />}>
                     <Route path="/" element={<Home />} />
@@ -59,7 +66,15 @@ const Router = () => {
                         path="/admin/users"
                         element={<Suspense fallback={LoadingFallback}><AdminUsers /></Suspense>}
                     />
+                    <Route
+                        path="/admin/contact"
+                        element={<Suspense fallback={LoadingFallback}><AdminContact /></Suspense>}
+                    />
                 </Route>
+                <Route
+                    path="*"
+                    element={<Suspense fallback={LoadingFallback}><NotFound /></Suspense>}
+                />
             </Routes>
         </>
     );

@@ -1,0 +1,135 @@
+.contactPage {
+  height: 100%;
+  background: var(--ns-fog);
+  padding: 2rem 1.5rem 4rem;
+}
+
+.contactBack {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ns-blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin: 0 auto 1rem;
+  display: block;
+  max-width: 32rem;
+}
+
+.contactBack:hover {
+  text-decoration: underline;
+}
+
+.contactCard {
+  max-width: 32rem;
+  margin: 0 auto;
+  background: var(--ns-paper);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(35, 38, 43, 0.04);
+  padding: 2.5rem;
+}
+
+.contactEyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ns-graphite);
+  margin: 0 0 0.4rem;
+}
+
+.contactHeading {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--ns-ink);
+  margin: 0 0 0.75rem;
+}
+
+.contactIntro {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ns-graphite);
+  margin: 0 0 2rem;
+}
+
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.contactLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--ns-graphite);
+  text-transform: uppercase;
+  margin-top: 1rem;
+}
+
+.contactLabel:first-of-type {
+  margin-top: 0;
+}
+
+.contactInput,
+.contactTextarea {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ns-ink);
+  background: var(--ns-fog);
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+}
+
+.contactInput:focus,
+.contactTextarea:focus {
+  outline: none;
+  border-color: var(--ns-blue);
+}
+
+.contactCharCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ns-graphite);
+  text-align: right;
+  margin-bottom: 0.75rem;
+}
+
+.contactSent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.contactSentIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a9e5c;
+  color: #fff;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.contactSentMessage {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ns-ink);
+  margin: 0;
+}
+
+.contactErrorMessage {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #b3261e;
+  margin: 0 0 0.75rem;
+}
