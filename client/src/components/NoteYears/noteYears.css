@@ -8,6 +8,7 @@
   flex-shrink: 0;
   align-self: flex-start;
   max-height: calc(100vh - 7rem);
+  max-height: calc(100dvh - 7rem);
   overflow-y: auto;
 }
 

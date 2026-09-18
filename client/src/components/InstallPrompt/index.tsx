@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { usePwaInstallPrompt } from '../../hooks/usePwaInstallPrompt';
-import { hasConsentDecision } from '../../utils/cookieConsent';
 import {
   recordVisit,
   hasEnoughVisitsForPrompt,
@@ -22,13 +21,6 @@ export const InstallPrompt = () => {
     setEnoughVisits(count >= 2);
   }, []);
 
-  // Both this and CookieConsentBanner are fixed, bottom-of-screen
-  // banners -- showing both at once would mean two competing asks
-  // stacked or overlapping. Cookie consent is the more foundational
-  // decision, so it goes first; this simply waits until that's settled.
-  if (!hasConsentDecision()) {
-    return null;
-  }
   if (isStandalone || dismissed || !enoughVisits) {
     return null;
   }
