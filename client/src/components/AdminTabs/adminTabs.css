@@ -1,0 +1,26 @@
+.adminTabs {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 0.5px solid var(--ns-rule);
+  margin-bottom: 1.5rem;
+}
+
+.adminTab {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+  text-decoration: none;
+  padding: 0.6rem 0.1rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+}
+
+.adminTab:hover {
+  color: var(--ns-ink);
+}
+
+.adminTabActive {
+  color: var(--ns-ink);
+  border-bottom-color: var(--ns-blue);
+}

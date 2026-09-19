@@ -34,7 +34,7 @@
   border: 0.5px solid var(--ns-rule);
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(35, 38, 43, 0.04);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .adminTableHeadCell {
@@ -44,6 +44,7 @@
   text-transform: uppercase;
   color: var(--ns-graphite) !important;
   border-bottom: 0.5px solid var(--ns-rule) !important;
+  white-space: nowrap;
 }
 
 .adminTableCell {
@@ -57,6 +58,7 @@
   font-family: var(--font-mono) !important;
   font-size: 12px !important;
   color: var(--ns-graphite) !important;
+  white-space: nowrap;
 }
 
 .adminRoleChip {

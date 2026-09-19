@@ -7,6 +7,8 @@ import { BrowserRouter } from 'react-router-dom';
 import Router from './router/index';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import { CookieConsentBanner } from './components/CookieConsentBanner/index';
+import { InstallPrompt } from './components/InstallPrompt/index';
+import Footer from './components/Footer/footer';
 import { useAuthTokenSync } from './hooks/useAuthTokenSync';
 import { ThemeModeProvider, useThemeMode } from './hooks/useThemeMode';
 import { NS_TOKENS } from './theme/nsTokens';
@@ -71,10 +73,14 @@ function ThemedApp() {
         <ThemeProvider theme={theme}>
             <div className="App">
                 <BrowserRouter basename="/">
-                    <AnalyticsTracker />
-                    <Router />
+                    <div className="appContent">
+                        <AnalyticsTracker />
+                        <Router />
+                    </div>
+                    <Footer />
                 </BrowserRouter>
                 <CookieConsentBanner />
+                <InstallPrompt />
             </div>
         </ThemeProvider>
     );

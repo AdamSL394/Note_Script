@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
-import Grid from '@mui/material/Grid/index.js';
 import Button from '@mui/material/Button/index.js';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import DeleteAccountDialog from '../DeleteAccountDialog';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
 import { WIN_TAGS } from '../../constants/noteFields';
@@ -24,6 +25,8 @@ const UserSetting = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState<string | undefined>();
     const [exportSignal, setExportSignal] = useState(0);
+    const [showAllStats, setShowAllStats] = useState(false);
+    const [showAllThemes, setShowAllThemes] = useState(false);
     const { user, logout } = useAuth0();
     const { mode, setMode } = useThemeMode();
 
@@ -107,8 +110,9 @@ const UserSetting = () => {
     }
 
     return (
+        <>
         <Container id="container" className="userInformation">
-            <Grid item xs={12} sm={10} md={8} lg={8} style={{ margin: '0 auto', textAlign: 'left' }}>
+            <div style={{ margin: '0 auto', textAlign: 'left' }}>
                 <div className="settingsHeader">
                     <UserAvatar id="userInfo" className="settingsAvatar" src={user.picture} size={80} />
                     <div className="settingsIdentity">
@@ -118,19 +122,16 @@ const UserSetting = () => {
                 </div>
 
                 <div className="settingsGroup">
+                    <h4 className="settingsGroupLabel">
+                        <span className="settingsGroupDot" aria-hidden="true"></span>
+                        Activity
+                    </h4>
                     <div className="Form">
                         <h4 className="settingsLabel">Tracked Stats</h4>
                         <div className="statChipRow">
-                            {withoutDups.map((icon, i) => {
-                                const active = icon.visible === 'visible';
+                            {(showAllStats ? withoutDups : withoutDups.slice(0, 5)).map((icon, i) => {
                                 const isWin = WIN_TAGS.includes(icon.name);
-                                const className = [
-                                    'tagChip',
-                                    active ? 'active' : '',
-                                    active && isWin ? 'win' : '',
-                                ]
-                                    .filter(Boolean)
-                                    .join(' ');
+                                const className = isWin ? 'trackedStatChip win' : 'trackedStatChip';
                                 return (
                                     <button
                                         key={i}
@@ -146,6 +147,15 @@ const UserSetting = () => {
                                     </button>
                                 );
                             })}
+                            {!showAllStats && withoutDups.length > 5 && (
+                                <button
+                                    type="button"
+                                    className="settingsShowMoreButton"
+                                    onClick={() => setShowAllStats(true)}
+                                >
+                                    +{withoutDups.length - 5} more
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -158,10 +168,17 @@ const UserSetting = () => {
                 </div>
 
                 <div className="settingsGroup">
+                    <h4 className="settingsGroupLabel">
+                        <span className="settingsGroupDot" aria-hidden="true"></span>
+                        Preferences
+                    </h4>
                     <div className="Form">
                         <h4 className="settingsLabel">Theme</h4>
                         <div className="statChipRow">
-                            {THEME_MODES.map((themeMode) => {
+                            {(showAllThemes
+                                ? THEME_MODES
+                                : [mode, ...THEME_MODES.filter((m) => m !== mode).slice(0, 2)]
+                            ).map((themeMode) => {
                                 const tokens = NS_TOKENS[themeMode];
                                 const active = themeMode === mode;
                                 return (
@@ -179,6 +196,15 @@ const UserSetting = () => {
                                     </button>
                                 );
                             })}
+                            {!showAllThemes && THEME_MODES.length > 3 && (
+                                <button
+                                    type="button"
+                                    className="settingsShowMoreButton"
+                                    onClick={() => setShowAllThemes(true)}
+                                >
+                                    +{THEME_MODES.length - 3} more
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -186,12 +212,14 @@ const UserSetting = () => {
                 </div>
 
                 <div className="settingsGroup">
+                    <h4 className="settingsGroupLabel">
+                        <span className="settingsGroupDot" aria-hidden="true"></span>
+                        Your data
+                        <Tooltip title="Download everything you've written here -- every note, tag, and setting -- as a single file you can keep.">
+                            <InfoOutlinedIcon className="settingsInfoIcon" fontSize="inherit" />
+                        </Tooltip>
+                    </h4>
                     <div className="Form">
-                        <h4 className="settingsLabel">Your data</h4>
-                        <p className="settingsDescription">
-                            Download everything you&apos;ve written here -- every note, tag, and setting -- as a
-                            single file you can keep.
-                        </p>
                         <Button variant="outlined" onClick={handleExportData} disabled={isExporting}>
                             {isExporting ? 'Preparing your export...' : 'Export my data'}
                         </Button>
@@ -199,18 +227,18 @@ const UserSetting = () => {
                         {exportError && <p className="settingsErrorText">{exportError}</p>}
                     </div>
                 </div>
+            </div>
+        </Container>
 
-                <div className="settingsDangerZone">
-                    <h4 className="settingsLabel">Danger Zone</h4>
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => setDeleteDialogOpen(true)}
-                    >
-                        Delete my account
-                    </Button>
-                </div>
-            </Grid>
+        <Container id="dangerZoneContainer" className="settingsDangerZone">
+            <h4 className="settingsLabel">Danger Zone</h4>
+            <Button
+                variant="outlined"
+                color="error"
+                onClick={() => setDeleteDialogOpen(true)}
+            >
+                Delete my account
+            </Button>
 
             <DeleteAccountDialog
                 open={deleteDialogOpen}
@@ -220,6 +248,7 @@ const UserSetting = () => {
                 errorMessage={deleteError}
             />
         </Container>
+        </>
     );
 };
 

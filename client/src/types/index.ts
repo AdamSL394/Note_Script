@@ -108,6 +108,14 @@ export interface UserRecord {
   role: 'user' | 'admin';
 }
 
+// Matches server/models/contactSubmission.ts's ContactSubmissionSchema.
+export interface ContactSubmissionRecord {
+  _id: string;
+  email: string;
+  message: string;
+  createdAt: string;
+}
+
 // The wrapper shape /api/users/user/:id actually responds with
 // (see server/routes/userSettings.js).
 // The subset of Auth0's user object actually used across this app —

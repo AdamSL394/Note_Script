@@ -109,3 +109,11 @@ export const trackedStatsSchema = z.object({
         visible: z.enum(['visible', 'hidden']),
     }),
 });
+
+// Genuinely public, unauthenticated endpoint -- kept deliberately
+// strict on length, since there's no logged-in user to hold
+// accountable for abuse the way there is everywhere else in this app.
+export const contactFormSchema = z.object({
+    email: z.string().email().max(254),
+    message: z.string().min(1).max(2000),
+});
