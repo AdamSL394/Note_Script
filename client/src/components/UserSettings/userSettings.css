@@ -5,7 +5,6 @@
   box-shadow: 0 1px 3px rgba(35, 38, 43, 0.04);
   padding: 2rem;
   margin-top: 2rem;
-  margin-bottom: 5rem;
 }
 
 .settingsHeader {
@@ -44,11 +43,16 @@
 /* A group is a set of related fields (e.g. usage stats, or
    appearance/notification preferences). Fields within a group sit
    close together; groups themselves get more breathing room and a
-   thin rule between them -- rhythm and spacing carry the grouping,
-   not new labels stacked on top of fields that are already labeled. */
+   thin rule between them. Groups now also get a short, bold label
+   with a small dot marker (.settingsGroupLabel) -- this page has
+   grown enough (6 themes, multi-part reminders, export, many tracked
+   stats) that spacing alone is no longer enough to read as "distinct
+   areas" at a glance; the label gives it a scannable table-of-
+   contents effect without repeating what each individual field's own
+   label (.settingsLabel) already says. */
 .settingsGroup {
-  padding-top: 1.5rem;
-  margin-top: 0.5rem;
+  padding-top: 2rem;
+  margin-top: 1rem;
   border-top: 0.5px solid var(--ns-rule);
 }
 
@@ -59,11 +63,32 @@
 }
 
 .settingsGroup .Form {
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.5rem;
 }
 
 .settingsGroup .Form:last-child {
   margin-bottom: 0;
+}
+
+.settingsGroupLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ns-ink);
+  margin-bottom: 1.4rem;
+}
+
+.settingsGroupDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ns-blue);
+  flex-shrink: 0;
 }
 
 .Form {
@@ -72,12 +97,21 @@
 }
 
 .settingsLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.05em;
   color: var(--ns-graphite);
   text-transform: uppercase;
   margin: 0 0 0.4rem;
+}
+
+.settingsInfoIcon {
+  font-size: 13px !important;
+  color: var(--ns-graphite);
+  cursor: help;
 }
 
 .settingsValue {
@@ -90,6 +124,48 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Tracked stats are read-only reference here (unlike on the
+   note-creation page, these chips aren't selectable) -- given a
+   page could have a dozen or more, a smaller, quieter treatment
+   keeps them from visually competing with actual interactive
+   controls like Theme, and the collapsed default keeps the section
+   from dominating the page's vertical space, especially on mobile
+   where wrapped chip rows are the single biggest scroll cost. */
+.trackedStatChip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 14px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.trackedStatChip.win {
+  border-color: var(--ns-amber);
+  background: var(--ns-amber-tint);
+  color: var(--ns-amber-dark);
+}
+
+.settingsShowMoreButton {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 14px;
+  border: 0.5px dashed var(--ns-rule);
+  background: transparent;
+  color: var(--ns-blue);
+  cursor: pointer;
+  line-height: 1.6;
 }
 
 .themeChip {
@@ -122,13 +198,6 @@
   border: 0.5px solid var(--ns-rule);
 }
 
-.settingsDescription {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ns-graphite);
-  margin-bottom: 0.75rem;
-}
-
 .settingsErrorText {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -141,11 +210,12 @@
    Reuses the same #b3261e already used for error text on this page,
    rather than introducing a new color for the same idea. */
 .settingsDangerZone {
-  margin-top: 2rem;
-  padding: 1.25rem 1.5rem;
-  border-left: 2px solid #b3261e;
   background: rgba(179, 38, 30, 0.04);
-  border-radius: 0 6px 6px 0;
+  border: 0.5px solid rgba(179, 38, 30, 0.3);
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
+  margin-top: 1.5rem;
+  margin-bottom: 5rem;
 }
 
 .settingsDangerZone .settingsLabel {

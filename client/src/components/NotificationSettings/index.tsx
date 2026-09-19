@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Tooltip from '@mui/material/Tooltip/index.js';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { usePushNotifications, isPushSupported } from '../../hooks/usePushNotifications';
 import NotificationRoutes from '../../router/notificationRoutes';
 import './notificationSettings.css';
@@ -55,10 +57,12 @@ export const NotificationSettings = () => {
 
   return (
     <div className="Form">
-      <h4 className="settingsLabel">Reminders</h4>
-      <p className="notificationDescription">
-        Get a nudge if you haven&apos;t logged a note by a time you choose.
-      </p>
+      <h4 className="settingsLabel">
+        Reminders
+        <Tooltip title="Get a nudge if you haven't logged a note by a time you choose.">
+          <InfoOutlinedIcon className="settingsInfoIcon" fontSize="inherit" />
+        </Tooltip>
+      </h4>
 
       <div className="notificationToggleRow">
         <button
