@@ -196,6 +196,7 @@
 html {
   background: var(--ns-fog);
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -204,6 +205,7 @@ body {
   min-height: 100dvh;
   background: var(--ns-fog);
   color: var(--ns-ink);
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.15s ease, color 0.15s ease;

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import NoteRoutes from '../../router/noteRoutes';
 import Container from '@mui/material/Container/index.js';
-import Grid from '@mui/material/Grid/index.js';
 import Button from '@mui/material/Button/index.js';
 import DeleteAccountDialog from '../DeleteAccountDialog';
 import type { TrackedStat, UserRecord, UserInfoResponse, AuthUser } from '../../types';
@@ -108,7 +107,7 @@ const UserSetting = () => {
 
     return (
         <Container id="container" className="userInformation">
-            <Grid item xs={12} sm={10} md={8} lg={8} style={{ margin: '0 auto', textAlign: 'left' }}>
+            <div style={{ margin: '0 auto', textAlign: 'left' }}>
                 <div className="settingsHeader">
                     <UserAvatar id="userInfo" className="settingsAvatar" src={user.picture} size={80} />
                     <div className="settingsIdentity">
@@ -210,7 +209,7 @@ const UserSetting = () => {
                         Delete my account
                     </Button>
                 </div>
-            </Grid>
+            </div>
 
             <DeleteAccountDialog
                 open={deleteDialogOpen}
