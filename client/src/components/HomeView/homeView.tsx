@@ -42,6 +42,7 @@ const HomeView = () => {
   const [noteview, setNoteView] = useState('week');
   const [timePeriod, setTimePeriod] = useState('1');
   const [trackedStats, setTrackedStats] = useState<TrackedStat[]>([]);
+  const [hasSeenOnboardingDemo, setHasSeenOnboardingDemo] = useState(true);
   const [successFlag, setSuccessFlag] = useState<'visible' | 'hidden'>('hidden');
   const [errorFlag, setErrorFlag] = useState<'visible' | 'hidden'>('hidden');
   const [errorMessage, setErrorMessage] = useState('');
@@ -112,8 +113,8 @@ const HomeView = () => {
     const lastWeeksDate = toLocalDateString(myPastDate);
 
     async function fetchData() {
+      await getUserInformation();
       await getNoteRanges(userid as string, todaysDate, lastWeeksDate);
-      getUserInformation();
     }
 
     fetchData();
@@ -246,6 +247,7 @@ const HomeView = () => {
     if (res) {
       const userInfo = JSON.parse(res) as UserInfoResponse;
       setTrackedStats(userInfo?.searchedUser?.settings ?? []);
+      setHasSeenOnboardingDemo(userInfo?.searchedUser?.hasSeenOnboardingDemo ?? true);
     }
   };
 
@@ -309,6 +311,7 @@ const HomeView = () => {
           setText={setText}
           text={text}
           storeNewNote={storeNewNote}
+          hasSeenOnboardingDemo={hasSeenOnboardingDemo}
         ></CreateNote>
       </div>
       <AlertMessage

@@ -196,6 +196,11 @@ const NoteRoutes = {
   getContactSubmissions: async (): Promise<ContactSubmissionRecord[] | null> => {
     return requestJson<ContactSubmissionRecord[]>('/contact/submissions');
   },
+
+  markOnboardingDemoSeen: async (): Promise<boolean> => {
+    const { ok } = await requestWithStatus('/api/users/user/onboarding-seen', { method: 'POST' });
+    return ok;
+  },
 };
 
 export default NoteRoutes;

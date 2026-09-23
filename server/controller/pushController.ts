@@ -6,9 +6,15 @@ import { logger } from '../logger';
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+// VAPID's spec accepts either a mailto: email or an https: URL as the
+// contact detail sent to push services (Google FCM, etc.) alongside
+// every notification. Configurable via env var rather than a personal
+// email hardcoded directly in public source code -- falls back to a
+// generic placeholder, not any real address, if unset.
+const vapidContact = process.env.VAPID_CONTACT || 'mailto:support@example.com';
 
 if (vapidPublicKey && vapidPrivateKey) {
-    webpush.setVapidDetails('mailto:lehreradam@yahoo.com', vapidPublicKey, vapidPrivateKey);
+    webpush.setVapidDetails(vapidContact, vapidPublicKey, vapidPrivateKey);
 }
 
 export function getVapidPublicKey(): string | undefined {

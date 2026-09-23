@@ -19,6 +19,7 @@ interface CreateNoteProps {
   text: string | undefined;
   setText: (text: string) => void;
   storeNewNote: (stats: TrackedStat[], date: string | undefined) => void;
+  hasSeenOnboardingDemo?: boolean;
 }
 
 export const CreateNote = (props: CreateNoteProps) => {
@@ -79,6 +80,69 @@ export const CreateNote = (props: CreateNoteProps) => {
     );
     props.setTrackedStats(updated);
   };
+
+  // One-time demo: types a short example sentence into the note
+  // textbox, then selects a starter tag, for a genuinely new user who
+  // hasn't seen it before (server-tracked, not localStorage, so it
+  // plays exactly once per account regardless of which device they're
+  // on) and whose textbox is currently empty (never interrupts
+  // something the user's already begun writing themselves).
+  //
+  // Deliberately NOT interruptible -- an earlier version tried to
+  // detect and cancel on any mouse/keyboard interaction, but that
+  // proved unreliable and made the demo feel broken rather than
+  // helpful (it could stop from something as small as moving the
+  // mouse). Instead, the demo now always plays through fully once
+  // triggered, and the textbox is made read-only only for the short
+  // duration it's actively running -- this also prevents a stray
+  // keystroke from racing against the demo's own typing (both would
+  // otherwise write to the same text state unpredictably).
+  const [isDemoPlaying, setIsDemoPlaying] = useState(false);
+
+  useEffect(() => {
+    if (props.hasSeenOnboardingDemo || props.text) {
+      return;
+    }
+    const demoText = 'This is how you write a note. Try tagging it below!';
+    setIsDemoPlaying(true);
+    let i = 0;
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    const typeNextChar = () => {
+      if (cancelled) return;
+      if (i >= demoText.length) {
+        // Typing finished -- pause, then select the seeded starter
+        // tag so its selected/highlighted state is visible too.
+        timers.push(
+          setTimeout(() => {
+            if (cancelled) return;
+            const welcomeTag = props.trackedStats.find((s) => s.name === 'welcome');
+            if (welcomeTag) {
+              setCodeIcon(welcomeTag);
+            }
+            setIsDemoPlaying(false);
+            NoteRoutes.markOnboardingDemoSeen();
+          }, 600)
+        );
+        return;
+      }
+      props.setText(demoText.slice(0, i + 1));
+      i++;
+      timers.push(setTimeout(typeNextChar, 35));
+    };
+
+    timers.push(setTimeout(typeNextChar, 500));
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
+    // Deliberately re-runs only when hasSeenOnboardingDemo itself
+    // changes (e.g. from its default `true` to the real fetched
+    // value), not on every trackedStats/text change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.hasSeenOnboardingDemo]);
 
   // Client-side mirror of the server's own reserved-name and duplicate
   // checks (trackedStatsSchema) -- for instant feedback, with the
@@ -161,7 +225,10 @@ export const CreateNote = (props: CreateNoteProps) => {
               props.setText(clamped);
             }}
             helperText={`${(props.text ?? '').length}/${CHARACTER_LIMIT}`}
-            InputProps={{ style: { fontFamily: 'var(--font-serif)', fontSize: '15px' } }}
+            InputProps={{
+              readOnly: isDemoPlaying,
+              style: { fontFamily: 'var(--font-serif)', fontSize: '15px' },
+            }}
           />
         </div>
 
