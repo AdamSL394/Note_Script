@@ -21,11 +21,49 @@ const getSingleUser = async (
     return user;
 };
 
+const STARTER_TAGS: ISetting[] = [
+    { icon: '👋', name: 'welcome', visible: 'hidden' },
+    { icon: '🥇', name: 'medal', visible: 'hidden' },
+];
+
+function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+async function seedExampleNotes(userId: string): Promise<void> {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    await Note.insertMany([
+        {
+            userId,
+            text:
+                'Welcome to Note Script! This is what a note looks like -- tap the tag icon below ' +
+                "to track things like exercise, reading, or anything else you'd like to notice " +
+                'patterns in over time.',
+            date: formatDate(today),
+            tags: [{ name: 'welcome', icon: '👋' }],
+        },
+        {
+            userId,
+            text:
+                'Notes can be as short or as detailed as you like. Tags with a gold border, like ' +
+                'this one, count as a "win" for the day.',
+            date: formatDate(yesterday),
+            tags: [{ name: 'medal', icon: '🥇' }],
+        },
+    ]);
+}
+
 const saveNewUser = async (
     id: string,
     userDetails: UserDetails
 ): Promise<IUser[]> => {
-    const newUser = new User({ _id: id, email: userDetails.email });
+    const newUser = new User({ _id: id, email: userDetails.email, settings: STARTER_TAGS });
     // Previously used the callback form of .save() without awaiting it,
     // so this function returned before the callback could ever set
     // errorMessage — it almost always reported success regardless of
@@ -36,6 +74,15 @@ const saveNewUser = async (
     // the shape User.find() returns, so both callers work unchanged.
     try {
         const savedUser = await newUser.save();
+        try {
+            await seedExampleNotes(id);
+        } catch (err) {
+            // Best-effort: the example notes are an onboarding nice-to-
+            // have, not a requirement for the account to work. A failure
+            // here shouldn't block signup or surface as an account
+            // creation error to the new user.
+            logger.error({ err, userId: id }, 'Failed to seed example notes for new user');
+        }
         return [savedUser];
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -124,6 +171,10 @@ export interface ExportedAccountData {
 // file would be a minor exposure) and internal fields like the
 // Mongo _id, userId, or role (database internals a user exporting
 // their own data neither needs nor expects to see).
+const markOnboardingDemoSeen = async (userId: string): Promise<void> => {
+    await User.updateOne({ _id: userId }, { hasSeenOnboardingDemo: true });
+};
+
 const exportUserData = async (userId: string): Promise<ExportedAccountData> => {
     const [user, notes] = await Promise.all([
         User.findOne({ _id: userId }).lean(),
@@ -155,4 +206,5 @@ export default {
     getAllUsers,
     deleteAccount,
     exportUserData,
+    markOnboardingDemoSeen,
 };

@@ -106,6 +106,7 @@ export interface UserRecord {
   email: string;
   settings: TrackedStat[];
   role: 'user' | 'admin';
+  hasSeenOnboardingDemo?: boolean;
 }
 
 // Matches server/models/contactSubmission.ts's ContactSubmissionSchema.

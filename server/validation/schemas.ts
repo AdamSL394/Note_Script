@@ -81,7 +81,12 @@ export const createNoteSchema = z.object({
 });
 
 export const uploadNotesSchema = z.object({
-    note: z.string().min(1),
+    // 50,000 chars is generous for a genuine personal export (years
+    // of journal entries) while bounding how many individual notes a
+    // single request's parseNotes call could generate -- defense in
+    // depth alongside Express's own default body-size limit (100KB),
+    // rather than relying solely on that global default.
+    note: z.string().min(1).max(50000),
 });
 
 const userDetailsSchema = z.object({

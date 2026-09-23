@@ -71,4 +71,16 @@ router.get('/user/export', requireAuth, async (req: Request, res: Response) => {
     return;
 });
 
+router.post('/user/onboarding-seen', requireAuth, async (req: Request, res: Response) => {
+    const userId = getRequiredUserId(req);
+    try {
+        await userController.markOnboardingDemoSeen(userId);
+        res.status(204).send();
+    } catch (err) {
+        logger.error({ err, userId }, 'Failed to mark onboarding demo as seen');
+        res.status(500).json({ error: 'Failed to update onboarding status' });
+    }
+    return;
+});
+
 export default router;

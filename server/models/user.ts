@@ -27,6 +27,10 @@ export interface IUser {
     email: string;
     role: 'user' | 'admin';
     notificationPreferences?: INotificationPreferences;
+    // Tracked server-side, not in localStorage -- the one-time note-
+    // composing typing demo should play exactly once per account, not
+    // once per browser/device a user happens to log in from.
+    hasSeenOnboardingDemo: boolean;
 }
 
 const SettingSchema = new Schema<ISetting>(
@@ -57,6 +61,7 @@ const UserSchema = new Schema<IUser>({
     email: String,
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     notificationPreferences: { type: NotificationPreferencesSchema, default: () => ({}) },
+    hasSeenOnboardingDemo: { type: Boolean, default: false },
 });
 
 const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);

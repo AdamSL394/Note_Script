@@ -22,7 +22,7 @@ function Footer() {
 
   return (
     <div style={style}>
-      © AdamSL394 GH
+      © Note Script
       <Link to="/contact" style={linkStyle}>Contact</Link>
       <Link to="/privacy" style={linkStyle}>Privacy</Link>
       <Link to="/terms" style={linkStyle}>Terms</Link>

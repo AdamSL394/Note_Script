@@ -1,10 +1,7 @@
 /* eslint-disable max-len */
 import React, { useState } from 'react';
-import Container from '@mui/material/Container/index.js';
 import { useAuth0 } from '@auth0/auth0-react';
-import Card from '@mui/material/Card/index.js';
 import Button from '@mui/material/Button/index.js';
-import Grid from '@mui/material/Grid/index.js';
 import NoteRoutes from '../../router/noteRoutes';
 import { toLocalDateString } from '../../utils/date';
 import './upload.css';
@@ -16,24 +13,21 @@ interface PreviewNote {
 }
 
 const EXAMPLE_FILE = `11/19/21
-    Nose Piercing
-    Bryce Ronak Show up
-    Get a table super drunk
+    Went for a run in the park
+    Tried a new coffee shop downtown
+    Read a few chapters before bed
     
     
     11/20/21
-    Sleep most the day 
-    Drinks strip of bars
-    Drop phone crack screen
-    Whore house no hot girls
+    Cleaned the apartment
+    Cooked dinner with a friend
+    Watched a movie
     
     
     11/21/21
-    Drop bags at Bryce/Ronaks
-    Chill at beach get coffee
-    Check into hostel
-    Meet up with kazakhstan girl
-    Ronak smooshed in bathroom`;
+    Worked on a side project
+    Called family
+    Early night, felt good`;
 
 const UploadNotes = () => {
   const [array, setArray] = useState<PreviewNote[]>([]);
@@ -65,13 +59,21 @@ const UploadNotes = () => {
         i++;
       }
 
+      // Blank separator lines are treated as note boundaries -- but
+      // trim() before checking length, not a bare length === 0 check,
+      // since a "blank" line that's actually whitespace-only (e.g. an
+      // indented example, or a real export with trailing spaces) was
+      // never being recognized as blank at all. That meant the parser
+      // never broke to start a new note, and just kept appending every
+      // subsequent line -- including later date headers -- as content
+      // of the first note.
       while (notes[i] !== '\n' && notes[i] !== undefined && i < notes.length) {
-        if (notes[i] === '\r' || notes[i].length === 0) {
+        if (notes[i] === '\r' || notes[i].trim().length === 0) {
           if (
             i + 1 < notes.length &&
-            (notes[i + 1] === '\r' || notes[i + 1].length === 0)
+            (notes[i + 1] === '\r' || notes[i + 1].trim().length === 0)
           ) {
-            while (notes[i + 1] === '\r' || notes[i + 1].length === 0) {
+            while (notes[i + 1] === '\r' || notes[i + 1].trim().length === 0) {
               i++;
             }
           }
@@ -148,6 +150,12 @@ const UploadNotes = () => {
     e.preventDefault();
     const blob = new Blob([EXAMPLE_FILE], { type: 'text/plain' });
     const href = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = 'example-notes.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(href);
   };
 
@@ -161,82 +169,71 @@ const UploadNotes = () => {
   const userId = user.sub.split('|')[1];
 
   return (
-    <>
-      <Container id="container">
-        <form>
+    <div className="uploadPage">
+      <div className="uploadCard">
+        <p className="uploadEyebrow">Import</p>
+        <h1 className="uploadHeading">Upload notes</h1>
+        <p className="uploadIntro">
+          Bring in notes from a .txt or .csv file -- each date starts a new note, with the lines
+          underneath as its content.
+        </p>
+
+        <form className="uploadForm">
+          <label className="uploadFileLabel" htmlFor="csvFileInput">
+            <span className="uploadFileLabelText">
+              {file ? file.name : 'Choose a file'}
+            </span>
+            <span className="uploadFileLabelButton">Browse</span>
+          </label>
           <input
             type="file"
             id="csvFileInput"
+            className="uploadFileInput"
             accept=".csv,.txt"
             onChange={handleOnChange}
           />
 
-          <Button
-            onClick={(e) => switchOperation(e, userId)}
-            id="upload"
-            style={{ marginRight: '3%' }}
-          >
-            {fileButtontext}
-          </Button>
+          <div className="uploadActions">
+            <Button
+              variant="contained"
+              onClick={(e) => switchOperation(e, userId)}
+              disabled={!isFile}
+            >
+              {fileButtontext}
+            </Button>
 
-          <Button id="example" onClick={(e) => download(e)}>
-            Example .txt File
-          </Button>
+            <Button variant="outlined" onClick={(e) => download(e)}>
+              Example .txt file
+            </Button>
+          </div>
         </form>
 
-        <Container style={{ paddingBottom: '3%', marginTop: '.5%' }}>
-          <Grid
-            style={{ width: '90% !important' }}
-            container
-            spacing={2}
-            direction="row"
-            justifyContent="center"
-            alignItems="flex-start"
-          >
-            {array.map((note, i) => {
-              return (
-                <Grid key={i + 100} item xs={12} sm={6} md={4} lg={3}>
-                  <Card
-                    style={{ marginBottom: '2%' }}
-                    id="Card"
-                    variant="outlined"
-                  >
-                    <div
-                      style={{
-                        marginBottom: '5%',
-                        borderBottom: '1px solid var(--ns-rule)',
-                      }}
-                    >
-                      <span style={{ marginRight: '12%' }}>
-                        {' '}
-                        <strong>{note.date}</strong>
-                      </span>
-                      <strong>
-                        <span>✨</span> &apos;s:&nbsp; {note.star}
-                      </strong>
-                    </div>
+        {array.length > 0 && (
+          <div className="uploadPreview">
+            <p className="uploadPreviewLabel">Preview ({array.length})</p>
+            <div className="uploadPreviewGrid">
+              {array.map((note, i) => (
+                <div className="uploadPreviewCard" key={i + 100}>
+                  <div className="uploadPreviewCardHeader">
+                    <strong>{note.date}</strong>
+                  </div>
+                  <ul className="uploadPreviewCardList">
                     {note.text.split('\n').map((line, key) => {
                       if (line.length === 0) {
                         return null;
                       }
                       const firstLetter = line[0].toUpperCase();
                       const restOfSentence = line.slice(1, line.length);
-                      return (
-                        <ul key={key} style={{ textAlign: 'left' }}>
-                          <li style={{ padding: '5px 3px ' }}>
-                            {firstLetter + restOfSentence}
-                          </li>
-                        </ul>
-                      );
+                      return <li key={key}>{firstLetter + restOfSentence}</li>;
                     })}
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Container>
-      </Container>
-    </>
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 export default UploadNotes;
