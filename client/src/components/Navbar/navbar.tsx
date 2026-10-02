@@ -148,14 +148,14 @@ function Navbar() {
               Admin
             </span>
           )}
-          <i className="tabs" id="userName" onClick={userSettings}>
+          <span className="tabs" id="userName" onClick={userSettings}>
             Hi{' '}
             <span role="img" aria-label="Star">
               👋🏼
             </span>{' '}
             {user?.name ? user.name : ''}
             <UserAvatar id="userAvatar" src={user?.picture} size={25} />
-          </i>
+          </span>
         </span>
         <Tooltip title="Change theme">
           <IconButton

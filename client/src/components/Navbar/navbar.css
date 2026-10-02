@@ -21,12 +21,13 @@
   text-decoration: none;
 }
 
-#userName {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ns-ink);
-  font-style: normal;
-}
+/* No "#userName" rule here on purpose -- this element already shares
+   the ".tabs" class (see navbar.tsx) for its font and color, same as
+   every other nav item. An ID-selector override used to live here
+   with its own `color: var(--ns-ink)`, which beat the shared
+   ".tabs" graphite color by specificity alone and was why "Hi Adam
+   Lehrer" rendered noticeably darker than "Home" / "All Notes" /
+   etc. right next to it. */
 
 #userAvatar {
   border-radius: 50%;
