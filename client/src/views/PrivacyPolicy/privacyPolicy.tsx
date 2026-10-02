@@ -1,6 +1,11 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { toLocalDateString } from '../../utils/date';
 import './privacyPolicy.css';
+
+// Hardcoded rather than computed at render time -- this is the actual
+// date the policy last changed, not "whenever someone happens to load
+// the page" (new Date() here previously made every visitor see today's
+// date as "last updated", which is misleading, not accurate).
+const LAST_UPDATED = 'October 1, 2026';
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
@@ -12,7 +17,7 @@ const PrivacyPolicy = () => {
       </button>
       <div className="legalContent">
         <h1>Privacy Policy</h1>
-        <p className="legalUpdated">Last updated: {toLocalDateString(new Date())}</p>
+        <p className="legalUpdated">Last updated: {LAST_UPDATED}</p>
 
         <p>
           This is a small, independently-run project, not a company with a
@@ -34,6 +39,13 @@ const PrivacyPolicy = () => {
             <strong>Usage data</strong> — general page-view analytics via
             Google Analytics, to understand how the app is used. This does
             not include the content of your notes.
+          </li>
+          <li>
+            <strong>Push notification data</strong> — if you turn on
+            notifications, your browser gives us a subscription endpoint
+            and encryption keys so we can deliver them. We can&apos;t read
+            any other data through this, and it&apos;s deleted if you turn
+            notifications off or delete your account.
           </li>
         </ul>
 

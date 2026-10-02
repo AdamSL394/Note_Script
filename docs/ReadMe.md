@@ -63,6 +63,10 @@ npm start
 | `AUTH0_DOMAIN` | server | Auth0 tenant domain |
 | `AUTH0_AUDIENCE` | server | Auth0 API audience |
 | `REDIS_URL` | server | Optional — omit to run rate limiting in-memory only |
+| `CLIENT_ORIGIN` | server | Origin allowed to call the API via CORS (e.g. `https://notescript.app`). Optional — omit to allow any origin in local dev |
+| `VAPID_PUBLIC_KEY` | server | Public key for Web Push notifications |
+| `VAPID_PRIVATE_KEY` | server | Private key for Web Push notifications |
+| `VAPID_CONTACT` | server | Optional — `mailto:` contact URI required by the Web Push protocol; defaults to a placeholder if unset |
 | `REACT_APP_GA_MEASUREMENT_ID` | client | Optional — omit to disable analytics |
 
 ## Testing
