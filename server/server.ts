@@ -101,7 +101,17 @@ app.use(
 );
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(cors());
+// Wide open (no `origin` option) meant any website could call this API
+// from a browser and read the response -- low actual risk today since
+// auth is a bearer token in localStorage (never a cookie) rather than a
+// cookie-based session, so there's nothing for a cross-site request to
+// ride on automatically, but it's still a gap worth closing rather than
+// relying on that alone. CLIENT_ORIGIN is optional and unset in local
+// dev (where the client runs on its own `npm start` origin and nothing
+// else should be calling the API anyway); in any environment where it
+// IS set (i.e. deployed), only that origin is allowed.
+const clientOrigin = process.env.CLIENT_ORIGIN;
+app.use(cors(clientOrigin ? { origin: clientOrigin } : undefined));
 
 // Deliberately public -- no checkJwt, no apiRateLimiter. A health/
 // keep-alive endpoint's whole job is to be hit by external monitoring

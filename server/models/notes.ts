@@ -5,6 +5,11 @@ export interface ITagSnapshot {
     icon: string;
 }
 
+export interface IChecklistItem {
+    text: string;
+    checked: boolean;
+}
+
 // Deliberately NOT extending Document — see models/user.ts for why.
 export interface INote {
     _id: mongoose.Types.ObjectId;
@@ -23,6 +28,11 @@ export interface INote {
     // and description at purchase time rather than re-reading today's
     // catalog every time the order is displayed).
     tags: ITagSnapshot[];
+    // A note can hold free-text (`text`), a checklist, or both -- see
+    // createNoteSchema's refine() on the server and the equivalent
+    // client-side check, which together require at least one of the two
+    // to be non-empty rather than requiring `text` specifically.
+    checklist: IChecklistItem[];
     // Legacy flat fields, kept (not deleted) during the migration
     // period as a safety net -- new code reads/writes `tags`
     // exclusively. Safe to remove once the migration has run in
@@ -48,9 +58,25 @@ const TagSnapshotSchema = new Schema<ITagSnapshot>(
     { _id: false }
 );
 
+const ChecklistItemSchema = new Schema<IChecklistItem>(
+    {
+        text: { type: String, required: true },
+        checked: { type: Boolean, default: false },
+    },
+    { _id: false }
+);
+
 const NoteSchema = new Schema<INote>({
     'userId': {type: String, required: true},
-    'text': {type: String, required: true},
+    // NOT required -- a note may be checklist-only (see `checklist`
+    // below). Mongoose's built-in `required` validator on a String path
+    // rejects an empty string, not just a missing one, so `required:
+    // true` here would have broken checklist-only notes at the model
+    // layer even after the zod schema (validation/schemas.ts) was fixed
+    // to allow them. `default: ''` keeps the field always present as a
+    // string for any code that reads `note.text` without an undefined
+    // check.
+    'text': {type: String, default: ''},
     'date': {type: String, required: true},
     // Was `default: false` — a boolean default on a String-typed field
     // that's supposed to hold '1'/'2'/'3'/'None' (see the client's
@@ -70,6 +96,14 @@ const NoteSchema = new Schema<INote>({
         validate: {
             validator: (arr: ITagSnapshot[]) => arr.length <= 40,
             message: 'A note cannot have more than 40 tags.',
+        },
+    },
+    'checklist': {
+        type: [ChecklistItemSchema],
+        default: [],
+        validate: {
+            validator: (arr: IChecklistItem[]) => arr.length <= 40,
+            message: 'A note cannot have more than 40 checklist items.',
         },
     },
     'look': {type: Boolean, default: false},

@@ -8,11 +8,12 @@ import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import { CreateNote } from '../HomeComponents/createNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
 import { HomeNoteCard } from '../HomeComponents/notesHomeView';
+import { ScrollableChipRow } from '../ScrollableChipRow/index';
 import { AlertMessage } from '../HomeComponents/SaveNoteAlert/index';
 import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import { useNoteEditing } from '../../hooks/useNoteEditing';
-import type { Note as NoteType, TrackedStat, UserInfoResponse } from '../../types';
+import type { Note as NoteType, TrackedStat, UserInfoResponse, ChecklistItem } from '../../types';
 import { WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
 import { toLocalDateString } from '../../utils/date';
 import './homeView.css';
@@ -35,6 +36,7 @@ const HomeView = () => {
   const [noNotes, setnoNotes] = useState<string | undefined>();
   const [noteError, setNoteError] = useState<string | undefined>();
   const [text, setText] = useState<string | undefined>();
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
 
   const [disabled, setDisabled] = useState(false);
 
@@ -78,6 +80,37 @@ const HomeView = () => {
     modelNoteId,
     saveError,
   } = useNoteEditing(setNotes, refreshAfterChange);
+
+  // Toggle/edit/remove a single checklist item on an already-saved
+  // note -- all three reuse the same updateNote (from useNoteEditing)
+  // that tag toggles already go through: build the new checklist
+  // array immutably, send the whole note through, let the server's
+  // response (source of truth) land back in state.
+  const toggleChecklistItem = (note: NoteType, index: number) => {
+    const nextChecklist = (note.checklist ?? []).map((item, i) =>
+      i === index ? { ...item, checked: !item.checked } : item
+    );
+    // star must be run through sanitizeStarValue here too -- some older
+    // notes still carry a legacy non-enum `star` (e.g. a raw boolean)
+    // that would otherwise be sent straight back to the server as-is,
+    // failing its star enum validation and silently rejecting the
+    // *whole* update (checklist change included), with nothing surfaced
+    // to the user. saveNote/cancelEdit/editNote already guard against
+    // this; these three checklist handlers didn't.
+    updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
+  };
+
+  const removeChecklistItem = (note: NoteType, index: number) => {
+    const nextChecklist = (note.checklist ?? []).filter((_, i) => i !== index);
+    updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
+  };
+
+  const editChecklistItemText = (note: NoteType, index: number, text: string) => {
+    const nextChecklist = (note.checklist ?? []).map((item, i) =>
+      i === index ? { ...item, text } : item
+    );
+    updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
+  };
 
   // Marks a note as being edited in place -- matches Note/index.tsx's
   // existing editNote logic exactly, since EditingNote reads the same
@@ -141,7 +174,8 @@ const HomeView = () => {
 
   const storeNewNote = async (
     stats: TrackedStat[],
-    date: string | undefined
+    date: string | undefined,
+    checklistToSave: ChecklistItem[]
   ) => {
     const userId = getUserId();
     if (!userId) {
@@ -149,12 +183,17 @@ const HomeView = () => {
     }
     setDisabled(true);
 
+    // A note only needs a real checklist item or two, not necessarily
+    // free-text -- validation checks either, not text specifically.
+    const hasText = Boolean(text && text.trim().length > 0);
+    const hasChecklistItem = checklistToSave.some((item) => item.text.trim().length > 0);
+
     const raw: Record<string, unknown> = {
-      text,
+      text: text ?? '',
       date,
     };
-    if (!text || text.length < 1 || !date) {
-      setErrorMessage('Please set a message & date');
+    if ((!hasText && !hasChecklistItem) || !date) {
+      setErrorMessage('Please add some text or a checklist item, and set a date');
       setErrorFlag('visible');
       setTimeout(() => {
         setErrorFlag('hidden');
@@ -167,6 +206,7 @@ const HomeView = () => {
       .filter((stat) => stat.visible === 'visible' && !RESERVED_NOTE_FIELDS.has(stat.name))
       .map((stat) => ({ name: stat.name, icon: stat.icon }));
     raw.tags = tags;
+    raw.checklist = checklistToSave;
 
     const res = await NoteRoutes.postNote(raw);
     const todaysDate = toLocalDateString(new Date());
@@ -190,6 +230,7 @@ const HomeView = () => {
     // "last week" window — only the extra getNoteRanges refresh below
     // depends on that.
     setText('');
+    setChecklist([]);
     setSuccessMessage(res);
     setSuccessFlag('visible');
 
@@ -266,7 +307,7 @@ const HomeView = () => {
   const renderPropertyCount = (icon: string, label: string, count: number) => {
     if (count <= 0) return null;
     return (
-      <span id="items" key={label}>
+      <span className="weeklyTagChip" key={label}>
         <span aria-hidden="true">{icon}</span> {label}: {count}
       </span>
     );
@@ -310,6 +351,8 @@ const HomeView = () => {
           user={user}
           setText={setText}
           text={text}
+          checklist={checklist}
+          setChecklist={setChecklist}
           storeNewNote={storeNewNote}
           hasSeenOnboardingDemo={hasSeenOnboardingDemo}
         ></CreateNote>
@@ -321,41 +364,74 @@ const HomeView = () => {
         errorMessage={errorMessage}
       ></AlertMessage>
 
-      <div className="streakStrip">
-        <span className="streakCount">
-          <span aria-hidden="true">📝</span>{' '}
-          {lookBackSummary.total} note{lookBackSummary.total === 1 ? '' : 's'}
-        </span>
-        {lookBackSummary.wins > 0 && (
-          <span className="streakCount">
-            <span aria-hidden="true">🔥</span>{' '}
-            {lookBackSummary.wins} win{lookBackSummary.wins === 1 ? '' : 's'}
-          </span>
-        )}
-        <span className="streakLabel">{getLookBackLabel()}</span>
-      </div>
+      <div className="weeklyWidget">
+        {/* Two stacked rows instead of one long one. The stat/win-badge
+            group and the Look Back control are both fixed-width, "read
+            this fact" pieces, so they share a top row sized to their
+            own content. Tag chips are open-ended -- there can be one
+            tag or a dozen -- so they get their own full-width row
+            underneath instead of fighting the top row's other pieces
+            for whatever space is left over on the right. At any fixed
+            card width (let alone a wide desktop viewport, where this
+            card doesn't grow to fill the screen) that leftover space
+            could end up a lot smaller than the chip row actually
+            needed. */}
+        <div className="weeklyWidgetTopRow">
+          {/* Stat + win badge are grouped into their own always-row
+              flex unit so they stay on one line together even once
+              ".weeklyWidgetTopRow" stacks to flex-direction:column on
+              narrow screens -- previously each was a direct child of
+              that column, so the two landed on separate stacked lines
+              there instead of side by side. */}
+          <div className="weeklyStatRow">
+            <div className="weeklyStat">
+              <span className="weeklyStatNumber">{lookBackSummary.total}</span>
+              <span className="weeklyStatLabel">
+                note{lookBackSummary.total === 1 ? '' : 's'}, {getLookBackLabel()}
+              </span>
+            </div>
 
-      <LookBack
-        timePeriod={timePeriod}
-        setNotes={setNotes}
-        setnoNotes={setnoNotes}
-        setNoteError={setNoteError}
-        setTimePeriod={setTimePeriod}
-        setNoteView={setNoteView}
-        getNoteRanges={getNoteRanges}
-        noteview={noteview}
-      ></LookBack>
+            {lookBackSummary.wins > 0 && (
+              <>
+                <div className="weeklyDivider" aria-hidden="true"></div>
+                <div className="weeklyWinBadge">
+                  <span className="weeklyWinIcon" aria-hidden="true">🔥</span>
+                  <span className="weeklyWinCount">
+                    {lookBackSummary.wins} win{lookBackSummary.wins === 1 ? '' : 's'}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="weeklyDivider" aria-hidden="true"></div>
+
+          <LookBack
+            timePeriod={timePeriod}
+            setNotes={setNotes}
+            setnoNotes={setnoNotes}
+            setNoteError={setNoteError}
+            setTimePeriod={setTimePeriod}
+            setNoteView={setNoteView}
+            getNoteRanges={getNoteRanges}
+            noteview={noteview}
+          ></LookBack>
+        </div>
+
+        {Object.values(propertyCounts).some(({ count }) => count > 0) && (
+          <div className="weeklyWidgetTagRow">
+            <ScrollableChipRow ariaLabel="tag counts for this period">
+              {Object.entries(propertyCounts)
+                .filter(([, { count }]) => count > 0)
+                .map(([tagName, { count, icon }]) => renderPropertyCount(icon, tagName, count))}
+            </ScrollableChipRow>
+          </div>
+        )}
+      </div>
 
       <h3 id="pastNoteHeader">{noNotes}</h3>
       <h3 id="pastNoteError">{noteError}</h3>
       <div>
-        {Object.values(propertyCounts).some(({ count }) => count > 0) && (
-          <div id="count">
-            {Object.entries(propertyCounts)
-              .filter(([, { count }]) => count > 0)
-              .map(([tagName, { count, icon }]) => renderPropertyCount(icon, tagName, count))}
-          </div>
-        )}
         <Grid
           container
           spacing={2}
@@ -380,7 +456,14 @@ const HomeView = () => {
                   onStarValueChange={onStarValueChange}
                 ></EditingNote>
               ) : (
-                <HomeNoteCard note={note} onEdit={editNote} onDelete={openModal} />
+                <HomeNoteCard
+                  note={note}
+                  onEdit={editNote}
+                  onDelete={openModal}
+                  onToggleChecklistItem={toggleChecklistItem}
+                  onRemoveChecklistItem={removeChecklistItem}
+                  onEditChecklistItemText={editChecklistItemText}
+                />
               )}
             </Grid>
           ))}

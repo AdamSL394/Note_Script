@@ -193,6 +193,42 @@ describe('PATCH /notes/update/:id — cross-user update', () => {
     });
 });
 
+// Route-level regression: `checklist` passed updateNoteSchema and was
+// handled correctly by noteController.updateNote, but the route handler
+// itself destructured req.body for the fields it forwards to the
+// controller and simply never included `checklist` in that list -- so
+// every checklist toggle/edit/remove request succeeded (200, no error)
+// while silently never persisting. A unit test against the schema or
+// the controller alone can't catch this; it only shows up by going
+// through the actual route.
+describe('PATCH /notes/update/:id — checklist persistence', () => {
+    it('persists a checklist change sent through the real route', async () => {
+        const note = await new Note({
+            userId: userA,
+            text: 'groceries',
+            date: '2026-01-01',
+            star: 'None',
+            checklist: [{ text: 'Buy milk', checked: false }],
+        }).save();
+        const app = buildApp();
+
+        const res = await request(app)
+            .patch(`/notes/update/${note._id.toString()}`)
+            .set('Authorization', bearerFor(userA))
+            .send({
+                edit: false,
+                text: 'groceries',
+                date: '2026-01-01',
+                star: 'None',
+                checklist: [{ text: 'Buy milk', checked: true }],
+            });
+
+        expect(res.status).toBe(200);
+        const updated = await Note.findById(note._id);
+        expect(updated?.checklist?.[0]?.checked).toBe(true);
+    });
+});
+
 // Sanity check that validObjectId's shape matches what routes actually expect.
 describe('helper sanity', () => {
     it('validObjectId produces a real 24-char hex string', () => {

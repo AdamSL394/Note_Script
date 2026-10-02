@@ -33,6 +33,13 @@ A few things worth knowing about how this app is actually built, not just what i
 - **CI/CD that can't be bypassed** — every push (including direct pushes outside a PR) runs the same validation as a merge; nothing deploys without it. Production deploys are a deliberate manual trigger, not automatic-on-merge.
 - **Structured logging with automatic secret redaction** — bearer tokens and cookies are never logged, even in dev.
 
+## Developer Documentation
+
+- [Architecture](./docs/ARCHITECTURE.md) — how the client, server, and infra pieces fit together, request lifecycle, caching/rate-limiting design
+- [API Reference](./docs/API.md) — every route: auth, request/response shape, validation
+- [Data Model](./docs/DATA_MODEL.md) — schemas, field meanings, legacy-field reconciliation
+- [Contributing](./docs/CONTRIBUTING.md) — local setup, conventions, testing patterns, CI/CD
+
 ## Local Development
 
 ```bash
@@ -56,6 +63,10 @@ npm start
 | `AUTH0_DOMAIN` | server | Auth0 tenant domain |
 | `AUTH0_AUDIENCE` | server | Auth0 API audience |
 | `REDIS_URL` | server | Optional — omit to run rate limiting in-memory only |
+| `CLIENT_ORIGIN` | server | Origin allowed to call the API via CORS (e.g. `https://notescript.app`). Optional — omit to allow any origin in local dev |
+| `VAPID_PUBLIC_KEY` | server | Public key for Web Push notifications |
+| `VAPID_PRIVATE_KEY` | server | Private key for Web Push notifications |
+| `VAPID_CONTACT` | server | Optional — `mailto:` contact URI required by the Web Push protocol; defaults to a placeholder if unset |
 | `REACT_APP_GA_MEASUREMENT_ID` | client | Optional — omit to disable analytics |
 
 ## Testing

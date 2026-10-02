@@ -1,0 +1,73 @@
+.scrollableChipRowWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.scrollableChipRow {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  scrollbar-width: none;
+  min-width: 0;
+}
+
+.scrollableChipRow::-webkit-scrollbar {
+  display: none;
+}
+
+/* Was opacity:0 / pointer-events:none until hover or focus -- a
+   reasonable fallback affordance for a mouse user, but it meant the
+   only hint that a chip row scrolls at all was invisible by default,
+   and never appeared for anyone on a touch device, where there's no
+   hover to reveal it in the first place. Translucent-but-always-there
+   is the fix: it reads as a quiet affordance rather than a loud
+   control, and doesn't depend on a pointer that not every visitor
+   has. */
+.scrollArrowButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 50%;
+  background: var(--ns-paper);
+  color: var(--ns-graphite);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.scrollArrowLeft {
+  margin-right: 4px;
+}
+
+.scrollArrowRight {
+  margin-left: 4px;
+}
+
+.scrollableChipRowWrap:hover .scrollArrowButton,
+.scrollArrowButton:focus-visible {
+  opacity: 1;
+}
+
+.scrollArrowButton:hover {
+  opacity: 1;
+  border-color: var(--ns-blue);
+  color: var(--ns-blue);
+}
+
+/* The button itself is only rendered at all once the row overflows
+   (see index.tsx), so reaching this state means scrolling IS possible
+   overall, just not any further in this one direction -- dimmed and
+   inert rather than removed, so the row doesn't visually jump/reflow
+   as each end is reached, and hover/focus can't revive it either. */
+.scrollArrowButton:disabled {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}

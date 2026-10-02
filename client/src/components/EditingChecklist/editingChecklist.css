@@ -1,0 +1,96 @@
+.editingChecklistSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editingChecklistScrollArea {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 8px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--ns-paper);
+}
+
+.editingChecklistItemFilled {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.2rem;
+  border-radius: 6px;
+}
+
+.editingChecklistItemFilled:hover {
+  background: var(--ns-fog);
+}
+
+.editingChecklistItemFilled input[type='checkbox'] {
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--ns-blue);
+}
+
+.editingChecklistText,
+.editingChecklistTextDone {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ns-ink);
+  cursor: text;
+  word-break: break-word;
+}
+
+.editingChecklistTextDone {
+  color: var(--ns-graphite);
+  text-decoration: line-through;
+}
+
+.editingChecklistRemoveButton {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.editingChecklistRemoveButton:hover {
+  opacity: 1;
+}
+
+.editingChecklistItemActive {
+  padding: 0.15rem 0;
+}
+
+.editingChecklistItemActive input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0.5px solid var(--ns-blue);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ns-ink);
+  background: var(--ns-paper);
+}
+
+.editingChecklistItemActive input:focus {
+  outline: none;
+}
+
+.editingAddChecklistButton {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ns-blue);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+.editingAddChecklistButton:hover {
+  text-decoration: underline;
+}

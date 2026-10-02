@@ -11,6 +11,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select/index.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import Textarea from '../TextArea/index';
 import { EditingTrackedEmojis } from '../EditingTrackedEmojis/index';
+import { EditingChecklist } from '../EditingChecklist/index';
 import type { Note, TrackedStat } from '../../types';
 import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
 import './editNote.css';
@@ -124,6 +125,8 @@ function EditingNote(props: EditingNoteProps) {
           note={props.note}
           setNoteValue={props.setNoteValue}
         ></Textarea>
+
+        <EditingChecklist note={props.note} setNoteValue={props.setNoteValue}></EditingChecklist>
 
         <div className="editingFooterRow">
           <Button

@@ -8,24 +8,18 @@
   gap: 1rem;
 }
 
-.createNoteTopRow {
+.notesChecklistRow {
   display: flex;
-  flex-wrap: wrap;
   gap: 1.5rem;
-  align-items: center;
+  align-items: stretch;
 }
 
-.createNoteMain {
-  flex: 1 1 18rem;
+.notesPanel,
+.checklistPanel {
+  flex: 1 1 50%;
   min-width: 0;
-}
-
-.createNoteControls {
-  flex: 0 0 12rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  align-self: center;
 }
 
 .composeHeading {
@@ -35,39 +29,151 @@
   margin: 0 0 0.6rem;
 }
 
-.tagRowWrap {
-  position: relative;
-  width: 100%;
-  min-width: 0;
-}
-
-.tagFade {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 4px;
-  width: 32px;
-  background: linear-gradient(to right, transparent, var(--ns-paper));
-  pointer-events: none;
-}
-
-.tagRow {
+/* Checklist panel -- height-capped and internally scrolling so a
+   checklist with many items never grows taller than the Notes panel
+   next to it (or the whole card wider than the viewport). */
+.checklistScrollArea {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 8px;
+  padding: 0.4rem;
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--ns-paper);
+}
+
+.checklistItemFilled {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.2rem;
+  border-radius: 6px;
+}
+
+.checklistItemFilled:hover {
+  background: var(--ns-fog);
+}
+
+.checklistItemFilled input[type='checkbox'] {
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--ns-blue);
+}
+
+.checklistItemText,
+.checklistItemTextDone {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ns-ink);
+  cursor: text;
+  word-break: break-word;
+}
+
+.checklistItemTextDone {
+  color: var(--ns-graphite);
+  text-decoration: line-through;
+}
+
+.checklistRemoveButton {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.checklistRemoveButton:hover {
+  opacity: 1;
+}
+
+.checklistItemActive {
+  padding: 0.15rem 0;
+}
+
+.checklistItemActive input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0.5px solid var(--ns-blue);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ns-ink);
+  background: var(--ns-paper);
+}
+
+.checklistItemActive input:focus {
+  outline: none;
+}
+
+.addChecklistItemButton {
+  align-self: flex-start;
+  margin-top: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ns-blue);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+.addChecklistItemButton:hover {
+  text-decoration: underline;
+}
+
+.tagSuggestionsRow {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  margin-top: 1rem;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
 }
 
-.tagRow::-webkit-scrollbar {
-  height: 4px;
+.tagSuggestionChip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px dashed var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.tagRow::-webkit-scrollbar-thumb {
-  background: var(--ns-rule);
-  border-radius: 4px;
+.tagSuggestionChip:hover {
+  border-color: var(--ns-blue);
+  color: var(--ns-ink);
+}
+
+/* Shared action row -- holds Date, the tag-selection chips, the
+   tag-creation toggle, and Save, below both panels rather than tied
+   to either one. A checklist-only note has no natural home for these
+   controls inside either panel, so they live independently here. */
+.sharedActionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+
+.sharedActionDate {
+  flex: 0 0 8.5rem;
+}
+
+.tagCreateToggle {
+  flex-shrink: 0;
+  border: 0.5px solid var(--ns-rule) !important;
+  color: var(--ns-graphite) !important;
+}
+
+.tagCreateToggle:hover {
+  border-color: var(--ns-blue) !important;
+  color: var(--ns-blue) !important;
 }
 
 .tagChip {
@@ -101,32 +207,8 @@
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.03em;
-}
-
-.tagSuggestionsRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tagSuggestionChip {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 0.5px dashed var(--ns-rule);
-  background: transparent;
-  color: var(--ns-graphite);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tagSuggestionChip:hover {
-  border-color: var(--ns-blue);
-  color: var(--ns-ink);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .newTagFormRow {
@@ -186,27 +268,44 @@
 }
 
 @media screen and (max-width: 700px) {
-  .createNoteTopRow {
+  .notesChecklistRow {
     flex-direction: column;
   }
-  .createNoteMain {
-    /* Without this, .createNoteMain has no explicit width in
-       flex-direction: column (where flex-basis/min-width govern
-       height, not width) with align-items: flex-start (which never
-       auto-stretches children to fill the container) -- so it falls
-       back to sizing itself to its own content's natural width. Since
-       .tagRow has no width constraint either, the whole chain expands
-       to fit the tag row fully unwrapped, dragging the entire card
-       wider than the viewport. Verified this exact mechanism and fix
-       directly with Playwright before applying it here. */
+
+  .notesPanel,
+  .checklistPanel {
     width: 100%;
   }
-  .createNoteControls {
-    flex: 1 1 auto;
-    width: 100%;
-  }
-  .createNoteMain textarea {
+
+  .notesPanel textarea {
     max-height: 130px !important;
     overflow-y: auto !important;
+  }
+
+  .sharedActionRow {
+    flex-wrap: wrap;
+  }
+
+  .sharedActionDate {
+    flex: 1 1 100%;
+  }
+
+  /* Tag chips take the full row on their own line on mobile, with
+     Save and the tag-creation toggle following on their own line --
+     kept visible here too (not hidden), since it's the only way to
+     create a tag and hiding it with no mobile replacement would leave
+     mobile users with no way to do that at all. */
+  .scrollableChipRowWrap {
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .tagCreateToggle {
+    order: 4;
+  }
+
+  .saveEntryButton {
+    order: 5;
+    margin-left: auto;
   }
 }

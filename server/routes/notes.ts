@@ -151,9 +151,18 @@ type UpdateNoteBody = z.infer<typeof updateNoteSchema>;
 
 router.patch('/update/:id', requireAuth, validateBody(updateNoteSchema), async (req: Request<{ id: string }, unknown, UpdateNoteBody>, res: Response) => {
     const userId = getRequiredUserId(req);
-    const { edit, text, date, star, tags, look, gym, weed, code, read, eatOut, basketball } = req.body;
+    // `checklist` was missing from this destructure -- updateNoteSchema
+    // validates it and noteController.updateNote already knows how to
+    // apply it (guarded the same way as `tags`, so an unrelated update
+    // never wipes an existing checklist), but it was never actually
+    // pulled off req.body here, so it never reached the controller at
+    // all. The request still succeeded and echoed the note back
+    // unchanged, which is exactly what made this look like a silent
+    // save failure -- nothing ever indicated the checklist change
+    // itself had been dropped.
+    const { edit, text, date, star, tags, checklist, look, gym, weed, code, read, eatOut, basketball } = req.body;
     const response = await noteController.updateNote(req.params.id, userId, {
-        edit, text, date, star, tags, look, gym, weed, code, read, eatOut, basketball,
+        edit, text, date, star, tags, checklist, look, gym, weed, code, read, eatOut, basketball,
     });
     invalidateUserAnalyticsCache(userId);
     res.json(response);

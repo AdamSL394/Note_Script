@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { request, requestJson, requestWithStatus } from './client';
-import type { Note, TagSnapshot, TagAnalytics, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord, ContactSubmissionRecord } from '../types';
+import type { Note, TagSnapshot, ChecklistItem, TagAnalytics, TagTimeSeries, HeatmapResponse, TagStreak, DayOfWeekPattern, Seasonality, AuthUser, UserRecord, ContactSubmissionRecord } from '../types';
 
 interface PaginatedNotesResponse {
   notes: Note[];
@@ -13,6 +13,7 @@ interface UpdateNotePayload {
   star: string;
   edit: boolean;
   tags: TagSnapshot[];
+  checklist: ChecklistItem[];
   look?: boolean;
   gym?: boolean;
   weed?: boolean;
@@ -89,9 +90,16 @@ const NoteRoutes = {
       body: {
         text: note.text,
         date: note.date,
-        star: note.star,
+        // Defensive: `star` is required server-side; the DB default of
+        // 'None' covers a genuinely missing note, but a falsy value
+        // slipping through here (e.g. '') would otherwise fail zod's
+        // enum check and reject the *entire* update -- including an
+        // unrelated checklist change -- so it's normalized here rather
+        // than trusted as always-populated.
+        star: note.star || 'None',
         edit: note.edit,
         tags: note.tags ?? [],
+        checklist: note.checklist ?? [],
       } as UpdateNotePayload,
     }),
 

@@ -1,6 +1,11 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { toLocalDateString } from '../../utils/date';
 import './termsOfService.css';
+
+// Hardcoded rather than computed at render time -- this is the actual
+// date the terms last changed, not "whenever someone happens to load
+// the page" (new Date() here previously made every visitor see today's
+// date as "last updated", which is misleading, not accurate).
+const LAST_UPDATED = 'October 1, 2026';
 
 const TermsOfService = () => {
   const navigate = useNavigate();
@@ -12,7 +17,7 @@ const TermsOfService = () => {
       </button>
       <div className="legalContent">
         <h1>Terms of Service</h1>
-        <p className="legalUpdated">Last updated: {toLocalDateString(new Date())}</p>
+        <p className="legalUpdated">Last updated: {LAST_UPDATED}</p>
 
         <p>
           This is a small, independently-run project. These terms are meant
