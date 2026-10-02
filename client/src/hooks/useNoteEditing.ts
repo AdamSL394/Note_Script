@@ -3,6 +3,7 @@ import type { SelectChangeEvent } from '@mui/material/Select/index.js';
 import NoteRoutes from '../router/noteRoutes';
 import type { Note as NoteType } from '../types';
 import { sanitizeStarValue } from '../utils/sanitizeStarValue';
+import { capitalizeChecklistText } from '../utils/capitalizeChecklistText';
 
 type SetNotes = (updater: NoteType[] | ((prev: NoteType[]) => NoteType[])) => void;
 
@@ -45,9 +46,30 @@ export function useNoteEditing(setNotes: SetNotes, onDeleted?: () => void) {
     const saveNote = (note: NoteType) => {
         const rawDraft = sessionStorage.getItem(note._id);
         const draftNote: NoteType | null = rawDraft ? JSON.parse(rawDraft) : null;
-        const noteToSave: NoteType = draftNote
+        const baseNoteToSave: NoteType = draftNote
             ? { ...draftNote, edit: false }
             : { ...note, edit: false };
+        // Drop any checklist item whose text is still empty/whitespace --
+        // e.g. one added via EditingChecklist's "+ Checklist item" button
+        // that never got typed into, or was still mid-edit when Save was
+        // clicked before it had a chance to blur. EditingChecklist's own
+        // blur handler normally cleans these up, but clicking this Save
+        // button doesn't reliably fire that blur first (the same race
+        // createNote.tsx's resolveChecklistForSave guards against for new
+        // notes). Left in, a single empty item fails the server's schema
+        // (min(1) on text) and rejects the *entire* update -- which is
+        // exactly why adding a checklist item could make a save silently
+        // do nothing.
+        const noteToSave: NoteType = {
+            ...baseNoteToSave,
+            checklist: (baseNoteToSave.checklist ?? [])
+                .filter((item) => item.text.trim().length > 0)
+                // Capitalize each item's leading letter at this single
+                // save-time choke point, not on every keystroke in
+                // EditingChecklist -- so it never fights a user who's
+                // still mid-word at the start of an item.
+                .map((item) => ({ ...item, text: capitalizeChecklistText(item.text) })),
+        };
         sessionStorage.setItem(noteToSave._id, JSON.stringify(noteToSave));
         updateNote(noteToSave);
     };

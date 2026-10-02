@@ -5,6 +5,7 @@ import Grid from '@mui/material/Grid/index.js';
 import { useEffect, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
+import { capitalizeChecklistText } from '../../utils/capitalizeChecklistText';
 import { CreateNote } from '../HomeComponents/createNote';
 import { LookBack } from '../HomeComponents/LookBack/index';
 import { HomeNoteCard } from '../HomeComponents/notesHomeView';
@@ -107,7 +108,7 @@ const HomeView = () => {
 
   const editChecklistItemText = (note: NoteType, index: number, text: string) => {
     const nextChecklist = (note.checklist ?? []).map((item, i) =>
-      i === index ? { ...item, text } : item
+      i === index ? { ...item, text: capitalizeChecklistText(text) } : item
     );
     updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
   };

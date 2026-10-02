@@ -7,6 +7,7 @@ import { Box } from '@mui/system';
 import React, { useEffect, useRef, useState } from 'react';
 import NoteRoutes from '../../router/noteRoutes';
 import { sanitizeStarValue } from '../../utils/sanitizeStarValue';
+import { capitalizeChecklistText } from '../../utils/capitalizeChecklistText';
 import EditingNote from '../EditNote/editNote';
 import ModalPop from '../Modal/index';
 import Note from '../Note/index';
@@ -300,7 +301,7 @@ function Notes(props: NotesProps) {
 
   const editChecklistItemText = (note: NoteType, index: number, text: string) => {
     const nextChecklist = (note.checklist ?? []).map((item, i) =>
-      i === index ? { ...item, text } : item
+      i === index ? { ...item, text: capitalizeChecklistText(text) } : item
     );
     updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
   };

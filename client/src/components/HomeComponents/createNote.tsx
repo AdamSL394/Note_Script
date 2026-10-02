@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toLocalDateString } from '../../utils/date';
 import { getTagColor } from '../../utils/tagColor';
+import { capitalizeChecklistText } from '../../utils/capitalizeChecklistText';
 import TextField from '@mui/material/TextField/index.js';
 import Button from '@mui/material/Button/index.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
@@ -299,6 +300,13 @@ export const CreateNote = (props: CreateNoteProps) => {
     resolveActiveChecklistItem();
   };
 
+  // Capitalizes every item's leading letter at save time, not on every
+  // keystroke while typing -- doing it here (once, at the finalization
+  // point) rather than in updateChecklistItemText means it never fights
+  // a user who's still mid-word at the start of the item.
+  const capitalizeChecklist = (items: ChecklistItem[]): ChecklistItem[] =>
+    items.map((item) => ({ ...item, text: capitalizeChecklistText(item.text) }));
+
   // Computes the checklist as it should actually be saved, resolving
   // any still-active/empty item synchronously -- used instead of
   // relying on props.checklist directly, since that state may not
@@ -308,12 +316,12 @@ export const CreateNote = (props: CreateNoteProps) => {
   // race that caused notes with checklist items to sometimes save
   // incorrectly.
   const resolveChecklistForSave = (): ChecklistItem[] => {
-    if (activeChecklistIndex === null) return props.checklist;
+    if (activeChecklistIndex === null) return capitalizeChecklist(props.checklist);
     const item = props.checklist[activeChecklistIndex];
     if (!item || item.text.trim().length === 0) {
-      return props.checklist.filter((_, i) => i !== activeChecklistIndex);
+      return capitalizeChecklist(props.checklist.filter((_, i) => i !== activeChecklistIndex));
     }
-    return props.checklist;
+    return capitalizeChecklist(props.checklist);
   };
 
   const handleSaveClick = () => {
