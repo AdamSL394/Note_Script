@@ -7,7 +7,7 @@ A full-stack MERN journaling and habit-tracking app, built as a learning vehicle
 ## Tech Stack
 
 **Client:** React 18 (TypeScript, Create React App), MUI, React Router
-**Server:** Express 5 (TypeScript), Mongoose 9 / MongoDB Atlas
+**Server:** Express 5 (TypeScript), Mongoose 8 / MongoDB Atlas
 **Auth:** Auth0 (Google OAuth)
 **Infra:** Docker, Heroku (Container Registry), GitHub Actions CI/CD
 **Observability:** Pino (structured logging), Google Analytics 4
@@ -15,14 +15,12 @@ A full-stack MERN journaling and habit-tracking app, built as a learning vehicle
 
 ## Features
 
-- Daily journaling with tag/mood tracking, dark mode + 6 theme presets
+- Daily journaling with tag/mood tracking and per-note checklists
+- A weekly summary widget — note count, win streak, and a Look Back control to browse prior weeks/months/years
+- 6 theme presets (Light, Dark, Sepia, Forest, Pulse, Signal)
 - Full-text search (MongoDB Atlas Search)
 - Year-based note filtering, real server-side pagination
-- Push notification reminders (Web Push/VAPID) if you haven't logged a note by a time you choose
-- Installable as a PWA -- a real install prompt on Android, a guided walkthrough on iOS
-- Data export -- every note, tag, and setting as a single downloadable file
-- A contact form (with an admin-only inbox), replacing a direct personal email
-- Admin role with protected user-management and contact-submissions views
+- Admin role with a protected user-management view
 - Google Analytics integration for traffic insight
 
 ## Architecture & Engineering Highlights
@@ -33,7 +31,7 @@ A few things worth knowing about how this app is actually built, not just what i
 - **Defense in depth on input validation** — Zod schemas at the API boundary, ownership-scoped database queries, and Mongoose's own patched sanitization, so no single control failing exposes the app.
 - **Rate limiting with a deliberate fail-open design** — tries Redis first for accurate cross-instance limiting, falls back to an in-memory counter on a timeout rather than either hanging the request or disabling protection entirely. Logged, not silent.
 - **CI/CD that can't be bypassed** — every push (including direct pushes outside a PR) runs the same validation as a merge; nothing deploys without it. Production deploys are a deliberate manual trigger, not automatic-on-merge.
-- **Structured logging with automatic secret redaction** — bearer tokens, cookies, and database credentials are never logged, even in dev or on a connection failure.
+- **Structured logging with automatic secret redaction** — bearer tokens and cookies are never logged, even in dev.
 
 ## Local Development
 
@@ -58,8 +56,6 @@ npm start
 | `AUTH0_DOMAIN` | server | Auth0 tenant domain |
 | `AUTH0_AUDIENCE` | server | Auth0 API audience |
 | `REDIS_URL` | server | Optional — omit to run rate limiting in-memory only |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | server | Optional — omit to disable push notification reminders |
-| `VAPID_CONTACT` | server | Optional — contact detail (`mailto:` or `https:`) sent to push services; falls back to a placeholder if unset |
 | `REACT_APP_GA_MEASUREMENT_ID` | client | Optional — omit to disable analytics |
 
 ## Testing
@@ -71,7 +67,7 @@ npm run lint
 npx tsc --noEmit
 ```
 
-Utility-level unit tests exist on the client (date handling, tag colors, PWA install logic, etc.) — component/integration-level testing is the remaining gap.
+Client-side test coverage is a known gap — not yet built out.
 
 ## CI/CD
 
