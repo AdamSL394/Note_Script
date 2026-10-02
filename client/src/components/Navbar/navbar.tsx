@@ -8,6 +8,7 @@ import Menu from '@mui/material/Menu/Menu.js';
 import MenuItem from '@mui/material/MenuItem/index.js';
 import Box from '@mui/material/Box/Box.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
+import ListSubheader from '@mui/material/ListSubheader/index.js';
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -159,7 +160,7 @@ function Navbar() {
         <Tooltip title="Change theme">
           <IconButton
             onClick={handleOpenThemeMenu}
-            className="themeToggleButton"
+            className={`themeToggleButton${anchorElTheme ? ' themeToggleButtonActive' : ''}`}
             aria-label="Change theme"
             aria-controls="theme-menu"
             aria-haspopup="true"
@@ -175,16 +176,26 @@ function Navbar() {
           onClose={() => setAnchorElTheme(null)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{ className: 'themeMenuPaper' }}
         >
+          <ListSubheader className="themeMenuHeading">Theme</ListSubheader>
           {THEME_MODES.map((themeMode) => (
             <MenuItem
               key={themeMode}
               onClick={() => handleSelectTheme(themeMode)}
               selected={themeMode === mode}
+              className="themeMenuItem"
             >
+              {/* A single flat dot only ever previewed the accent color;
+                  splitting it between the theme's paper and accent
+                  shows a little more of what picking it will actually
+                  change, closer to a real swatch than a status dot. */}
               <span
                 className="themeSwatch"
-                style={{ backgroundColor: NS_TOKENS[themeMode].blue }}
+                style={{
+                  background: `linear-gradient(135deg, ${NS_TOKENS[themeMode].paper} 50%, ${NS_TOKENS[themeMode].blue} 50%)`,
+                  borderColor: NS_TOKENS[themeMode].rule,
+                }}
               ></span>
               {NS_TOKENS[themeMode].label}
               {themeMode === mode && (

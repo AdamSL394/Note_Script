@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import Card from '@mui/material/Card/index.js';
 import Grid from '@mui/material/Grid/index.js';
 import IconButton from '@mui/material/IconButton/index.js';
 import Tooltip from '@mui/material/Tooltip/index.js';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CloseIcon from '@mui/icons-material/Close';
 import type { Note } from '../../types';
 import { WIN_TAGS } from '../../constants/noteFields';
 import { getTagColor } from '../../utils/tagColor';
@@ -15,12 +17,18 @@ interface HomeNotesProps {
   notes: Note[];
   onEdit: (note: Note) => void;
   onDelete: (note: Note) => void;
+  onToggleChecklistItem: (note: Note, index: number) => void;
+  onRemoveChecklistItem: (note: Note, index: number) => void;
+  onEditChecklistItemText: (note: Note, index: number, text: string) => void;
 }
 
 interface HomeNoteCardProps {
   note: Note;
   onEdit: (note: Note) => void;
   onDelete: (note: Note) => void;
+  onToggleChecklistItem: (note: Note, index: number) => void;
+  onRemoveChecklistItem: (note: Note, index: number) => void;
+  onEditChecklistItemText: (note: Note, index: number, text: string) => void;
 }
 
 // A single card. Exported on its own (not just as part of the list
@@ -33,6 +41,16 @@ export const HomeNoteCard = (props: HomeNoteCardProps) => {
   const { note, onEdit, onDelete } = props;
   const isWinDay = WIN_TAGS.some((tag) => (note.tags ?? []).some((t) => t.name === tag));
   const stars = renderStars(note.star);
+  const [editingChecklistIndex, setEditingChecklistIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  const commitChecklistEdit = (index: number) => {
+    const trimmed = editingText.trim();
+    if (trimmed.length > 0) {
+      props.onEditChecklistItemText(note, index, trimmed);
+    }
+    setEditingChecklistIndex(null);
+  };
 
   return (
     <Card
@@ -106,6 +124,82 @@ export const HomeNoteCard = (props: HomeNoteCardProps) => {
         );
       })}
 
+      {(note.checklist ?? []).length > 0 && (
+        <div style={{ margin: '0.5rem 0' }}>
+          {(note.checklist ?? []).map((item, index) => (
+            <div
+              key={index}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '2px 0',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={item.checked}
+                onChange={() => props.onToggleChecklistItem(note, index)}
+                aria-label={`Mark "${item.text}" as done`}
+                style={{ flexShrink: 0, cursor: 'pointer' }}
+              />
+              {editingChecklistIndex === index ? (
+                <input
+                  type="text"
+                  autoFocus
+                  value={editingText}
+                  maxLength={200}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onBlur={() => commitChecklistEdit(index)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitChecklistEdit(index);
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: '14px',
+                    border: '0.5px solid var(--ns-blue)',
+                    borderRadius: '6px',
+                    padding: '2px 6px',
+                  }}
+                />
+              ) : (
+                <span
+                  onClick={() => {
+                    setEditingChecklistIndex(index);
+                    setEditingText(item.text);
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: '14px',
+                    color: item.checked ? 'var(--ns-graphite)' : 'var(--ns-ink)',
+                    textDecoration: item.checked ? 'line-through' : 'none',
+                    cursor: 'text',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {item.text}
+                </span>
+              )}
+              <IconButton
+                size="small"
+                aria-label="Remove checklist item"
+                onClick={() => props.onRemoveChecklistItem(note, index)}
+                style={{ flexShrink: 0, opacity: 0.6 }}
+              >
+                <CloseIcon style={{ fontSize: '14px' }} />
+              </IconButton>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div
         style={{
           marginTop: '0.75rem',
@@ -148,7 +242,14 @@ export const HomeNotes = (props: HomeNotesProps) => (
   <>
     {props.notes.map((note, i) => (
       <Grid alignItems="flex-start" key={i} item xs={12} sm={6} md={4} lg={3}>
-        <HomeNoteCard note={note} onEdit={props.onEdit} onDelete={props.onDelete} />
+        <HomeNoteCard
+          note={note}
+          onEdit={props.onEdit}
+          onDelete={props.onDelete}
+          onToggleChecklistItem={props.onToggleChecklistItem}
+          onRemoveChecklistItem={props.onRemoveChecklistItem}
+          onEditChecklistItemText={props.onEditChecklistItemText}
+        />
       </Grid>
     ))}
   </>

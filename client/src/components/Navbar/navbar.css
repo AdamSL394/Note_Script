@@ -51,18 +51,83 @@
   background-color: var(--ns-blue-tint) !important;
 }
 
+/* Matches the button's own :hover treatment, applied instead while
+   the menu it opens is actually open -- otherwise the trigger looked
+   completely at rest the whole time its dropdown was showing. */
+.themeToggleButtonActive {
+  color: var(--ns-blue) !important;
+  background-color: var(--ns-blue-tint) !important;
+}
+
+/* Bumped from 12px and given a soft drop shadow + split-color fill
+   (see navbar.tsx) -- previously a flat 12px dot in just the accent
+   color, which read as a plain status indicator rather than a swatch
+   of an actual theme. */
 .themeSwatch {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  margin-right: 0.6rem;
+  margin-right: 0.65rem;
   border: 0.5px solid var(--ns-rule);
+  box-shadow: 0 1px 2px rgba(35, 38, 43, 0.18);
+  flex-shrink: 0;
 }
 
 .themeMenuCheck {
-  margin-left: 0.6rem;
+  margin-left: auto;
+  padding-left: 0.6rem;
   color: var(--ns-blue) !important;
+}
+
+/* The theme dropdown previously rendered as a completely bare MUI
+   Menu/MenuItem list -- every other dropdown in the nav (the mobile
+   page menu) already gets the card treatment below
+   (".navDropdownPaper"/".navDropdownItem"); this just brings the
+   theme menu in line with that, plus a heading and rounded,
+   inset-selectable rows so each theme reads as its own tappable
+   swatch card rather than a plain list row. */
+.themeMenuPaper {
+  background: var(--ns-paper) !important;
+  border: 0.5px solid var(--ns-rule) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 24px rgba(35, 38, 43, 0.14) !important;
+  min-width: 190px !important;
+  margin-top: 6px;
+  padding: 0.3rem 0 !important;
+}
+
+.themeMenuHeading {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ns-graphite) !important;
+  background: transparent !important;
+  line-height: 2 !important;
+  padding: 0.2rem 1rem 0.3rem !important;
+}
+
+.themeMenuItem {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.03em;
+  color: var(--ns-ink) !important;
+  padding: 0.55rem 0.85rem !important;
+  border-radius: 8px !important;
+  margin: 0.05rem 0.35rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.themeMenuItem:hover {
+  color: var(--ns-blue) !important;
+  background-color: var(--ns-blue-tint) !important;
+}
+
+.themeMenuItem.Mui-selected,
+.themeMenuItem.Mui-selected:hover {
+  background-color: var(--ns-blue-tint) !important;
 }
 
 .navDropdownPaper {

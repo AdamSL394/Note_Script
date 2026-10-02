@@ -20,27 +20,167 @@
   margin: 1.5rem 0;
 }
 
-/* Tracked-property count panel - was a vertical stack of "Label: N"
-   lines, which got noticeably worse once a bug fix meant all 9 tag
-   counts could actually display at once instead of silently 2 of them
-   never rendering. Now a wrapping row of pill chips matching
-   CreateNote's .tagChip so the same "tag" visual language is used
-   consistently across the create form and the summary. */
-#count {
+/* The weekly summary widget -- combines what used to be three
+   disjoint pieces (the note/win-count strip, the Look Back control,
+   and the tag-count chips) into a single card: a colored accent bar,
+   a big anchored note-count stat, vertical dividers separating each
+   section, and a circular icon-badge treatment on the win-count
+   highlight specifically (not on every element -- that would just be
+   noise). */
+.weeklyWidget {
   max-width: 46rem;
   margin: 0 auto 1.5rem;
   background: var(--ns-paper);
   border: 0.5px solid var(--ns-rule);
+  border-left: 3px solid var(--ns-blue);
   border-radius: 12px;
-  box-shadow: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0.85rem 1rem;
   box-sizing: border-box;
+  padding: 0.85rem 1.25rem;
 }
 
-#items {
+.weeklyWidgetTopRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* The stat/win-badge group sits at the left edge and Look Back now
+   sits at the right edge (via the row's own justify-content:
+   space-between above) instead of trailing immediately after the
+   stat group -- so the divider that used to visually separate the
+   two no longer has a fixed position to sit in; with extra space on
+   both sides of it, it just floats somewhere in the middle of the
+   gap rather than marking a boundary. Dropped here, and shown again
+   in the mobile stack below, where it's doing a different job (a
+   horizontal rule between two full-width stacked rows). */
+.weeklyWidgetTopRow > .weeklyDivider {
+  display: none;
+}
+
+/* The tag chips get their own full-width row below the stat/Look Back
+   row rather than competing with them inside one shared flex row --
+   see homeView.tsx for why. A thin top rule plays the same role the
+   inline dividers play within the row above: marking this off as a
+   separate group of facts about the period, not sharing one with the
+   stat/Look Back row above it. */
+.weeklyWidgetTagRow {
+  border-top: 0.5px solid var(--ns-rule);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.weeklyDivider {
+  align-self: stretch;
+  width: 0.5px;
+  background: var(--ns-rule);
+  flex-shrink: 0;
+}
+
+/* Keeps the note count and the win badge on one line together, as
+   their own row unit, even once .weeklyWidgetHeader itself switches
+   to flex-direction:column at narrow widths -- see the mobile query
+   below, where this is what stops "4 wins" from dropping onto its
+   own separate stacked line under the note count. */
+.weeklyStatRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* The anchoring stat -- a big number the rest of the widget hangs
+   off of, rather than one more inline "N notes" span among equals. */
+.weeklyStat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.weeklyStatNumber {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ns-ink);
+}
+
+/* Was stacked across two lines via a <br> ("notes" / "the past week"),
+   which read as oversized and a little loud next to everything else
+   on this single-line card. One line, a touch smaller, with
+   white-space:nowrap so it can't re-wrap and reintroduce the same
+   stacked look at an in-between width -- the header's own flex-wrap
+   still drops the whole stat group to its own line first. */
+.weeklyStatLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--ns-graphite);
+  white-space: nowrap;
+}
+
+/* Icon-badge treatment -- reserved for the win-count highlight, the
+   one thing on this card worth calling out visually. */
+.weeklyWinBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.weeklyWinIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ns-amber-tint);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.weeklyWinCount {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ns-amber-dark);
+  white-space: nowrap;
+}
+
+/* Everything else in this header is a fact about the past period
+   (the count, the win badge, the chips); Look Back is the one piece
+   that's a live control -- it changes what the rest of the card
+   shows. Nothing previously distinguished "thing you read" from
+   "thing you operate" beyond the same thin divider used between the
+   read-only pieces, so the control gets its own inset/filled
+   treatment here to read as a control at a glance. */
+.weeklyWidget .lookBackRow {
+  margin: 0;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  background: var(--ns-fog);
+  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+}
+
+/* Its own full-width row now (see .weeklyWidgetTagRow above), not one
+   more flex child racing the stat/Look Back group for whatever space
+   happens to be left on the right -- previously `flex: 1 1 10rem`
+   here meant the chip row only got the card's leftover width after
+   those other, content-sized pieces took theirs, which could leave it
+   squeezed into a narrow strip even on a roomy card. */
+.weeklyWidget .scrollableChipRowWrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.weeklyTagChip {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.03em;
@@ -51,56 +191,7 @@
   padding: 4px 10px;
   line-height: 1.6;
   white-space: nowrap;
-}
-
-/* Streak strip - the signature element. A row of dots representing the
-   last 7 days: gray = no entry, blue = logged, amber = a tracked "win"
-   (medal/king) that day. */
-.streakStrip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  max-width: 24rem;
-  margin: 0 auto 1.5rem;
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  color: var(--ns-graphite);
-}
-
-.streakStrip .streakCount {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ns-amber-dark);
-  white-space: nowrap;
-  margin-right: 0.5rem;
-}
-
-.streakStrip .streakLabel {
-  white-space: nowrap;
-}
-
-.streakStrip .streakRule {
-  flex: 1;
-  height: 0.5px;
-  background: var(--ns-rule);
-}
-
-.streakDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ns-rule);
   flex-shrink: 0;
-}
-
-.streakDot.logged {
-  background: var(--ns-blue);
-}
-
-.streakDot.win {
-  background: var(--ns-amber);
 }
 
 .lookBackRow {
@@ -128,8 +219,49 @@
   letter-spacing: 0.03em;
   color: var(--ns-graphite);
 }
-@media screen and (max-width: 500px) {
-  .streakStrip {
+
+/* Below this width the top row stacks into separate lines with real
+   spacing between them -- an earlier, more tightly-packed version of
+   this was tried and felt "crammed" in practice, so this deliberately
+   keeps generous gaps rather than re-compacting. The tag row needs no
+   stacking-specific override of its own anymore: it's already a plain
+   full-width block below the top row at every width (see
+   .weeklyWidgetTagRow / .weeklyWidget .scrollableChipRowWrap above),
+   so there's nothing here left to flip over when the top row's own
+   axis changes. The chip row keeps scrolling horizontally rather than
+   wrapping, same as the tag-selection chips in the compose form -- one
+   scroll behavior for chip rows everywhere, not two. See
+   scrollableChipRow.css for why the arrow buttons no longer need a
+   mobile-specific override: they're always visible now (not just on
+   hover), which is what actually makes a horizontally-scrolling row
+   discoverable on a touch device where there's no hover to reveal
+   them in the first place. */
+@media screen and (max-width: 640px) {
+  .weeklyWidget {
     max-width: 100%;
+  }
+  .weeklyWidgetTopRow {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.85rem;
+  }
+  /* Scoped to direct children only -- the top row's own divider
+     (between the stat row and Look Back) goes full-width horizontal
+     here, but ".weeklyStatRow" has its own nested divider (between the
+     note count and the win badge) that must stay the original thin
+     vertical rule so those two stay on one line; an unscoped
+     ".weeklyDivider" rule here would flatten that one too and push
+     "N wins" onto its own stacked line underneath. Re-shown here (the
+     desktop rule above hides it) since stacked rows need a visible
+     boundary between them that space-between alone no longer provides
+     once everything's full-width in a single column. */
+  .weeklyWidgetTopRow > .weeklyDivider {
+    display: block;
+    width: 100%;
+    height: 0.5px;
+  }
+  .weeklyWidget .lookBackRow {
+    justify-content: flex-start;
   }
 }

@@ -4,6 +4,11 @@ export interface TagSnapshot {
   icon: string;
 }
 
+export interface ChecklistItem {
+  text: string;
+  checked: boolean;
+}
+
 export interface TagAnalytics {
   name: string;
   icon: string;
@@ -69,6 +74,9 @@ export interface Note {
   // Missing/undefined should be treated the same as an empty array,
   // never assumed to always be present.
   tags?: TagSnapshot[];
+  // A note can hold free-text, a checklist, or both. Optional/missing
+  // is treated the same as an empty array, same convention as `tags`.
+  checklist?: ChecklistItem[];
   // Legacy flat fields -- kept optional here since the server still
   // accepts them from the currently-live client during the transition
   // (see server's backward-compat shim in noteController.ts). New

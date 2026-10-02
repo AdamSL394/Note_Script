@@ -1,4 +1,4 @@
-import Note, { INote, ITagSnapshot } from '../models/notes';
+import Note, { INote, ITagSnapshot, IChecklistItem } from '../models/notes';
 import { normalizeUserId } from '../utils/userId';
 import { logger } from '../logger';
 
@@ -681,6 +681,7 @@ interface UpdateNoteOptions {
     date: string;
     star: string;
     tags?: ITagSnapshot[];
+    checklist?: IChecklistItem[];
     // Legacy fields, accepted from the currently-live client during the
     // gap before it's updated to send `tags` directly. See the
     // reconciliation logic below for how these get merged.
@@ -741,6 +742,13 @@ const updateNote = async (
         // text/date/star changed), tags is left out of $set entirely --
         // deliberately NOT overwritten with an empty array, which would
         // silently wipe out whatever tags this note already had.
+    }
+
+    // Same guard as tags: only touch checklist when the caller
+    // explicitly sent one, so an unrelated update (e.g. just toggling
+    // the star) never silently wipes an existing checklist.
+    if (options.checklist !== undefined) {
+        setFields.checklist = options.checklist;
     }
 
     // Switched from findByIdAndUpdate (which only filters by _id) to

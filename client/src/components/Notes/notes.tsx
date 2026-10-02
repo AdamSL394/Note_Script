@@ -274,6 +274,37 @@ function Notes(props: NotesProps) {
   // staged draft and restores the pristine pre-edit snapshot (see
   // editNote in Note/index.tsx), rather than committing partial
   // changes or leaving the note stuck in edit mode with no way out.
+  // Toggle/edit/remove a single checklist item on an already-saved
+  // note -- all three reuse the same updateNote used for tag toggles
+  // and edit-mode saves: build the new checklist array immutably,
+  // send the whole note through, let the server's response (source of
+  // truth) land back in state.
+  const toggleChecklistItem = (note: NoteType, index: number) => {
+    const nextChecklist = (note.checklist ?? []).map((item, i) =>
+      i === index ? { ...item, checked: !item.checked } : item
+    );
+    // star must be run through sanitizeStarValue here too -- some older
+    // notes still carry a legacy non-enum `star` (e.g. a raw boolean)
+    // that would otherwise be sent straight back to the server as-is,
+    // failing its star enum validation and silently rejecting the
+    // *whole* update (checklist change included), with nothing surfaced
+    // to the user. cancelEdit already guards against this; these three
+    // checklist handlers didn't.
+    updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
+  };
+
+  const removeChecklistItem = (note: NoteType, index: number) => {
+    const nextChecklist = (note.checklist ?? []).filter((_, i) => i !== index);
+    updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
+  };
+
+  const editChecklistItemText = (note: NoteType, index: number, text: string) => {
+    const nextChecklist = (note.checklist ?? []).map((item, i) =>
+      i === index ? { ...item, text } : item
+    );
+    updateNote({ ...note, star: sanitizeStarValue(note.star), checklist: nextChecklist });
+  };
+
   const cancelEdit = (note: NoteType) => {
     const rawOriginal = sessionStorage.getItem(`${note._id}-original`);
     sessionStorage.removeItem(note._id);
@@ -483,6 +514,9 @@ function Notes(props: NotesProps) {
                             note={note}
                             openModal={openModal}
                             updateNote={updateNote}
+                            onToggleChecklistItem={toggleChecklistItem}
+                            onRemoveChecklistItem={removeChecklistItem}
+                            onEditChecklistItemText={editChecklistItemText}
                           ></Note>
                         );
                       }

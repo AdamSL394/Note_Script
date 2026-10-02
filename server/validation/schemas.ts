@@ -21,7 +21,7 @@ export const noteRangeSchema = z.object({
 // boolean field could, regardless of whether this check is ever
 // bypassed.
 const RESERVED_TAG_NAMES = new Set([
-    '_id', 'userId', 'text', 'date', 'star', 'edit', 'updatedAt', 'textLength', 'tags',
+    '_id', 'userId', 'text', 'date', 'star', 'edit', 'updatedAt', 'textLength', 'tags', 'checklist',
 ]);
 
 const tagsArray = z
@@ -46,6 +46,15 @@ const tagsArray = z
 // does NOT include 'king', 'medal', or 'date/smoosh' -- the live
 // client's edit flow has never sent those (only creation could set
 // them), so there's nothing to bridge for those three specifically.
+const checklistArray = z
+    .array(
+        z.object({
+            text: z.string().min(1).max(200),
+            checked: z.boolean(),
+        })
+    )
+    .max(40);
+
 const legacyTagFields = {
     look: z.boolean().optional(),
     gym: z.boolean().optional(),
@@ -65,6 +74,7 @@ export const updateNoteSchema = z.object({
     date: dateString,
     star: starValue,
     tags: tagsArray.optional(),
+    checklist: checklistArray.optional(),
     ...legacyTagFields,
 });
 
@@ -73,12 +83,22 @@ export const updateNoteSchema = z.object({
 // not have any tags set yet. userId is deliberately NOT included
 // here: the route always overwrites whatever the client sends with the
 // verified token identity, after this schema validates the rest.
-export const createNoteSchema = z.object({
-    text: z.string().min(1).max(200),
-    date: dateString,
-    star: starValue.optional(),
-    tags: tagsArray.optional(),
-});
+export const createNoteSchema = z
+    .object({
+        // NOT min(1) -- a note may be checklist-only. The refine()
+        // below requires at least one of text/checklist to be
+        // non-empty instead of hard-coding that requirement onto
+        // `text` specifically.
+        text: z.string().max(200),
+        date: dateString,
+        star: starValue.optional(),
+        tags: tagsArray.optional(),
+        checklist: checklistArray.optional(),
+    })
+    .refine(
+        (note) => note.text.trim().length > 0 || (note.checklist ?? []).length > 0,
+        { message: 'A note needs either text or at least one checklist item.' }
+    );
 
 export const uploadNotesSchema = z.object({
     // 50,000 chars is generous for a genuine personal export (years
