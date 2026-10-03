@@ -56,13 +56,25 @@ jobs:
           retention-days: 14
       - name: Security audit
         # Blocking -- verified directly before making this change that
-        # the server is genuinely at 0 vulnerabilities across every
-        # severity (the previous "critical in mongoose" this comment
-        # used to reference is resolved). This now actually guards
-        # against a future dependency reintroducing a real
-        # vulnerability, rather than just reporting one that's already
-        # known and accepted.
-        run: npm audit --audit-level=high
+        # the server's production dependencies are genuinely at 0
+        # vulnerabilities across every severity (the previous "critical
+        # in mongoose" this comment used to reference is resolved). This
+        # now actually guards against a future dependency reintroducing
+        # a real vulnerability, rather than just reporting one that's
+        # already known and accepted.
+        #
+        # --omit=dev scopes this to dependencies that actually ship in
+        # the production image (Dockerfile prunes dev deps the same
+        # way). Without it, a brand-new advisory against a dev-only tool
+        # that only ever runs locally (nodemon, used solely by `npm run
+        # dev`'s hot-reload, never in the shipped container) blocks every
+        # deploy with zero real exposure to fix -- npm's advisory
+        # database updates independently of this repo, so the exact same
+        # commit can start failing CI overnight with no code change at
+        # all. A real vulnerability in a *production* dependency should
+        # still block; this just stops auditing code that was never
+        # going to run in prod to begin with.
+        run: npm audit --omit=dev --audit-level=high
         working-directory: server
 
   client-checks:

@@ -40,6 +40,14 @@ COPY ./server ./server
 RUN test -f server/config/config.json || cp server/config/config.example.json server/config/config.json
 RUN npm run build --prefix server
 
+# devDependencies (typescript, ts-node, nodemon, eslint, jest, etc.) were
+# needed to run the build step above but never run in the shipped
+# container (CMD below runs the compiled JS directly, not nodemon) --
+# pruning them here means the image doesn't carry dev-only tooling (and
+# its vulnerabilities, e.g. a dev-only transitive package with no fix
+# yet showing up in `npm audit`) into production at all.
+RUN npm prune --omit=dev --prefix server
+
 ENV NODE_ENV=production
 
 CMD ["node", "server/dist/server.js"]
