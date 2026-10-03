@@ -29,7 +29,7 @@ Run the same checks CI runs (see [CI/CD](#cicd) below for the exact commands) �
 catching a failure locally is faster than waiting on a CI run:
 
 ```bash
-cd server && npx tsc --noEmit && npm run lint && npm test && npm audit --audit-level=high
+cd server && npx tsc --noEmit && npm run lint && npm test && npm audit --omit=dev --audit-level=high
 cd client && npx tsc --noEmit && npm run lint && CI=true npm test -- --watchAll=false && npm run build
 ```
 
@@ -91,9 +91,13 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push and PR to `master
 
 - **`server-checks`** — type-check (`tsc --noEmit`, whole project, not just what a
   test's import graph happens to reach), lint, the full test suite with coverage,
-  `npm audit --audit-level=high` (**blocking** — the server is verified clean at
-  0 vulnerabilities across every severity, so this guards against a future
-  dependency actually reintroducing one, not a known-and-ignored finding).
+  `npm audit --omit=dev --audit-level=high` (**blocking** — scoped to production
+  dependencies, which the Dockerfile also prunes down to; the server is verified
+  clean at 0 vulnerabilities there across every severity, so this guards against a
+  future dependency actually reintroducing one, not a known-and-ignored finding.
+  Dev-only tooling like `nodemon`, used solely by local hot-reload, is excluded —
+  it never ships in the production image, so a new advisory against it with no fix
+  yet shouldn't block every deploy).
 - **`client-checks`** — type-check, lint, test suite with coverage, `npm audit`
   (**non-blocking** — reviewed directly: the client's findings are almost entirely
   build/test-time-only tooling that never ships to a real browser, plus a
