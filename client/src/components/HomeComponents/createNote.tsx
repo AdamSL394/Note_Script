@@ -4,15 +4,14 @@ import { getTagColor } from '../../utils/tagColor';
 import { capitalizeChecklistText } from '../../utils/capitalizeChecklistText';
 import TextField from '@mui/material/TextField/index.js';
 import Button from '@mui/material/Button/index.js';
-import Tooltip from '@mui/material/Tooltip/index.js';
 import IconButton from '@mui/material/IconButton/index.js';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import NoteRoutes from '../../router/noteRoutes';
 import type { TrackedStat, AuthUser, ChecklistItem } from '../../types';
 import { NOTE_TAG_FIELDS, WIN_TAGS, RESERVED_NOTE_FIELDS } from '../../constants/noteFields';
 import { EmojiPicker } from '../EmojiPicker/index';
+import { DatePicker } from '../DatePicker/index';
 import { ScrollableChipRow } from '../ScrollableChipRow/index';
 import './createNote.css';
 
@@ -360,6 +359,13 @@ export const CreateNote = (props: CreateNoteProps) => {
 
         <div className="checklistPanel">
           <p className="composeHeading">Checklist</p>
+          {/* No items yet -- skip the bordered scroll box entirely rather
+              than rendering it empty (just padding and a border with
+              nothing inside reads as a broken/placeholder element, not
+              an empty state). EditingChecklist (the equivalent box for
+              an already-saved note) already does this; createNote's
+              checklist never got the same guard. */}
+          {props.checklist.length > 0 && (
           <div className="checklistScrollArea">
             {props.checklist.map((item, index) => {
               const isActive = activeChecklistIndex === index;
@@ -413,6 +419,7 @@ export const CreateNote = (props: CreateNoteProps) => {
               );
             })}
           </div>
+          )}
           {props.checklist.length < MAX_CHECKLIST_ITEMS && (
             <button type="button" className="addChecklistItemButton" onClick={addChecklistItem}>
               + Checklist item
@@ -437,14 +444,18 @@ export const CreateNote = (props: CreateNoteProps) => {
       )}
 
       <div className="sharedActionRow">
-        <TextField
-          type="date"
-          label="Date"
-          size="small"
-          className="sharedActionDate"
-          value={date ?? ''}
-          onChange={(e) => setDate(e.target.value)}
-          InputLabelProps={{ shrink: true }}
+        {/* Was a native <input type="date">: its calendar popup is
+            drawn by the OS/browser and can't be themed at all, so it
+            was the one control in this row that could never actually
+            match the app -- different font, different colors, a
+            completely different visual language depending on the
+            device. DatePicker (EmojiPicker's same trigger+modal
+            pattern) replaces it with a calendar this app actually
+            draws, matching everything else here. */}
+        <DatePicker
+          value={date}
+          onChange={setDate}
+          ariaLabel="Choose the note's date"
         />
 
         <ScrollableChipRow ariaLabel="Select tags for this note">
@@ -486,20 +497,29 @@ export const CreateNote = (props: CreateNoteProps) => {
           })}
         </ScrollableChipRow>
 
-        <Tooltip title={showNewTagForm ? 'Close' : 'Create a new tag'}>
-          <IconButton
-            size="small"
-            className="tagCreateToggle"
-            aria-label={showNewTagForm ? 'Close new tag form' : 'Create a new tag'}
-            onClick={() => setShowNewTagForm((v) => !v)}
-          >
-            {showNewTagForm ? (
-              <CloseIcon style={{ fontSize: '16px' }} />
-            ) : (
-              <AddIcon style={{ fontSize: '16px' }} />
-            )}
-          </IconButton>
-        </Tooltip>
+        {/* A bare unlabeled "+" icon button relied on a hover tooltip
+            ("Create a new tag") to explain itself -- hover doesn't fire
+            on a touch screen, so on mobile this control had no
+            explanation at all before being tapped. Labeled text,
+            matching the "+ Checklist item" button's established
+            pattern elsewhere in this same form, needs no hover to be
+            understood. */}
+        <button
+          type="button"
+          className="tagCreateToggle"
+          aria-label={showNewTagForm ? 'Close new tag form' : 'Create a new tag'}
+          onClick={() => setShowNewTagForm((v) => !v)}
+        >
+          {showNewTagForm ? (
+            <>
+              <CloseIcon style={{ fontSize: '14px' }} /> Close
+            </>
+          ) : (
+            <>
+              <AddIcon style={{ fontSize: '14px' }} /> New tag
+            </>
+          )}
+        </button>
 
         <Button
           className="saveEntryButton"
@@ -518,37 +538,54 @@ export const CreateNote = (props: CreateNoteProps) => {
 
       {showNewTagForm && (
         <div className="newTagFormRow">
+          {/* A heading plus an always-visible caption, replacing a
+              hover-only info-icon tooltip that explained what this row
+              even was -- hover never fires on a touch screen, so this
+              whole form previously had no visible explanation on
+              mobile. Labeling the two inputs ("Icon" / "Name") removes
+              the other guess: the emoji button showed only a "🏷️"
+              placeholder with nothing marking it as a button to press
+              before the name field. */}
+          <p className="newTagFormHeading">New tag</p>
           <div className="newTagForm">
-            <EmojiPicker
-              value={newTagIcon}
-              onSelect={setNewTagIcon}
-              ariaLabel="Choose a tag icon"
-            />
-            <input
-              type="text"
-              placeholder="New tag name"
-              value={newTagName}
-              onChange={(e) => {
-                setNewTagName(e.target.value);
-                if (tagError) setTagError('');
-              }}
-              maxLength={30}
-              className="newTagNameInput"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddNewTag();
-              }}
-            />
-            <Button onClick={handleAddNewTag} size="small" variant="outlined">
+            <div className="newTagField">
+              <span className="newTagFieldLabel">Icon</span>
+              <EmojiPicker
+                value={newTagIcon}
+                onSelect={setNewTagIcon}
+                ariaLabel="Choose a tag icon"
+              />
+            </div>
+            <div className="newTagField newTagFieldName">
+              <span className="newTagFieldLabel">Name</span>
+              <input
+                type="text"
+                placeholder="e.g. Reading"
+                value={newTagName}
+                onChange={(e) => {
+                  setNewTagName(e.target.value);
+                  if (tagError) setTagError('');
+                }}
+                maxLength={30}
+                className="newTagNameInput"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddNewTag();
+                }}
+              />
+            </div>
+            <Button
+              onClick={handleAddNewTag}
+              size="small"
+              variant="outlined"
+              className="newTagAddButton"
+            >
               Add
             </Button>
           </div>
-          <Tooltip
-            title="You can create your own custom tags -- pick an emoji and give it a name."
-            arrow
-            placement="top"
-          >
-            <InfoOutlinedIcon className="newTagInfoIcon" fontSize="small" />
-          </Tooltip>
+          <p className="newTagCaption">
+            Pick an emoji and give it a name -- it'll show up as a tag you can
+            add to any note.
+          </p>
         </div>
       )}
       {tagError && <p className="newTagError">{tagError}</p>}

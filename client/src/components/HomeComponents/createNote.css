@@ -153,34 +153,52 @@
 /* Shared action row -- holds Date, the tag-selection chips, the
    tag-creation toggle, and Save, below both panels rather than tied
    to either one. A checklist-only note has no natural home for these
-   controls inside either panel, so they live independently here. */
+   controls inside either panel, so they live independently here.
+
+   Breaks out to the card's full width (negative margin equal to
+   .createNoteCard's own padding) with no padding added back, so the
+   first/last pill actually touch the card's edges instead of just
+   gaining empty space on either side. No background/border treatment
+   on top of that -- just the room, nothing that reads as a separate
+   toolbar strip. */
 .sharedActionRow {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: nowrap;
+  margin: 0 -1rem;
 }
 
-.sharedActionDate {
-  flex: 0 0 8.5rem;
-}
-
+/* Was an icon-only IconButton; now a labeled text button (matching
+   .addChecklistItemButton's pattern elsewhere in this form) so what it
+   does doesn't depend on a hover tooltip that never fires on touch. */
 .tagCreateToggle {
   flex-shrink: 0;
-  border: 0.5px solid var(--ns-rule) !important;
-  color: var(--ns-graphite) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 20px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
 }
 
 .tagCreateToggle:hover {
-  border-color: var(--ns-blue) !important;
-  color: var(--ns-blue) !important;
+  border-color: var(--ns-blue);
+  color: var(--ns-blue);
 }
 
 .tagChip {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.03em;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 20px;
   border: 0.5px solid var(--ns-rule);
   background: transparent;
@@ -203,48 +221,82 @@
   color: var(--ns-amber-dark);
 }
 
+/* MUI's contained-button defaults (uppercase, bold, elevated shadow,
+   4px corners) made this the single heaviest element in the row --
+   visually it read as much wider than its actual padding, crowding the
+   tag chips next to it into the scroll-arrow state even when most of
+   them would otherwise fit. A slim pill matching the tagChip/
+   tagCreateToggle shape stays the clear primary action (still filled,
+   still the only blue element here) without dominating the row. */
 .saveEntryButton {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12px !important;
+  font-weight: 500 !important;
   letter-spacing: 0.03em;
+  text-transform: none !important;
   flex-shrink: 0;
   white-space: nowrap;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
 }
 
+.saveEntryButton:hover {
+  box-shadow: none !important;
+}
+
+/* Sits inside its own bordered card now, rather than a bare row of
+   controls with no visual boundary -- makes it read as one distinct
+   "you're creating something" form instead of blending into the tag
+   chips/date row just above it. */
 .newTagFormRow {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 0.5px solid var(--ns-rule);
+  border-radius: 10px;
+  background: var(--ns-fog);
 }
 
-.newTagInfoIcon {
-  color: var(--ns-graphite);
-  cursor: help;
-  flex-shrink: 0;
+.newTagFormHeading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ns-ink);
 }
 
 .newTagForm {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
+  gap: 0.6rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
-.newTagIconInput {
-  width: 2.5rem;
-  flex-shrink: 0;
-  text-align: center;
-  border-radius: 8px;
-  border: 0.5px solid var(--ns-rule);
-  background: var(--ns-paper);
-  font-size: 14px;
-  padding: 0.4rem 0.2rem;
+.newTagField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.newTagFieldName {
+  flex: 1;
+  min-width: 8rem;
+}
+
+.newTagFieldLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
 }
 
 .newTagNameInput {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   border-radius: 8px;
   border: 0.5px solid var(--ns-rule);
   background: var(--ns-paper);
@@ -254,10 +306,25 @@
   padding: 0.4rem 0.6rem;
 }
 
-.newTagIconInput:focus,
 .newTagNameInput:focus {
   outline: none;
   border-color: var(--ns-blue);
+}
+
+.newTagAddButton {
+  flex-shrink: 0;
+}
+
+/* Always visible now, instead of only on hover over a separate info
+   icon -- hover never fires on a touch screen, so this explanation was
+   previously invisible on mobile until someone happened to tap the icon
+   and get lucky with whatever touch-and-hold behavior their browser
+   gives a Tooltip. */
+.newTagCaption {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ns-graphite);
 }
 
 .newTagError {
@@ -282,30 +349,56 @@
     overflow-y: auto !important;
   }
 
+  /* The full-bleed breakout reads fine as one line on desktop, but once
+     it wraps onto several lines here, having it start further left than
+     everything above it (the textarea, "Checklist item", etc., all
+     still inset by the card's own padding) just looks misaligned rather
+     than roomier. Keep it inset to match the rest of the card at this
+     width.
+
+     Wrapping also stacks 2-3 rows of pills with the same tight 0.5rem
+     gap used for spacing between pills on one line -- fine horizontally,
+     cramped vertically once there are several rows. Give rows more room
+     than columns.
+
+     Chips take their own full-width line first; Date, "+ New tag" and
+     Add note follow as a second line of exactly three controls, and
+     justify-content spaces that trio evenly across the full width
+     (flexbox justifies each wrapped line on its own) instead of leaving
+     them huddled on one side. */
   .sharedActionRow {
     flex-wrap: wrap;
-  }
-
-  .sharedActionDate {
-    flex: 1 1 100%;
+    justify-content: space-between;
+    margin: 0;
+    row-gap: 0.75rem;
   }
 
   /* Tag chips take the full row on their own line on mobile, with
-     Save and the tag-creation toggle following on their own line --
-     kept visible here too (not hidden), since it's the only way to
-     create a tag and hiding it with no mobile replacement would leave
-     mobile users with no way to do that at all. */
+     Date, the tag-creation toggle and Save following as a row of three
+     below -- kept visible here too (not hidden), since it's the only
+     way to create a tag and hiding it with no mobile replacement would
+     leave mobile users with no way to do that at all. */
   .scrollableChipRowWrap {
     flex: 1 1 100%;
-    order: 3;
+    order: 1;
+  }
+
+  /* A little more breathing room between chips than the tight 5px used
+     on desktop's single scrollable line -- there's no scrolling here,
+     the chips just wrap, so there's no reason to pack them as tight. */
+  .scrollableChipRow {
+    gap: 8px;
+  }
+
+  .datePickerTrigger {
+    order: 2;
   }
 
   .tagCreateToggle {
-    order: 4;
+    order: 3;
   }
 
   .saveEntryButton {
-    order: 5;
-    margin-left: auto;
+    order: 4;
   }
 }

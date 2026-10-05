@@ -1,0 +1,161 @@
+.datePickerTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 20px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ns-graphite);
+  padding: 4px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.datePickerTrigger:hover {
+  border-color: var(--ns-blue);
+}
+
+.datePickerTriggerIcon {
+  font-size: 13px;
+}
+
+/* Fixed to the viewport and centered with flex, same as EmojiPicker's
+   modal -- not anchored to this trigger, so it can never run
+   off-screen regardless of where the trigger sits (e.g. near the left
+   edge of a compact action row on mobile). */
+.datePickerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 38, 43, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.datePickerModal {
+  background: var(--ns-paper);
+  border-radius: 14px;
+  padding: 1rem;
+  width: 100%;
+  max-width: 300px;
+  box-shadow: 0 8px 32px rgba(35, 38, 43, 0.25);
+}
+
+.datePickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.datePickerMonthLabel {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ns-ink);
+}
+
+.datePickerNavButton {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.datePickerNavButton:hover {
+  border-color: var(--ns-blue);
+  color: var(--ns-blue);
+}
+
+.datePickerWeekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 2px;
+}
+
+.datePickerWeekdayLabel {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ns-graphite);
+  padding: 4px 0;
+}
+
+.datePickerGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datePickerCellBlank {
+  aspect-ratio: 1;
+}
+
+.datePickerCell {
+  aspect-ratio: 1;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ns-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.datePickerCell:hover {
+  background: var(--ns-rule);
+}
+
+.datePickerCellToday {
+  border: 0.5px solid var(--ns-blue);
+  color: var(--ns-blue);
+}
+
+.datePickerCellSelected {
+  background: var(--ns-blue);
+  color: #fff;
+}
+
+.datePickerCellSelected:hover {
+  background: var(--ns-blue);
+  opacity: 0.9;
+}
+
+.datePickerTodayButton {
+  width: 100%;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 0.5px solid var(--ns-rule);
+  background: transparent;
+  color: var(--ns-graphite);
+  cursor: pointer;
+}
+
+.datePickerTodayButton:hover {
+  border-color: var(--ns-blue);
+  color: var(--ns-blue);
+}
